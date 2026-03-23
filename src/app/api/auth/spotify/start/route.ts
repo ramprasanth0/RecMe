@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { getSpotifyAuthUrl } from "@/lib/spotify/auth";
 
 export async function GET() {
-  // Phase 2: Redirect user to Spotify OAuth authorization URL
-  return NextResponse.json(
-    { message: "Spotify auth start — not yet implemented" },
-    { status: 501 }
-  );
+  // Generate a random state for CSRF protection
+  const state = crypto.randomUUID();
+
+  // Store state in a cookie to verify on callback
+  cookies().set("spotify_auth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 600, // 10 minutes
+    path: "/",
+  });
+
+  const authUrl = getSpotifyAuthUrl(state);
+  return NextResponse.redirect(authUrl);
 }
