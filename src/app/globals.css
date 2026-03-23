@@ -1,16 +1,45 @@
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --surface: #111111;
-  --surface-light: #1A1A1A;
-  --music-accent: #1DB954;
-  --movie-accent: #F5A623;
-  --primary-text: #DDDDDD;
-  --muted-text: #888888;
+@layer base {
+  :root,
+  .dark {
+    --background: #0A0A0A;
+    --foreground: #DDDDDD;
+    --card: #111111;
+    --card-foreground: #DDDDDD;
+    --popover: #111111;
+    --popover-foreground: #DDDDDD;
+    --primary: #1DB954;
+    --primary-foreground: #0A0A0A;
+    --secondary: #1A1A1A;
+    --secondary-foreground: #DDDDDD;
+    --muted: #1A1A1A;
+    --muted-foreground: #888888;
+    --accent: #F5A623;
+    --accent-foreground: #0A0A0A;
+    --destructive: #ef4444;
+    --destructive-foreground: #DDDDDD;
+    --border: rgba(255, 255, 255, 0.08);
+    --input: rgba(255, 255, 255, 0.1);
+    --ring: #1DB954;
+    --radius: 0.625rem;
+
+    /* RecMe custom */
+    --surface: #111111;
+    --surface-light: #1A1A1A;
+    --music-accent: #1DB954;
+    --movie-accent: #F5A623;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
 /* Film grain texture overlay */
@@ -51,7 +80,6 @@
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Hide scrollbar for horizontal scroll containers */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
@@ -59,55 +87,4 @@
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
-}
-
-@layer base {
-  .theme {
-    --font-heading: var(--font-playfair);
-    --font-sans: var(--font-dm-sans);
-  }
-
-  /* RecMe is dark-only — no light theme */
-  :root,
-  .dark {
-    --background: #0A0A0A;
-    --foreground: #DDDDDD;
-    --card: #111111;
-    --card-foreground: #DDDDDD;
-    --popover: #111111;
-    --popover-foreground: #DDDDDD;
-    --primary: #1DB954;
-    --primary-foreground: #0A0A0A;
-    --secondary: #1A1A1A;
-    --secondary-foreground: #DDDDDD;
-    --muted: #1A1A1A;
-    --muted-foreground: #888888;
-    --accent: #F5A623;
-    --accent-foreground: #0A0A0A;
-    --destructive: #ef4444;
-    --border: rgba(255, 255, 255, 0.08);
-    --input: rgba(255, 255, 255, 0.1);
-    --ring: #1DB954;
-    --radius: 0.625rem;
-    --sidebar: #111111;
-    --sidebar-foreground: #DDDDDD;
-    --sidebar-primary: #1DB954;
-    --sidebar-primary-foreground: #0A0A0A;
-    --sidebar-accent: #1A1A1A;
-    --sidebar-accent-foreground: #DDDDDD;
-    --sidebar-border: rgba(255, 255, 255, 0.08);
-    --sidebar-ring: #1DB954;
-  }
-
-  * {
-    @apply border-border outline-ring/50;
-  }
-
-  body {
-    @apply bg-background text-foreground;
-  }
-
-  html {
-    @apply font-sans;
-  }
 }
