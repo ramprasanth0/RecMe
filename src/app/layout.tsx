@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans, JetBrains_Mono, Geist } from "next/font/google";
+import { Playfair_Display, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -36,9 +34,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("dark", "font-sans", geist.variable)}>
+    <html lang="en" className="dark">
       <body
-        className={`${playfair.variable} ${dmSans.variable} ${jetbrains.variable} font-body antialiased bg-background text-primary-text film-grain`}
+        className={cn(
+          playfair.variable,
+          dmSans.variable,
+          jetbrains.variable,
+          "font-body antialiased film-grain"
+        )}
       >
         {children}
       </body>

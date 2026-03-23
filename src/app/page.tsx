@@ -1,101 +1,81 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Music, Film, Sparkles } from "lucide-react";
 
-export default function Home() {
+export default function RootPage() {
+  // Phase 2 will add SSR auth detection here
+  // For now, render a placeholder landing
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="https://nextjs.org/icons/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="https://nextjs.org/icons/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <main className="min-h-screen flex flex-col items-center justify-center px-6">
+      {/* Hero */}
+      <div className="text-center max-w-2xl mx-auto space-y-6">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Sparkles className="w-5 h-5 text-[var(--music-accent)]" />
+          <span className="font-mono text-sm tracking-widest uppercase text-[var(--muted-text)]">
+            RecMe
+          </span>
+          <Sparkles className="w-5 h-5 text-[var(--movie-accent)]" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="https://nextjs.org/icons/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+
+        <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight">
+          Your taste.{" "}
+          <span className="bg-gradient-to-r from-[var(--music-accent)] to-[var(--movie-accent)] bg-clip-text text-transparent">
+            Amplified.
+          </span>
+        </h1>
+
+        <p className="text-lg text-[var(--muted-text)] max-w-lg mx-auto">
+          Discover music and movies the world is obsessed with — powered by AI
+          that knows your taste.
+        </p>
+
+        <div className="flex items-center justify-center gap-4 pt-4">
+          <Link
+            href="/api/auth/callback/spotify"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--music-accent)] text-black font-semibold text-sm hover:brightness-110 transition-all"
+          >
+            <Music className="w-4 h-4" />
+            Connect with Spotify
+          </Link>
+          <Link
+            href="/home"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-white/10 text-[var(--primary-text)] font-semibold text-sm hover:bg-white/5 transition-all"
+          >
+            <Film className="w-4 h-4" />
+            Continue with Email
+          </Link>
+        </div>
+      </div>
+
+      {/* Placeholder for trending sections */}
+      <div className="mt-24 w-full max-w-6xl space-y-12">
+        <section>
+          <h2 className="font-display text-2xl font-semibold mb-6">
+            Trending Movies
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[2/3] rounded-lg bg-[var(--surface)] animate-pulse"
+              />
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <h2 className="font-display text-2xl font-semibold mb-6">
+            Trending Music
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-square rounded-lg bg-[var(--surface)] animate-pulse"
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+    </main>
   );
 }
