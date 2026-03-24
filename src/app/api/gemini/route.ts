@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
               systemInstruction: systemPrompt,
               maxOutputTokens: 1500,
               temperature: 0.8,
+              responseMimeType: "application/json",
             },
           });
           for await (const chunk of stream) {

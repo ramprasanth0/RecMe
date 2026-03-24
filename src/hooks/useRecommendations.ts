@@ -110,18 +110,21 @@ export function useRecommendations(
   return { items, isLoading, error, lastMood, fetchRecs };
 }
 
-/** Extract JSON object from a string that might have surrounding text */
+/** Extract JSON object from a string that might have surrounding text or markdown fences */
 function extractJSON(text: string): string | null {
+  // Strip markdown code fences Gemini sometimes adds
+  const cleaned = text.replace(/```(?:json)?\n?/g, "").trim();
+
   // Try parsing directly first
   try {
-    JSON.parse(text.trim());
-    return text.trim();
+    JSON.parse(cleaned);
+    return cleaned;
   } catch {
-    // Try to find JSON object in the text
-    const start = text.indexOf("{");
-    const end = text.lastIndexOf("}");
+    // Find outermost JSON object boundaries
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
-      const candidate = text.slice(start, end + 1);
+      const candidate = cleaned.slice(start, end + 1);
       try {
         JSON.parse(candidate);
         return candidate;
