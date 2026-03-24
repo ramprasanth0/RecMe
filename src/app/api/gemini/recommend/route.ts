@@ -60,9 +60,10 @@ export async function POST(request: NextRequest) {
       contents: [{ role: "user", parts: [{ text: parsed.mood }] }],
       config: {
         systemInstruction: systemPrompt,
-        maxOutputTokens: 2000,
+        maxOutputTokens: 8192,
         temperature: 0.8,
         responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 

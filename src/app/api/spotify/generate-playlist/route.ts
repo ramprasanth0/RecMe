@@ -91,9 +91,10 @@ Rules:
       model: AI_MODEL,
       contents: [{ role: "user", parts: [{ text: aiPrompt }] }],
       config: {
-        maxOutputTokens: 4096,
+        maxOutputTokens: 8192,
         temperature: 0.8,
         responseMimeType: "application/json",
+        thinkingConfig: { thinkingBudget: 0 }, // disable thinking — not needed for playlist curation
       },
     });
     rawText = result.text ?? "";
