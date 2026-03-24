@@ -108,12 +108,20 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
             <p className="font-medium">{user.display_name || "User"}</p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
             {user.spotify_id ? (
-              <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-[var(--music-accent)]/10 text-[var(--music-accent)]">
-                <Music className="w-3 h-3" />
-                Spotify connected
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-[var(--music-accent)]/10 text-[var(--music-accent)]">
+                  <Music className="w-3 h-3" />
+                  Spotify connected
+                </span>
+                <a
+                  href="/api/auth/spotify/reconnect"
+                  className="text-xs px-3 py-1.5 rounded-full border border-white/10 text-muted-foreground hover:text-foreground hover:border-white/20 transition-colors"
+                >
+                  Reconnect
+                </a>
+              </div>
             ) : (
               <a
                 href="/api/auth/spotify/start"

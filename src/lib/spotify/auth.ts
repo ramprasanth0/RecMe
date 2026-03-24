@@ -12,7 +12,7 @@ const SCOPES = [
   "playlist-modify-private",
 ].join(" ");
 
-export function getSpotifyAuthUrl(state: string): string {
+export function getSpotifyAuthUrl(state: string, showDialog = false): string {
   const params = new URLSearchParams({
     response_type: "code",
     client_id: env.spotify.clientId(),
@@ -20,6 +20,7 @@ export function getSpotifyAuthUrl(state: string): string {
     redirect_uri: env.spotify.redirectUri(),
     state,
   });
+  if (showDialog) params.set("show_dialog", "true");
   return `${SPOTIFY_AUTH_URL}?${params.toString()}`;
 }
 
