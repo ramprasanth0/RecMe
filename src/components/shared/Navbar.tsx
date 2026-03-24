@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -9,15 +10,46 @@ interface NavbarProps {
   user?: { display_name: string | null; avatar_url: string | null } | null;
 }
 
+const NAV_LINKS = [
+  { href: "/home", label: "Dashboard" },
+  { href: "/chat", label: "Chat" },
+  { href: "/profile", label: "Profile" },
+];
+
 export function Navbar({ user }: NavbarProps) {
+  const pathname = usePathname();
+
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-4">
+    <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-background/80 backdrop-blur-md">
       {/* Logo */}
       <Link href="/" className="flex items-center gap-2">
         <span className="font-display text-xl font-bold tracking-tight">
           Rec<span className="text-[var(--music-accent)]">Me</span>
         </span>
       </Link>
+
+      {/* Nav links — only for logged-in users */}
+      {user && (
+        <div className="hidden sm:flex items-center gap-1">
+          {NAV_LINKS.map(({ href, label }) => {
+            const isActive = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                className={cn(
+                  "text-sm px-3 py-1.5 rounded-lg transition-colors",
+                  isActive
+                    ? "text-foreground bg-white/8"
+                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                )}
+              >
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      )}
 
       {/* Profile */}
       <div className="flex items-center gap-3">
@@ -30,7 +62,8 @@ export function Navbar({ user }: NavbarProps) {
               href="/profile"
               className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center",
-                "bg-surface-light border border-white/5 hover:border-white/10 transition-colors"
+                "bg-surface-light border border-white/5 hover:border-white/10 transition-colors",
+                pathname === "/profile" && "border-white/20"
               )}
             >
               {user.avatar_url ? (
