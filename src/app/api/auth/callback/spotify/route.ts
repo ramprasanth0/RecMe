@@ -30,7 +30,6 @@ export async function GET(request: NextRequest) {
   try {
     // Exchange code for tokens
     const tokens = await exchangeCodeForTokens(code);
-    console.log("[spotify-callback] Granted scopes:", tokens.scope);
     const profile = await getSpotifyProfile(tokens.access_token);
 
     // Upsert user in Supabase using service role
