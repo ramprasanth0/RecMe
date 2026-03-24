@@ -86,7 +86,7 @@ export function Navbar({ user }: NavbarProps) {
           </>
         ) : (
           <Link
-            href="/api/auth/spotify/start"
+            href="/signin"
             className="text-sm px-4 py-2 rounded-full bg-[var(--music-accent)] text-black font-medium hover:brightness-110 transition-all"
           >
             Sign in

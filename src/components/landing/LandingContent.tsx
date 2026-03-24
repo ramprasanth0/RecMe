@@ -144,7 +144,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
               Connect Spotify for personalized music recommendations
             </p>
             <a
-              href="/api/auth/spotify/start"
+              href="/signin"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-[var(--music-accent)] text-black text-sm font-medium hover:brightness-110 transition-all"
             >
               Connect with Spotify
