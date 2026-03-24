@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
@@ -46,10 +47,20 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   const displayMovies = (movieRecs.items.length > 0 ? movieRecs.items : SAMPLE_MOVIES) as MovieItem[];
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="min-h-screen pt-20 px-4 sm:px-6 pb-12"
+    >
       <div className="max-w-5xl mx-auto">
         {/* Greeting or tagline */}
-        <div className="text-center mb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
+          className="text-center mb-8"
+        >
           {isAuthenticated && userName ? (
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
               {greeting},{" "}
@@ -68,7 +79,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
               ? "Get personalized recommendations powered by AI"
               : "Discover music and movies — powered by AI that learns your taste"}
           </p>
-        </div>
+        </motion.div>
 
         {/* Tab switcher */}
         <div className="flex justify-center mb-8">
@@ -126,15 +137,33 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {activeTab === "music"
-              ? displayMusic.map((item, i) => (
-                  <RecommendationCard key={`${item.title}-${i}`} type="music" item={item} />
-                ))
-              : displayMovies.map((item, i) => (
-                  <RecommendationCard key={`${item.title}-${i}`} type="movie" item={item} />
-                ))}
-          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
+              initial="hidden"
+              animate="show"
+              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+            >
+              {activeTab === "music"
+                ? displayMusic.map((item, i) => (
+                    <motion.div
+                      key={`${item.title}-${i}`}
+                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                    >
+                      <RecommendationCard type="music" item={item} />
+                    </motion.div>
+                  ))
+                : displayMovies.map((item, i) => (
+                    <motion.div
+                      key={`${item.title}-${i}`}
+                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                    >
+                      <RecommendationCard type="movie" item={item} />
+                    </motion.div>
+                  ))}
+            </motion.div>
+          </AnimatePresence>
         )}
 
         {/* Sign-in prompt for guests */}
@@ -152,7 +181,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

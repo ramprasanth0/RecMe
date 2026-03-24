@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
@@ -75,11 +76,21 @@ export function MoviesTab() {
         {isLoading ? (
           <AiThinkingLoader type="movie" count={8} />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+          <motion.div
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+            initial="hidden"
+            animate="show"
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
+          >
             {displayRecs.map((item, i) => (
-              <RecommendationCard key={`${item.title}-${i}`} type="movie" item={item} />
+              <motion.div
+                key={`${item.title}-${i}`}
+                variants={{ hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } } }}
+              >
+                <RecommendationCard type="movie" item={item} />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </section>
 
