@@ -8,7 +8,7 @@ import { z } from "zod/v4";
 
 const RequestSchema = z.object({
   prompt: z.string().min(1).max(500),
-  trackCount: z.number().min(5).max(30).optional().default(15),
+  trackCount: z.number().min(5).max(20).optional().default(10),
 });
 
 export async function POST(request: NextRequest) {
@@ -91,7 +91,7 @@ Rules:
       model: AI_MODEL,
       contents: [{ role: "user", parts: [{ text: aiPrompt }] }],
       config: {
-        maxOutputTokens: 2000,
+        maxOutputTokens: 4096,
         temperature: 0.8,
         responseMimeType: "application/json",
       },

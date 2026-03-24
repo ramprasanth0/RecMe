@@ -25,7 +25,7 @@ const PROMPT_SUGGESTIONS = [
 
 export function PlaylistGenerator() {
   const [prompt, setPrompt] = useState("");
-  const [trackCount, setTrackCount] = useState(15);
+  const [trackCount, setTrackCount] = useState(10);
   const [status, setStatus] = useState<Status>("idle");
   const [result, setResult] = useState<GeneratedPlaylist | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -156,7 +156,7 @@ export function PlaylistGenerator() {
           {/* Track count */}
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <span>Tracks:</span>
-            {[10, 15, 20, 25].map((n) => (
+            {[10, 15, 20].map((n) => (
               <button
                 key={n}
                 onClick={() => setTrackCount(n)}
