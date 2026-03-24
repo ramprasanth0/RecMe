@@ -1,17 +1,11 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const playfair = Playfair_Display({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-playfair",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -37,10 +31,9 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body
         className={cn(
-          playfair.variable,
-          dmSans.variable,
+          inter.variable,
           jetbrains.variable,
-          "font-body antialiased film-grain"
+          "font-sans antialiased film-grain"
         )}
       >
         {children}

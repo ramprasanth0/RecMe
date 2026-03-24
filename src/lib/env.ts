@@ -21,8 +21,8 @@ export const env = {
   tmdb: {
     apiKey: () => required("TMDB_API_KEY"),
   },
-  anthropic: {
-    apiKey: () => required("ANTHROPIC_API_KEY"),
+  gemini: {
+    apiKey: () => required("GEMINI_API_KEY"),
   },
   supabase: {
     url: () => required("NEXT_PUBLIC_SUPABASE_URL"),
