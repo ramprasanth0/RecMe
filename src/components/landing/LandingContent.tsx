@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
@@ -33,6 +33,10 @@ interface LandingContentProps {
 
 export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
+  const [greeting, setGreeting] = useState<string>("");
+  useEffect(() => {
+    setGreeting(getGreeting());
+  }, []);
 
   const musicRecs = useRecommendations({ type: "music" });
   const movieRecs = useRecommendations({ type: "movie" });
@@ -48,7 +52,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
         <div className="text-center mb-8">
           {isAuthenticated && userName ? (
             <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-              {getGreeting()},{" "}
+              {greeting},{" "}
               <span className="text-[var(--music-accent)]">{userName}</span>
             </h1>
           ) : (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MusicTab } from "@/components/dashboard/MusicTab";
 import { MoviesTab } from "@/components/dashboard/MoviesTab";
@@ -12,6 +12,11 @@ interface DashboardContentProps {
 
 export function DashboardContent({ userName }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
+  // Compute greeting client-side only to avoid SSR/client timezone mismatch
+  const [greeting, setGreeting] = useState<string>("");
+  useEffect(() => {
+    setGreeting(getGreeting(userName ?? undefined));
+  }, [userName]);
 
   return (
     <div className="min-h-screen pt-28 px-4 sm:px-6 pb-12">
@@ -19,7 +24,7 @@ export function DashboardContent({ userName }: DashboardContentProps) {
         {/* Greeting */}
         <div className="text-center mb-10">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-            {getGreeting(userName ?? undefined)}
+            {greeting}
           </h1>
           <p className="text-sm text-muted-foreground mt-1.5">
             What are you in the mood for?
