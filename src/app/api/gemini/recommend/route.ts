@@ -1,4 +1,4 @@
-export const maxDuration = 30; // extend Vercel timeout to 30s
+export const maxDuration = 45; // allow time for AI + TMDB enrichment
 
 import { NextRequest } from "next/server";
 import { getGeminiClient, AI_MODEL } from "@/lib/gemini";
@@ -6,6 +6,8 @@ import { buildSystemPrompt } from "@/lib/gemini/prompt";
 import { z } from "zod/v4";
 import { getCurrentUser } from "@/lib/auth/session";
 import { getTopArtists, getTopTracks } from "@/lib/spotify";
+import { searchMovieTMDB } from "@/lib/tmdb";
+import { MovieRecommendationSchema, MusicRecommendationSchema } from "@/types/recommendations";
 
 const RequestSchema = z.object({
   type: z.enum(["music", "movie"]),
@@ -68,6 +70,51 @@ export async function POST(request: NextRequest) {
     });
 
     const text = result.text ?? "";
+
+    // Parse and enrich movie results with verified TMDB data (correct poster, synopsis, rating)
+    if (parsed.type === "movie") {
+      try {
+        const rawParsed = JSON.parse(text.replace(/```(?:json)?\n?/g, "").trim());
+        const validated = MovieRecommendationSchema.parse(rawParsed);
+
+        // Enrich each movie in parallel — TMDB search by title+year for accurate data
+        const enriched = await Promise.allSettled(
+          validated.items.map(async (item) => {
+            const tmdbData = await searchMovieTMDB(item.title, item.year);
+            if (!tmdbData) return item;
+            return {
+              ...item,
+              tmdbId: tmdbData.tmdbId,
+              posterPath: tmdbData.posterPath ?? item.posterPath,
+              genres: tmdbData.genres.length > 0 ? tmdbData.genres : item.genres,
+              rating: tmdbData.rating ?? item.rating,
+              synopsis: tmdbData.synopsis ?? undefined,
+            };
+          })
+        );
+
+        const items = enriched
+          .map((r) => (r.status === "fulfilled" ? r.value : null))
+          .filter(Boolean);
+
+        return Response.json({ type: "movie", items });
+      } catch {
+        // Enrichment failed — fall back to raw text for client-side parsing
+        return Response.json({ text });
+      }
+    }
+
+    // Music — no enrichment needed, return raw text for client-side parsing
+    if (parsed.type === "music") {
+      try {
+        const rawParsed = JSON.parse(text.replace(/```(?:json)?\n?/g, "").trim());
+        const validated = MusicRecommendationSchema.parse(rawParsed);
+        return Response.json({ type: "music", items: validated.items });
+      } catch {
+        return Response.json({ text });
+      }
+    }
+
     return Response.json({ text });
   } catch (err) {
     console.error("Recommend API error:", err);

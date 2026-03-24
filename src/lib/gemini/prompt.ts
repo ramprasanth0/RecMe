@@ -56,6 +56,8 @@ Rules:
 - Return ONLY the JSON object, no markdown fences, no extra text`);
   } else {
     sections.push(`
+The user may describe a movie using any of: a mood, partial plot or story, cast, director, year, genre, theme, setting, or relevancy (e.g. "movie about diamond trade in Africa", "film starring Cate Blanchett", "90s sci-fi thriller", "something like Parasite but funnier").
+
 Respond with exactly 5-8 movie recommendations as a JSON object:
 {
   "type": "movie",
@@ -65,16 +67,17 @@ Respond with exactly 5-8 movie recommendations as a JSON object:
       "year": 2024,
       "tmdbId": 0,
       "genres": ["Genre1", "Genre2"],
-      "reason": "One sentence explaining why this fits"
+      "reason": "One sentence explaining why this fits the user's request"
     }
   ]
 }
 
 Rules:
-- Every item MUST have a "reason" that connects to the user's mood or taste
-- Include accurate year and genre data
-- Set tmdbId to 0 if unsure (the app will look it up)
-- Be conversational, warm, and confident — like a friend with great taste
+- NEVER recommend adult, pornographic, or explicitly sexual content — all recommendations must be suitable for general audiences
+- Every item MUST have a "reason" that connects directly to what the user asked
+- Include accurate year and TMDB-style genre names (Action, Drama, Sci-Fi, Thriller, etc.)
+- Use real, well-known movie titles with their correct release year
+- Set tmdbId to 0 — the app will verify it against TMDB
 - Return ONLY the JSON object, no markdown fences, no extra text`);
   }
 

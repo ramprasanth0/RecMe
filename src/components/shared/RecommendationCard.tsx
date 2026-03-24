@@ -200,45 +200,57 @@ function MovieCard({ item }: { item: MovieItem }) {
             {rating.toFixed(1)}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-          <a
-            href={item.tmdbId ? `https://www.themoviedb.org/movie/${item.tmdbId}` : "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className="w-9 h-9 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
-            title="View on TMDB"
-          >
-            <ExternalLink className="w-4 h-4" />
-          </a>
-          <button
-            onClick={handleSave}
-            className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
-              saved
-                ? "bg-[var(--movie-accent)] text-black"
-                : "bg-white/15 backdrop-blur-sm text-white"
-            )}
-            title={saved ? "Saved" : "Save"}
-          >
-            {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
-          </button>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 gap-2">
+          {/* AI reason shown on hover */}
+          <p className="text-[11px] text-white/80 font-mono leading-relaxed line-clamp-3 mb-1">
+            {item.reason}
+          </p>
+          <div className="flex items-center gap-2">
+            <a
+              href={item.tmdbId ? `https://www.themoviedb.org/movie/${item.tmdbId}` : "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="w-8 h-8 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
+              title="View on TMDB"
+            >
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+            <button
+              onClick={handleSave}
+              className={cn(
+                "w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
+                saved
+                  ? "bg-[var(--movie-accent)] text-black"
+                  : "bg-white/15 backdrop-blur-sm text-white"
+              )}
+              title={saved ? "Saved" : "Save"}
+            >
+              {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </div>
       </div>
       <div className="p-3 space-y-1">
         <p className="text-sm font-medium truncate">{item.title}</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span>{item.year}</span>
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <span className="shrink-0">{item.year}</span>
           {item.genres.length > 0 && (
             <>
-              <span className="opacity-30">|</span>
+              <span className="opacity-30">·</span>
               <span className="truncate">{item.genres.slice(0, 2).join(", ")}</span>
             </>
           )}
         </div>
-        <p className="text-[11px] text-muted-foreground/60 font-mono leading-relaxed line-clamp-2 mt-1.5">
-          {item.reason}
-        </p>
+        {item.synopsis ? (
+          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3 mt-1">
+            {item.synopsis}
+          </p>
+        ) : (
+          <p className="text-[11px] text-muted-foreground/60 font-mono leading-relaxed line-clamp-2 mt-1">
+            {item.reason}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -43,7 +43,22 @@ export function useRecommendations(
 
         if (!res.ok) throw new Error("Failed to get recommendations");
 
-        const { text } = await res.json();
+        const data = await res.json();
+
+        // Server-side enriched response: { type, items }
+        if (data.items) {
+          if (options.type === "music") {
+            const validated = MusicRecommendationSchema.parse({ type: "music", items: data.items });
+            setItems(validated.items);
+          } else {
+            const validated = MovieRecommendationSchema.parse({ type: "movie", items: data.items });
+            setItems(validated.items);
+          }
+          return;
+        }
+
+        // Legacy text response fallback
+        const { text } = data;
         if (!text) throw new Error("Empty response from AI");
 
         const jsonStr = extractJSON(text);

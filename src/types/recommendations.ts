@@ -16,6 +16,7 @@ export const MovieItemSchema = z.object({
   reason: z.string(),
   posterPath: z.string().optional(),
   rating: z.number().optional(),
+  synopsis: z.string().optional(),
 });
 
 export const MusicRecommendationSchema = z.object({
