@@ -20,7 +20,7 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-white/5 bg-background/80 backdrop-blur-md">
+    <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-border bg-background/80 backdrop-blur-md">
       {/* Logo — left */}
       <Link href="/" className="flex items-center gap-2 justify-self-start">
         <span className="font-display text-xl font-bold tracking-tight">
@@ -40,8 +40,8 @@ export function Navbar({ user }: NavbarProps) {
                 className={cn(
                   "text-sm px-3 py-1.5 rounded-lg transition-colors",
                   isActive
-                    ? "text-foreground bg-white/8"
-                    : "text-muted-foreground hover:text-foreground hover:bg-white/5"
+                    ? "text-foreground bg-black/[0.06] dark:bg-white/8"
+                    : "text-muted-foreground hover:text-foreground hover:bg-black/[0.04] dark:hover:bg-white/5"
                 )}
               >
                 {label}
@@ -59,8 +59,8 @@ export function Navbar({ user }: NavbarProps) {
               href="/profile"
               className={cn(
                 "w-9 h-9 rounded-full flex items-center justify-center",
-                "bg-surface-light border border-white/5 hover:border-white/10 transition-colors",
-                pathname === "/profile" && "border-white/20"
+                "bg-surface-light border border-border hover:border-border transition-colors",
+                pathname === "/profile" && "border-border"
               )}
             >
               {user.avatar_url ? (
@@ -78,7 +78,7 @@ export function Navbar({ user }: NavbarProps) {
             <form action="/api/auth/logout" method="POST">
               <button
                 type="submit"
-                className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-light border border-white/5 hover:border-white/10 transition-colors"
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-surface-light border border-border hover:border-border transition-colors"
               >
                 <LogOut className="w-4 h-4 text-muted-foreground" />
               </button>

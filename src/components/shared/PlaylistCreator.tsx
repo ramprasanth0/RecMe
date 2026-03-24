@@ -63,7 +63,7 @@ export function PlaylistCreator({ tracks, onClose }: PlaylistCreatorProps) {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-md rounded-2xl bg-surface border border-white/10 shadow-2xl overflow-hidden">
+      <div className="relative w-full max-w-md rounded-2xl bg-surface border border-border shadow-2xl overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <h2 className="text-lg font-semibold">Create Spotify Playlist</h2>
@@ -120,7 +120,7 @@ export function PlaylistCreator({ tracks, onClose }: PlaylistCreatorProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder="My RecMe Mix"
-                  className="w-full rounded-lg bg-surface-light border border-white/5 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)]"
+                  className="w-full rounded-lg bg-surface-light border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)]"
                   disabled={status === "creating"}
                 />
               </div>
@@ -133,7 +133,7 @@ export function PlaylistCreator({ tracks, onClose }: PlaylistCreatorProps) {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="AI-curated by RecMe"
-                  className="w-full rounded-lg bg-surface-light border border-white/5 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)]"
+                  className="w-full rounded-lg bg-surface-light border border-border px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)]"
                   disabled={status === "creating"}
                 />
               </div>

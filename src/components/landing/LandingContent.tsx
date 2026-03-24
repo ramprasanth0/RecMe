@@ -107,7 +107,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
                 ? "Picked for you"
                 : "Trending recommendations"}
           </h2>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/5 text-muted-foreground ml-auto">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] dark:bg-white/5 text-muted-foreground ml-auto">
             AI
           </span>
         </div>
@@ -116,7 +116,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
         {active.isLoading ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl bg-surface border border-white/5 overflow-hidden">
+              <div key={i} className="rounded-xl bg-surface border border-border overflow-hidden">
                 <div className={`${activeTab === "music" ? "aspect-square" : "aspect-[2/3]"} bg-surface-light animate-pulse`} />
                 <div className="p-3 space-y-2">
                   <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />

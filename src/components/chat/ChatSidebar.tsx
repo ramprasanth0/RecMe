@@ -77,7 +77,7 @@ export function ChatSidebar({
 
   return (
     <div className="flex flex-col h-full">
-      <div className="p-4 border-b border-white/5">
+      <div className="p-4 border-b border-border">
         <button
           onClick={onNewSession}
           className="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg bg-[var(--music-accent)] text-black text-sm font-medium hover:brightness-110 transition-all"
@@ -105,8 +105,8 @@ export function ChatSidebar({
                 className={cn(
                   "w-full text-left rounded-lg px-3 py-2.5 group transition-colors",
                   activeSessionId === session.id
-                    ? "bg-surface-light border border-white/5"
-                    : "hover:bg-surface-light/50"
+                    ? "bg-surface-light border border-border"
+                    : "hover:bg-muted"
                 )}
               >
                 <div className="flex items-start gap-2">

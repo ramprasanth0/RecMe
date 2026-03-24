@@ -30,7 +30,7 @@ export function MoodInput({ activeTab, onSubmit, isLoading }: MoodInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="relative flex items-center gap-3 rounded-xl bg-surface border border-white/5 focus-within:border-white/10 transition-colors">
+      <div className="relative flex items-center gap-3 rounded-xl bg-surface border border-border focus-within:border-foreground/20 transition-colors">
         <Sparkles
           className="w-4 h-4 ml-4 shrink-0"
           style={{ color: accentColor }}

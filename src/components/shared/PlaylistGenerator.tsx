@@ -60,7 +60,7 @@ export function PlaylistGenerator() {
   }
 
   return (
-    <div className="rounded-xl bg-surface border border-white/5 p-5 space-y-4">
+    <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
       <div className="flex items-center gap-2">
         <Sparkles className="w-4 h-4 text-[var(--music-accent)]" />
         <h3 className="text-sm font-semibold">AI Playlist Generator</h3>
@@ -143,7 +143,7 @@ export function PlaylistGenerator() {
               placeholder="Describe your perfect playlist… e.g. 'chill late night R&B' or 'energetic workout bangers'"
               disabled={status === "generating"}
               rows={2}
-              className="w-full rounded-lg bg-surface-light border border-white/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)] resize-none disabled:opacity-50"
+              className="w-full rounded-lg bg-surface-light border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)] resize-none disabled:opacity-50"
             />
           </div>
 
@@ -154,7 +154,7 @@ export function PlaylistGenerator() {
                 key={s}
                 onClick={() => setPrompt(s)}
                 disabled={status === "generating"}
-                className="text-[11px] px-2.5 py-1 rounded-full bg-surface-light border border-white/5 text-muted-foreground hover:text-foreground hover:border-white/10 transition-all disabled:opacity-50"
+                className="text-[11px] px-2.5 py-1 rounded-full bg-surface-light border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-all disabled:opacity-50"
               >
                 {s}
               </button>

@@ -61,7 +61,7 @@ export function StreamingChat({ sessionId, initialMessages }: StreamingChatProps
                         setInput(suggestion);
                         inputRef.current?.focus();
                       }}
-                      className="text-xs px-3 py-1.5 rounded-full bg-surface-light border border-white/5 text-muted-foreground hover:text-foreground hover:border-white/10 transition-colors"
+                      className="text-xs px-3 py-1.5 rounded-full bg-surface-light border border-border text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
                     >
                       {suggestion}
                     </button>
@@ -86,7 +86,7 @@ export function StreamingChat({ sessionId, initialMessages }: StreamingChatProps
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="border-t border-white/5 p-4">
+      <form onSubmit={handleSubmit} className="border-t border-border p-4">
         <div className="flex gap-3">
           <input
             ref={inputRef}
@@ -94,7 +94,7 @@ export function StreamingChat({ sessionId, initialMessages }: StreamingChatProps
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="How are you feeling right now?"
-            className="flex-1 rounded-lg bg-surface-light border border-white/5 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)] transition-shadow"
+            className="flex-1 rounded-lg bg-surface-light border border-border px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-[var(--music-accent)] transition-shadow"
             disabled={isStreaming}
           />
           <button

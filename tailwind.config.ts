@@ -45,8 +45,8 @@ const config: Config = {
         },
         // RecMe custom tokens
         surface: {
-          DEFAULT: "#111111",
-          light: "#1A1A1A",
+          DEFAULT: "var(--surface)",
+          light: "var(--surface-light)",
         },
         "music-accent": "#1DB954",
         "movie-accent": "#F5A623",

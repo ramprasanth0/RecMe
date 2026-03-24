@@ -24,7 +24,7 @@ export function TabSwitcher({ defaultTab = "music", onTabChange }: TabSwitcherPr
   };
 
   return (
-    <div className="relative inline-flex items-center gap-1 p-1 rounded-full bg-surface border border-white/5">
+    <div className="relative inline-flex items-center gap-1 p-1 rounded-full bg-surface border border-border">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (

@@ -3,8 +3,38 @@
 @tailwind utilities;
 
 @layer base {
-  :root,
+  :root {
+    /* Light mode tokens */
+    --background: #F8F7F5;
+    --foreground: #1A1A1A;
+    --card: #FFFFFF;
+    --card-foreground: #1A1A1A;
+    --popover: #FFFFFF;
+    --popover-foreground: #1A1A1A;
+    --primary: #1DB954;
+    --primary-foreground: #FFFFFF;
+    --secondary: #EFEFED;
+    --secondary-foreground: #1A1A1A;
+    --muted: #EFEFED;
+    --muted-foreground: #666666;
+    --accent: #F5A623;
+    --accent-foreground: #FFFFFF;
+    --destructive: #ef4444;
+    --destructive-foreground: #FFFFFF;
+    --border: rgba(0, 0, 0, 0.09);
+    --input: rgba(0, 0, 0, 0.06);
+    --ring: #1DB954;
+    --radius: 0.625rem;
+
+    /* RecMe custom */
+    --surface: #FFFFFF;
+    --surface-light: #EFEFED;
+    --music-accent: #1DB954;
+    --movie-accent: #F5A623;
+  }
+
   .dark {
+    /* Dark mode tokens */
     --background: #0A0A0A;
     --foreground: #DDDDDD;
     --card: #111111;
@@ -24,7 +54,6 @@
     --border: rgba(255, 255, 255, 0.08);
     --input: rgba(255, 255, 255, 0.1);
     --ring: #1DB954;
-    --radius: 0.625rem;
 
     /* RecMe custom */
     --surface: #111111;
@@ -49,15 +78,20 @@
   inset: 0;
   z-index: 50;
   pointer-events: none;
-  opacity: 0.03;
+  opacity: 0.025;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
 }
 
 /* Glassmorphism utility */
 .glass {
-  background: rgba(17, 17, 17, 0.6);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark .glass {
+  background: rgba(17, 17, 17, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -72,11 +106,19 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.15);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
 

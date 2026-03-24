@@ -72,7 +72,7 @@ function MusicCard({
   }
 
   return (
-    <div className="group/card relative rounded-xl bg-surface border border-white/5 overflow-hidden transition-all duration-300 hover:border-[var(--music-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/40">
+    <div className="group/card relative rounded-xl bg-surface border border-border overflow-hidden transition-all duration-300 hover:border-[var(--music-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/20">
       <div className="aspect-square bg-surface-light relative overflow-hidden">
         {albumArt ? (
           <Image
@@ -180,7 +180,7 @@ function MovieCard({ item }: { item: MovieItem }) {
     : null;
 
   return (
-    <div className="group/card relative rounded-xl bg-surface border border-white/5 overflow-hidden transition-all duration-300 hover:border-[var(--movie-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/40">
+    <div className="group/card relative rounded-xl bg-surface border border-border overflow-hidden transition-all duration-300 hover:border-[var(--movie-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/20">
       <div className="aspect-[2/3] bg-surface-light relative overflow-hidden">
         {posterUrl ? (
           <Image

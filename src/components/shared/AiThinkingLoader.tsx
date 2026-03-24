@@ -73,7 +73,7 @@ export function AiThinkingLoader({ type, count = 8 }: AiThinkingLoaderProps) {
               key={i}
               className="w-1.5 h-1.5 rounded-full transition-all duration-300"
               style={{
-                backgroundColor: i === stepIndex ? accent : "rgba(255,255,255,0.15)",
+                backgroundColor: i === stepIndex ? accent : "var(--border)",
                 transform: i === stepIndex ? "scale(1.3)" : "scale(1)",
               }}
             />
@@ -93,7 +93,7 @@ export function AiThinkingLoader({ type, count = 8 }: AiThinkingLoaderProps) {
         {Array.from({ length: count }).map((_, i) => (
           <div
             key={i}
-            className="rounded-xl bg-surface border border-white/5 overflow-hidden"
+            className="rounded-xl bg-surface border border-border overflow-hidden"
             style={{ animationDelay: `${i * 60}ms` }}
           >
             <div
