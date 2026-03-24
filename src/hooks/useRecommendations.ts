@@ -35,7 +35,7 @@ export function useRecommendations(
       setLastMood(mood);
 
       try {
-        const res = await fetch("/api/claude", {
+        const res = await fetch("/api/gemini", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
