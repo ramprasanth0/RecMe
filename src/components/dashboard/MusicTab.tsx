@@ -7,6 +7,7 @@ import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { PlaylistCreator } from "@/components/shared/PlaylistCreator";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { useRecommendations } from "@/hooks/useRecommendations";
+import { AiThinkingLoader } from "@/components/shared/AiThinkingLoader";
 import type { MusicItem } from "@/types/recommendations";
 
 const SAMPLE_RECS: MusicItem[] = [
@@ -106,17 +107,7 @@ export function MusicTab() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="rounded-xl bg-surface border border-white/5 overflow-hidden">
-                <div className="aspect-square bg-surface-light animate-pulse" />
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />
-                  <div className="h-2 bg-surface-light rounded animate-pulse w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <AiThinkingLoader type="music" count={8} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {displayRecs.map((item, i) => (

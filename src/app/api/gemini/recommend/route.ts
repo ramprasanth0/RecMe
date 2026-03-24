@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
         maxOutputTokens: 8192,
         temperature: 0.8,
         responseMimeType: "application/json",
-        thinkingConfig: { thinkingBudget: 0 },
+        // thinking enabled — better taste-aware recommendations
       },
     });
 
