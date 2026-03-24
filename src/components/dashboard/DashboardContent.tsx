@@ -14,10 +14,10 @@ export function DashboardContent({ userName }: DashboardContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
 
   return (
-    <div className="min-h-screen pt-20 px-4 sm:px-6 pb-12">
-      <div className="max-w-5xl mx-auto">
+    <div className="min-h-screen pt-28 px-4 sm:px-6 pb-12">
+      <div className="max-w-6xl mx-auto">
         {/* Greeting */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight">
             {getGreeting(userName ?? undefined)}
           </h1>

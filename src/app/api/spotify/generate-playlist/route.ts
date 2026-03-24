@@ -68,7 +68,11 @@ Rules:
     const result = await client.models.generateContent({
       model: AI_MODEL,
       contents: [{ role: "user", parts: [{ text: aiPrompt }] }],
-      config: { maxOutputTokens: 2000, temperature: 0.8 },
+      config: {
+        maxOutputTokens: 2000,
+        temperature: 0.8,
+        responseMimeType: "application/json",
+      },
     });
     rawText = result.text ?? "";
   } catch {
