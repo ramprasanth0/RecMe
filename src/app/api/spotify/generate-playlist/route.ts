@@ -120,6 +120,17 @@ Rules:
     return Response.json({ error: "Failed to parse AI response" }, { status: 500 });
   }
 
+  // Verify token has playlist scope before trying to create
+  try {
+    const meRes = await fetch("https://api.spotify.com/v1/me", {
+      headers: { Authorization: `Bearer ${user.spotify_access_token}` },
+    });
+    const meData = await meRes.json();
+    console.log("[generate-playlist] Token check — Spotify user id:", meData.id, "| product:", meData.product);
+  } catch (e) {
+    console.warn("[generate-playlist] Token check failed:", e);
+  }
+
   // Create Spotify playlist
   let playlist: { id: string; external_urls: { spotify: string } };
   try {
