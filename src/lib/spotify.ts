@@ -51,7 +51,10 @@ export async function createPlaylist(
       public: false,
     }),
   });
-  if (!res.ok) throw new Error(`Create playlist failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Create playlist failed: ${res.status} — ${body}`);
+  }
   return res.json() as Promise<{ id: string; external_urls: { spotify: string } }>;
 }
 
