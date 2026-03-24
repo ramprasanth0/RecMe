@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState } from "react";
 
 const POSTER_URL =
@@ -33,15 +32,14 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Movie poster background */}
-      <Image
-        src={POSTER_URL}
-        alt=""
-        fill
-        className="object-cover object-center scale-105"
-        priority
-        unoptimized
+    <div
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      style={{ backgroundColor: "#0a0a0a" }}
+    >
+      {/* Movie poster background — CSS background avoids Next.js fill/height constraints */}
+      <div
+        className="absolute inset-0 bg-cover bg-center scale-105"
+        style={{ backgroundImage: `url('${POSTER_URL}')` }}
       />
 
       {/* Dark overlay */}

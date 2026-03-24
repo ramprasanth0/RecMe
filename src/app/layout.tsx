@@ -16,7 +16,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RecMe — Your taste. Amplified.",
+  title: "🔴 RecMe — Your taste. Amplified.",
   description:
     "AI-powered music and movie recommendations based on your Spotify listening history, mood, and preferences.",
   keywords: ["music", "movies", "recommendations", "AI", "Spotify", "TMDB"],
