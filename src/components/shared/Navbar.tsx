@@ -28,8 +28,8 @@ export function Navbar({ user }: NavbarProps) {
         </span>
       </Link>
 
-      {/* Nav links — center */}
-      <div className="flex items-center justify-center gap-1">
+      {/* Nav links — center (hidden on mobile) */}
+      <div className="hidden sm:flex items-center justify-center gap-1">
         {user ? (
           NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href;

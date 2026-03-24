@@ -90,25 +90,25 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
           <User className="w-5 h-5 text-muted-foreground" />
           <h2 className="text-base font-semibold">Account</h2>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           {user.avatar_url ? (
             <Image
               src={user.avatar_url}
               alt=""
               width={48}
               height={48}
-              className="rounded-full"
+              className="rounded-full shrink-0"
             />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-surface-light flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-surface-light flex items-center justify-center shrink-0">
               <User className="w-5 h-5 text-muted-foreground" />
             </div>
           )}
-          <div>
-            <p className="font-medium">{user.display_name || "User"}</p>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+          <div className="min-w-0 flex-1">
+            <p className="font-medium truncate">{user.display_name || "User"}</p>
+            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
           </div>
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {user.spotify_id ? (
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-[var(--music-accent)]/10 text-[var(--music-accent)]">
