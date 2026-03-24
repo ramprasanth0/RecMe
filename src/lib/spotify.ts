@@ -31,3 +31,60 @@ export async function getSpotifyTopData(
   ]);
   return { topArtists, topTracks };
 }
+
+/** Create a new playlist in the user's Spotify account */
+export async function createPlaylist(
+  accessToken: string,
+  userId: string,
+  name: string,
+  description = ""
+) {
+  const res = await fetch(`${SPOTIFY_API}/users/${userId}/playlists`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      name,
+      description,
+      public: false,
+    }),
+  });
+  if (!res.ok) throw new Error(`Create playlist failed: ${res.status}`);
+  return res.json() as Promise<{ id: string; external_urls: { spotify: string } }>;
+}
+
+/** Add tracks to a Spotify playlist */
+export async function addTracksToPlaylist(
+  accessToken: string,
+  playlistId: string,
+  uris: string[]
+) {
+  const res = await fetch(`${SPOTIFY_API}/playlists/${playlistId}/tracks`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ uris }),
+  });
+  if (!res.ok) throw new Error(`Add tracks failed: ${res.status}`);
+  return res.json();
+}
+
+/** Search for a track on Spotify and return its URI */
+export async function searchTrack(
+  accessToken: string,
+  title: string,
+  artist: string
+): Promise<string | null> {
+  const query = encodeURIComponent(`track:${title} artist:${artist}`);
+  const res = await fetch(
+    `${SPOTIFY_API}/search?q=${query}&type=track&limit=1`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.tracks?.items?.[0]?.uri ?? null;
+}

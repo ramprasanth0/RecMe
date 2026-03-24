@@ -1,8 +1,10 @@
 "use client";
 
-import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
+import { useState, useCallback } from "react";
+import { Sparkles, TrendingUp, AlertCircle, ListMusic } from "lucide-react";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
+import { PlaylistCreator } from "@/components/shared/PlaylistCreator";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import type { MusicItem } from "@/types/recommendations";
 
@@ -30,11 +32,52 @@ export function MusicTab() {
   const { items: aiRecs, isLoading, error, lastMood, fetchRecs } = useRecommendations({
     type: "music",
   });
+  const [playlistTracks, setPlaylistTracks] = useState<MusicItem[]>([]);
+  const [showPlaylist, setShowPlaylist] = useState(false);
 
   const displayRecs = (aiRecs.length > 0 ? aiRecs : SAMPLE_RECS) as MusicItem[];
 
+  const handleAddToPlaylist = useCallback((item: MusicItem) => {
+    setPlaylistTracks((prev) => {
+      if (prev.some((t) => t.title === item.title && t.artist === item.artist)) return prev;
+      return [...prev, item];
+    });
+  }, []);
+
   return (
     <div className="space-y-10">
+      {/* Playlist queue */}
+      {playlistTracks.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[var(--music-accent)]/10 border border-[var(--music-accent)]/20">
+          <ListMusic className="w-4 h-4 text-[var(--music-accent)] shrink-0" />
+          <span className="text-sm flex-1">
+            {playlistTracks.length} track{playlistTracks.length > 1 ? "s" : ""} queued
+          </span>
+          <button
+            onClick={() => setPlaylistTracks([])}
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Clear
+          </button>
+          <button
+            onClick={() => setShowPlaylist(true)}
+            className="text-xs px-3 py-1.5 rounded-full bg-[var(--music-accent)] text-black font-medium hover:brightness-110 transition-all"
+          >
+            Create Playlist
+          </button>
+        </div>
+      )}
+
+      {showPlaylist && (
+        <PlaylistCreator
+          tracks={playlistTracks}
+          onClose={() => {
+            setShowPlaylist(false);
+            setPlaylistTracks([]);
+          }}
+        />
+      )}
+
       {/* Mood input */}
       <MoodInput activeTab="music" onSubmit={fetchRecs} isLoading={isLoading} />
 
@@ -73,7 +116,7 @@ export function MusicTab() {
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {displayRecs.map((item, i) => (
-              <RecommendationCard key={`${item.title}-${i}`} type="music" item={item} />
+              <RecommendationCard key={`${item.title}-${i}`} type="music" item={item} onAddToPlaylist={handleAddToPlaylist} />
             ))}
           </div>
         )}

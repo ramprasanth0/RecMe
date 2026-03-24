@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Bookmark, Plus, ExternalLink } from "lucide-react";
+import { Bookmark, BookmarkCheck, Plus, ExternalLink } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
+import { cn } from "@/lib/utils";
 
 interface MusicCardProps {
   type: "music";
   item: MusicItem;
+  onAddToPlaylist?: (item: MusicItem) => void;
 }
 
 interface MovieCardProps {
@@ -18,14 +20,38 @@ interface MovieCardProps {
 type RecCardProps = MusicCardProps | MovieCardProps;
 
 export function RecommendationCard(props: RecCardProps) {
-  if (props.type === "music") return <MusicCard item={props.item} />;
+  if (props.type === "music")
+    return <MusicCard item={props.item} onAddToPlaylist={props.onAddToPlaylist} />;
   return <MovieCard item={props.item} />;
 }
 
-function MusicCard({ item }: { item: MusicItem }) {
+function MusicCard({
+  item,
+  onAddToPlaylist,
+}: {
+  item: MusicItem;
+  onAddToPlaylist?: (item: MusicItem) => void;
+}) {
+  const [saved, setSaved] = useState(false);
+
+  async function handleSave(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (saved) return;
+    try {
+      const res = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "music",
+          item_data: { title: item.title, artist: item.artist, reason: item.reason },
+        }),
+      });
+      if (res.ok) setSaved(true);
+    } catch {}
+  }
+
   return (
     <div className="group/card relative rounded-xl bg-surface border border-white/5 overflow-hidden transition-all duration-300 hover:border-[var(--music-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/40">
-      {/* Album art */}
       <div className="aspect-square bg-surface-light relative overflow-hidden">
         {item.albumArt ? (
           <Image
@@ -40,17 +66,31 @@ function MusicCard({ item }: { item: MusicItem }) {
             <MusicIcon className="w-12 h-12" />
           </div>
         )}
-        {/* Hover overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-          <button className="w-9 h-9 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform" title="Add to Playlist">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onAddToPlaylist?.(item);
+            }}
+            className="w-9 h-9 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
+            title="Add to Playlist"
+          >
             <Plus className="w-4 h-4" />
           </button>
-          <button className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:scale-110 transition-transform" title="Save">
-            <Bookmark className="w-4 h-4" />
+          <button
+            onClick={handleSave}
+            className={cn(
+              "w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
+              saved
+                ? "bg-[var(--music-accent)] text-black"
+                : "bg-white/15 backdrop-blur-sm text-white"
+            )}
+            title={saved ? "Saved" : "Save"}
+          >
+            {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           </button>
         </div>
       </div>
-      {/* Info */}
       <div className="p-3 space-y-1">
         <p className="text-sm font-medium truncate">{item.title}</p>
         <p className="text-xs text-muted-foreground truncate">{item.artist}</p>
@@ -65,11 +105,10 @@ function MusicCard({ item }: { item: MusicItem }) {
 function MovieCard({ item }: { item: MovieItem }) {
   const [posterPath, setPosterPath] = useState<string | null>(item.posterPath ?? null);
   const [rating, setRating] = useState<number | null>(item.rating ?? null);
+  const [saved, setSaved] = useState(false);
 
-  // Auto-fetch poster from TMDB if we have a tmdbId but no posterPath
   useEffect(() => {
     if (posterPath || !item.tmdbId || item.tmdbId === 0) return;
-
     fetch(`/api/tmdb/poster?id=${item.tmdbId}`)
       .then((res) => res.json())
       .then((data) => {
@@ -79,13 +118,36 @@ function MovieCard({ item }: { item: MovieItem }) {
       .catch(() => {});
   }, [item.tmdbId, posterPath, rating]);
 
+  async function handleSave(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (saved) return;
+    try {
+      const res = await fetch("/api/recommendations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "movie",
+          item_data: {
+            title: item.title,
+            year: item.year,
+            tmdbId: item.tmdbId,
+            genres: item.genres,
+            reason: item.reason,
+            posterPath,
+            rating,
+          },
+        }),
+      });
+      if (res.ok) setSaved(true);
+    } catch {}
+  }
+
   const posterUrl = posterPath
     ? `https://image.tmdb.org/t/p/w780${posterPath}`
     : null;
 
   return (
     <div className="group/card relative rounded-xl bg-surface border border-white/5 overflow-hidden transition-all duration-300 hover:border-[var(--movie-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/40">
-      {/* Poster */}
       <div className="aspect-[2/3] bg-surface-light relative overflow-hidden">
         {posterUrl ? (
           <Image
@@ -100,23 +162,36 @@ function MovieCard({ item }: { item: MovieItem }) {
             <FilmIcon className="w-12 h-12" />
           </div>
         )}
-        {/* Rating badge */}
         {rating && (
           <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded bg-black/70 backdrop-blur-sm text-[var(--movie-accent)] text-xs font-mono font-bold">
             {rating.toFixed(1)}
           </div>
         )}
-        {/* Hover overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-          <button className="w-9 h-9 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform" title="Where to Watch">
+          <a
+            href={item.tmdbId ? `https://www.themoviedb.org/movie/${item.tmdbId}` : "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="w-9 h-9 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
+            title="View on TMDB"
+          >
             <ExternalLink className="w-4 h-4" />
-          </button>
-          <button className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:scale-110 transition-transform" title="Save">
-            <Bookmark className="w-4 h-4" />
+          </a>
+          <button
+            onClick={handleSave}
+            className={cn(
+              "w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
+              saved
+                ? "bg-[var(--movie-accent)] text-black"
+                : "bg-white/15 backdrop-blur-sm text-white"
+            )}
+            title={saved ? "Saved" : "Save"}
+          >
+            {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           </button>
         </div>
       </div>
-      {/* Info */}
       <div className="p-3 space-y-1">
         <p className="text-sm font-medium truncate">{item.title}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
