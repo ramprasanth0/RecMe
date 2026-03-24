@@ -12,13 +12,31 @@ const RequestSchema = z.object({
 });
 
 export async function POST(request: NextRequest) {
+  console.log("[generate-playlist] Request received");
+
   const user = await getUserWithFreshToken();
   if (!user?.spotify_access_token || !user.spotify_id) {
+    console.log("[generate-playlist] Auth failed — no spotify token or id");
     return Response.json({ error: "Spotify not connected" }, { status: 401 });
   }
+  console.log("[generate-playlist] User authenticated, spotify_id:", user.spotify_id);
 
-  const body = await request.json();
-  const parsed = RequestSchema.parse(body);
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch (e) {
+    console.error("[generate-playlist] Failed to parse request body:", e);
+    return Response.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  let parsed: { prompt: string; trackCount: number };
+  try {
+    parsed = RequestSchema.parse(body);
+  } catch (e) {
+    console.error("[generate-playlist] Zod validation failed:", e);
+    return Response.json({ error: "Invalid request params" }, { status: 400 });
+  }
+  console.log("[generate-playlist] Parsed request — prompt:", parsed.prompt, "| trackCount:", parsed.trackCount);
 
   // Fetch user's Spotify context
   let topArtists: string[] = [];
@@ -33,8 +51,9 @@ export async function POST(request: NextRequest) {
       (t: { name: string; artists: { name: string }[] }) =>
         `${t.name} by ${t.artists[0]?.name}`
     );
-  } catch {
-    // Proceed without context
+    console.log("[generate-playlist] Spotify context — artists:", topArtists.length, "| tracks:", topTracks.length);
+  } catch (e) {
+    console.warn("[generate-playlist] Could not fetch Spotify context (proceeding without):", e);
   }
 
   const userContext = [
@@ -66,6 +85,7 @@ Rules:
   // Generate playlist with Gemini
   let rawText = "";
   try {
+    console.log("[generate-playlist] Calling Gemini...");
     const client = getGeminiClient();
     const result = await client.models.generateContent({
       model: AI_MODEL,
@@ -77,7 +97,9 @@ Rules:
       },
     });
     rawText = result.text ?? "";
-  } catch {
+    console.log("[generate-playlist] Gemini responded, raw length:", rawText.length, "| preview:", rawText.slice(0, 120));
+  } catch (e) {
+    console.error("[generate-playlist] Gemini call failed:", e);
     return Response.json({ error: "AI generation failed" }, { status: 500 });
   }
 
@@ -88,37 +110,59 @@ Rules:
     const cleaned = rawText.replace(/```(?:json)?\n?/g, "").trim();
     const start = cleaned.indexOf("{");
     const end = cleaned.lastIndexOf("}");
-    if (start === -1 || end === -1) throw new Error("No JSON found");
+    if (start === -1 || end === -1) throw new Error("No JSON object found in response");
     const data = JSON.parse(cleaned.slice(start, end + 1));
     playlistName = data.playlistName || playlistName;
     tracks = data.tracks || [];
-  } catch {
+    console.log("[generate-playlist] Parsed AI response — name:", playlistName, "| tracks:", tracks.length);
+  } catch (e) {
+    console.error("[generate-playlist] Parse failed:", e, "| rawText:", rawText.slice(0, 300));
     return Response.json({ error: "Failed to parse AI response" }, { status: 500 });
   }
 
   // Create Spotify playlist
-  const playlist = await createPlaylist(
-    user.spotify_access_token,
-    user.spotify_id,
-    playlistName,
-    `Created by RecMe AI — "${parsed.prompt}"`
-  );
+  let playlist: { id: string; external_urls: { spotify: string } };
+  try {
+    console.log("[generate-playlist] Creating Spotify playlist:", playlistName);
+    playlist = await createPlaylist(
+      user.spotify_access_token,
+      user.spotify_id,
+      playlistName,
+      `Created by RecMe AI — "${parsed.prompt}"`
+    );
+    console.log("[generate-playlist] Playlist created, id:", playlist.id);
+  } catch (e) {
+    console.error("[generate-playlist] createPlaylist failed:", e);
+    return Response.json({ error: "Failed to create Spotify playlist" }, { status: 500 });
+  }
 
   // Search for tracks in batches of 5 to avoid Spotify rate limits
   const uris: string[] = [];
   const batchSize = 5;
   for (let i = 0; i < tracks.length; i += batchSize) {
     const batch = tracks.slice(i, i + batchSize);
+    console.log(`[generate-playlist] Searching batch ${i / batchSize + 1} (${batch.length} tracks)...`);
     const results = await Promise.all(
       batch.map((t) => searchTrack(user.spotify_access_token!, t.title, t.artist))
     );
-    uris.push(...results.filter((uri): uri is string => uri !== null));
+    const found = results.filter((uri): uri is string => uri !== null);
+    console.log(`[generate-playlist] Batch result: ${found.length}/${batch.length} found`);
+    uris.push(...found);
   }
+
+  console.log("[generate-playlist] Total URIs found:", uris.length, "of", tracks.length);
 
   if (uris.length > 0) {
-    await addTracksToPlaylist(user.spotify_access_token, playlist.id, uris);
+    try {
+      await addTracksToPlaylist(user.spotify_access_token, playlist.id, uris);
+      console.log("[generate-playlist] Tracks added to playlist successfully");
+    } catch (e) {
+      console.error("[generate-playlist] addTracksToPlaylist failed:", e);
+      return Response.json({ error: "Failed to add tracks to playlist" }, { status: 500 });
+    }
   }
 
+  console.log("[generate-playlist] Done —", uris.length, "tracks added to", playlistName);
   return Response.json({
     playlistName,
     playlistUrl: playlist.external_urls.spotify,
