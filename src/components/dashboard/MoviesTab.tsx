@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
@@ -17,19 +18,31 @@ const SAMPLE_RECS: MovieItem[] = [
   { title: "Her", year: 2013, tmdbId: 152601, genres: ["Romance", "Sci-Fi"], reason: "Tender exploration of love in a digital age", rating: 8.0 },
 ];
 
-const TRENDING: MovieItem[] = [
-  { title: "Dune: Part Two", year: 2024, tmdbId: 693134, genres: ["Sci-Fi", "Adventure"], reason: "Expansive and visually breathtaking", rating: 8.3 },
-  { title: "The Brutalist", year: 2024, tmdbId: 549509, genres: ["Drama"], reason: "Ambitious epic about the immigrant experience", rating: 7.8 },
-  { title: "Anora", year: 2024, tmdbId: 1064213, genres: ["Drama", "Comedy"], reason: "Sharp and surprising Palme d'Or winner", rating: 7.5 },
-  { title: "Conclave", year: 2024, tmdbId: 974453, genres: ["Thriller", "Drama"], reason: "Gripping Vatican political thriller", rating: 7.6 },
-  { title: "The Substance", year: 2024, tmdbId: 933260, genres: ["Horror", "Sci-Fi"], reason: "Bold body horror with a statement", rating: 7.2 },
-  { title: "Nosferatu", year: 2024, tmdbId: 426063, genres: ["Horror"], reason: "Atmospheric reimagining of the classic", rating: 7.0 },
-];
-
 export function MoviesTab() {
   const { items: aiRecs, isLoading, error, lastMood, fetchRecs } = useRecommendations({
     type: "movie",
   });
+  const [trending, setTrending] = useState<MovieItem[]>([]);
+
+  useEffect(() => {
+    fetch("/api/tmdb/trending")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.results) return;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const items: MovieItem[] = data.results.slice(0, 10).map((m: any) => ({
+          title: m.title,
+          year: new Date(m.release_date).getFullYear(),
+          tmdbId: m.id,
+          genres: [],
+          reason: m.overview?.slice(0, 80) || "Trending this week",
+          posterPath: m.poster_path,
+          rating: m.vote_average,
+        }));
+        setTrending(items);
+      })
+      .catch(() => {});
+  }, []);
 
   const displayRecs = (aiRecs.length > 0 ? aiRecs : SAMPLE_RECS) as MovieItem[];
 
@@ -80,19 +93,21 @@ export function MoviesTab() {
       </section>
 
       {/* Trending */}
-      <section>
-        <div className="flex items-center gap-2 mb-5">
-          <TrendingUp className="w-4 h-4 text-muted-foreground" />
-          <h2 className="text-base font-semibold">Trending this week</h2>
-        </div>
-        <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-          {TRENDING.map((item, i) => (
-            <div key={i} className="shrink-0 w-[160px]">
-              <RecommendationCard type="movie" item={item} />
-            </div>
-          ))}
-        </div>
-      </section>
+      {trending.length > 0 && (
+        <section>
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Trending this week</h2>
+          </div>
+          <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+            {trending.map((item, i) => (
+              <div key={i} className="shrink-0 w-[160px]">
+                <RecommendationCard type="movie" item={item} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
