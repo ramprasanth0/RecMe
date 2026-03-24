@@ -35,11 +35,12 @@ export async function getSpotifyTopData(
 /** Create a new playlist in the user's Spotify account */
 export async function createPlaylist(
   accessToken: string,
-  userId: string,
+  _userId: string,
   name: string,
   description = ""
 ) {
-  const res = await fetch(`${SPOTIFY_API}/users/${userId}/playlists`, {
+  // Use /me/playlists — avoids 403 issues with user-scoped endpoint in dev mode
+  const res = await fetch(`${SPOTIFY_API}/me/playlists`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
