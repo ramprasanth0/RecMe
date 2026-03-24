@@ -75,13 +75,15 @@ Rules:
     return Response.json({ error: "AI generation failed" }, { status: 500 });
   }
 
-  // Parse AI response
+  // Parse AI response — strip markdown fences Gemini sometimes adds
   let playlistName = "My RecMe Playlist";
   let tracks: { title: string; artist: string }[] = [];
   try {
-    const start = rawText.indexOf("{");
-    const end = rawText.lastIndexOf("}");
-    const data = JSON.parse(rawText.slice(start, end + 1));
+    const cleaned = rawText.replace(/```(?:json)?\n?/g, "").trim();
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start === -1 || end === -1) throw new Error("No JSON found");
+    const data = JSON.parse(cleaned.slice(start, end + 1));
     playlistName = data.playlistName || playlistName;
     tracks = data.tracks || [];
   } catch {

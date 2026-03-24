@@ -20,18 +20,18 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-6 py-4 border-b border-white/5 bg-background/80 backdrop-blur-md">
-      {/* Logo */}
-      <Link href="/" className="flex items-center gap-2">
+    <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-white/5 bg-background/80 backdrop-blur-md">
+      {/* Logo — left */}
+      <Link href="/" className="flex items-center gap-2 justify-self-start">
         <span className="font-display text-xl font-bold tracking-tight">
           Rec<span className="text-[var(--music-accent)]">Me</span>
         </span>
       </Link>
 
-      {/* Nav links — only for logged-in users */}
-      {user && (
-        <div className="hidden sm:flex items-center gap-1">
-          {NAV_LINKS.map(({ href, label }) => {
+      {/* Nav links — center */}
+      <div className="flex items-center justify-center gap-1">
+        {user ? (
+          NAV_LINKS.map(({ href, label }) => {
             const isActive = pathname === href;
             return (
               <Link
@@ -47,17 +47,14 @@ export function Navbar({ user }: NavbarProps) {
                 {label}
               </Link>
             );
-          })}
-        </div>
-      )}
+          })
+        ) : null}
+      </div>
 
-      {/* Profile */}
-      <div className="flex items-center gap-3">
+      {/* Profile — right */}
+      <div className="flex items-center gap-3 justify-self-end">
         {user ? (
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground hidden sm:block">
-              {user.display_name}
-            </span>
+          <>
             <Link
               href="/profile"
               className={cn(
@@ -86,7 +83,7 @@ export function Navbar({ user }: NavbarProps) {
                 <LogOut className="w-4 h-4 text-muted-foreground" />
               </button>
             </form>
-          </div>
+          </>
         ) : (
           <Link
             href="/api/auth/spotify/start"
