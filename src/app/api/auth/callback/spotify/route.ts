@@ -83,10 +83,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(`${baseUrl}/`);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("Spotify callback error:", message);
-    return NextResponse.redirect(
-      `${baseUrl}/?error=${encodeURIComponent(message.slice(0, 100))}`
-    );
+    console.error("Spotify callback error:", err);
+    return NextResponse.redirect(`${baseUrl}/?error=auth_failed`);
   }
 }
