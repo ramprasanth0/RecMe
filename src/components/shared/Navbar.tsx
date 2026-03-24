@@ -20,7 +20,7 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
       {/* Logo — left */}
       <Link href="/" className="flex items-center gap-2 justify-self-start">
         <span className="font-display text-xl font-bold tracking-tight">
