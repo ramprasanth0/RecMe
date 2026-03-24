@@ -9,56 +9,62 @@ interface PromptContext {
 }
 
 export function buildSystemPrompt(ctx: PromptContext): string {
-  const sections: string[] = [
-    `You are RecMe's AI engine — a taste-aware recommendation assistant.`,
-    `You are recommending ${ctx.type === "music" ? "music" : "movies"}.`,
+  // The query is the PRIMARY directive — listed first and most prominently
+  const lines: string[] = [
+    `You are RecMe's recommendation engine. Your ONLY job is to return results that directly and specifically match what the user asked for.`,
+    ``,
+    `USER QUERY (match this precisely):`,
+    `"${ctx.mood}"`,
   ];
 
-  if (ctx.topArtists?.length) {
-    sections.push(`User's top artists: ${ctx.topArtists.slice(0, 10).join(", ")}`);
-  }
+  // User context is secondary — only used to break ties, never to override query relevance
+  const contextParts: string[] = [];
+  if (ctx.topArtists?.length)
+    contextParts.push(`Top artists: ${ctx.topArtists.slice(0, 8).join(", ")}`);
+  if (ctx.topTracks?.length)
+    contextParts.push(`Top tracks: ${ctx.topTracks.slice(0, 8).join(", ")}`);
+  if (ctx.favoriteGenres?.length)
+    contextParts.push(`Preferred music genres: ${ctx.favoriteGenres.join(", ")}`);
+  if (ctx.movieGenres?.length)
+    contextParts.push(`Preferred movie genres: ${ctx.movieGenres.join(", ")}`);
+  if (ctx.likedItems?.length)
+    contextParts.push(`Previously liked: ${ctx.likedItems.slice(0, 5).join(", ")}`);
 
-  if (ctx.topTracks?.length) {
-    sections.push(`User's top tracks: ${ctx.topTracks.slice(0, 10).join(", ")}`);
+  if (contextParts.length) {
+    lines.push(
+      ``,
+      `USER TASTE CONTEXT (secondary — use only to break ties or add personal flavour; never let this override query relevance):`,
+      ...contextParts
+    );
   }
-
-  if (ctx.favoriteGenres?.length) {
-    sections.push(`User's favorite music genres: ${ctx.favoriteGenres.join(", ")}`);
-  }
-
-  if (ctx.movieGenres?.length) {
-    sections.push(`User's favorite movie genres: ${ctx.movieGenres.join(", ")}`);
-  }
-
-  if (ctx.likedItems?.length) {
-    sections.push(`Previously liked items: ${ctx.likedItems.slice(0, 5).join(", ")}`);
-  }
-
-  sections.push(`User's current mood/request: "${ctx.mood}"`);
 
   if (ctx.type === "music") {
-    sections.push(`
-Respond with exactly 5-8 music recommendations as a JSON object:
+    lines.push(`
+TASK: Return exactly 10 music tracks that DIRECTLY match the query above, ordered from most to least relevant.
+
+Output format — a single JSON object, no markdown, no extra text:
 {
   "type": "music",
   "items": [
     {
       "title": "Song Title",
       "artist": "Artist Name",
-      "reason": "One sentence explaining why this fits"
+      "reason": "Specific one-sentence explanation of how this track matches the query"
     }
   ]
 }
 
-Rules:
-- Every item MUST have a "reason" that connects to the user's mood or taste
-- Be conversational, warm, and confident — like a friend with great taste
-- Return ONLY the JSON object, no markdown fences, no extra text`);
+RULES:
+1. Every item MUST be a direct, unambiguous match for the query — not tangentially related
+2. If fewer than 10 tracks are a strong match, return only those that truly fit — do NOT pad with weak matches
+3. Items are already ordered most → least relevant; maintain this order
+4. The "reason" must explain the specific connection to the query, not describe the track in general
+5. Return ONLY the JSON object`);
   } else {
-    sections.push(`
-The user may describe a movie using any of: a mood, partial plot or story, cast, director, year, genre, theme, setting, or relevancy (e.g. "movie about diamond trade in Africa", "film starring Cate Blanchett", "90s sci-fi thriller", "something like Parasite but funnier").
+    lines.push(`
+TASK: Return exactly 10 movies that DIRECTLY match the query above, ordered from most to least relevant. The user may describe by: mood, partial plot/story, cast, director, year, genre, theme, setting, or relevancy (e.g. "movie about diamond trade in Africa", "film starring Cate Blanchett", "90s sci-fi thriller", "something like Parasite but funnier").
 
-Respond with exactly 5-8 movie recommendations as a JSON object:
+Output format — a single JSON object, no markdown, no extra text:
 {
   "type": "movie",
   "items": [
@@ -67,21 +73,22 @@ Respond with exactly 5-8 movie recommendations as a JSON object:
       "year": 2024,
       "tmdbId": 0,
       "genres": ["Genre1", "Genre2"],
-      "reason": "One sentence explaining why this fits the user's request"
+      "reason": "Specific one-sentence explanation of how this movie matches the query"
     }
   ]
 }
 
-Rules:
-- NEVER recommend adult, pornographic, or explicitly sexual content — all recommendations must be suitable for general audiences
-- Every item MUST have a "reason" that connects directly to what the user asked
-- Include accurate year and TMDB-style genre names (Action, Drama, Sci-Fi, Thriller, etc.)
-- Use real, well-known movie titles with their correct release year
-- Set tmdbId to 0 — the app will verify it against TMDB
-- Return ONLY the JSON object, no markdown fences, no extra text`);
+RULES:
+1. Every item MUST be a direct, unambiguous match for the query — not tangentially related
+2. If fewer than 10 movies are a strong match, return only those that truly fit — do NOT pad with weak matches
+3. Items are already ordered most → least relevant; maintain this order
+4. The "reason" must explain the specific connection to the query (e.g. "set in Sierra Leone and centres on the illegal diamond trade" — not generic praise)
+5. NEVER recommend adult, pornographic, or explicitly sexual content
+6. Use real movie titles with accurate release year; set tmdbId to 0 (app verifies it)
+7. Return ONLY the JSON object`);
   }
 
-  return sections.join("\n\n");
+  return lines.join("\n");
 }
 
 export function buildChatSystemPrompt(context?: {

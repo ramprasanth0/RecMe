@@ -22,7 +22,7 @@ interface AiThinkingLoaderProps {
   count?: number;
 }
 
-export function AiThinkingLoader({ type, count = 8 }: AiThinkingLoaderProps) {
+export function AiThinkingLoader({ type, count = 10 }: AiThinkingLoaderProps) {
   const steps = type === "music" ? MUSIC_STEPS : MOVIE_STEPS;
   const accent = type === "music" ? "var(--music-accent)" : "var(--movie-accent)";
   const [stepIndex, setStepIndex] = useState(0);
@@ -82,14 +82,7 @@ export function AiThinkingLoader({ type, count = 8 }: AiThinkingLoaderProps) {
       </div>
 
       {/* Skeleton cards */}
-      <div
-        className={cn(
-          "grid gap-4",
-          type === "music"
-            ? "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
-            : "grid-cols-2 sm:grid-cols-3 md:grid-cols-4"
-        )}
-      >
+      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
         {Array.from({ length: count }).map((_, i) => (
           <div
             key={i}

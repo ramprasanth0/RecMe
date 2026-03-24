@@ -108,10 +108,10 @@ export function MusicTab() {
         </div>
 
         {isLoading ? (
-          <AiThinkingLoader type="music" count={8} />
+          <AiThinkingLoader type="music" count={10} />
         ) : (
           <motion.div
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
             initial="hidden"
             animate="show"
             variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}

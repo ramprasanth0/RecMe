@@ -63,9 +63,9 @@ export async function POST(request: NextRequest) {
       config: {
         systemInstruction: systemPrompt,
         maxOutputTokens: 8192,
-        temperature: 0.8,
+        temperature: 0.3,  // low = precise query matching, not creative wandering
+        topP: 0.8,
         responseMimeType: "application/json",
-        // thinking enabled — better taste-aware recommendations
       },
     });
 
