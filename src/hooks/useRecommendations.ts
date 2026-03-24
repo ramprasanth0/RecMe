@@ -35,65 +35,20 @@ export function useRecommendations(
       setLastMood(mood);
 
       try {
-        const res = await fetch("/api/gemini", {
+        const res = await fetch("/api/gemini/recommend", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: options.type,
-            mood,
-            topArtists: options.topArtists,
-            topTracks: options.topTracks,
-            favoriteGenres: options.favoriteGenres,
-            movieGenres: options.movieGenres,
-          }),
+          body: JSON.stringify({ type: options.type, mood }),
         });
 
         if (!res.ok) throw new Error("Failed to get recommendations");
-        if (!res.body) throw new Error("No response body");
 
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let accumulated = "";
-        let buffer = "";
+        const { text } = await res.json();
+        if (!text) throw new Error("Empty response from AI");
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          // Buffer chunks so lines split across network packets are reassembled
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split("\n");
-          buffer = lines.pop() ?? ""; // keep incomplete last line in buffer
-
-          for (const line of lines) {
-            if (!line.startsWith("data: ")) continue;
-            const data = line.slice(6).trim();
-            if (data === "[DONE]") continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.text) accumulated += parsed.text;
-              if (parsed.error) setError(parsed.error);
-            } catch {
-              // malformed chunk — skip
-            }
-          }
-        }
-
-        // Flush any remaining buffered line
-        if (buffer.startsWith("data: ")) {
-          const data = buffer.slice(6).trim();
-          if (data && data !== "[DONE]") {
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.text) accumulated += parsed.text;
-            } catch {}
-          }
-        }
-
-        // Parse the complete accumulated response
-        const jsonStr = extractJSON(accumulated);
+        const jsonStr = extractJSON(text);
         if (!jsonStr) {
-          console.error("extractJSON failed, accumulated:", accumulated.slice(0, 300));
+          console.error("extractJSON failed, text:", text.slice(0, 300));
           setError("Could not parse AI response");
           return;
         }

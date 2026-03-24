@@ -8,15 +8,10 @@ import { cn } from "@/lib/utils";
 
 async function fetchItunesAlbumArt(title: string, artist: string): Promise<string | null> {
   try {
-    const query = encodeURIComponent(`${title} ${artist}`);
-    const res = await fetch(
-      `https://itunes.apple.com/search?term=${query}&media=music&entity=musicTrack&limit=1`
-    );
+    const params = new URLSearchParams({ title, artist });
+    const res = await fetch(`/api/itunes/artwork?${params}`);
     const data = await res.json();
-    const art: string | undefined = data.results?.[0]?.artworkUrl100;
-    if (!art) return null;
-    // Upgrade to 600x600 for high-res
-    return art.replace("100x100bb", "600x600bb");
+    return data.url ?? null;
   } catch {
     return null;
   }
