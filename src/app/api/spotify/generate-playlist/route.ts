@@ -164,22 +164,27 @@ Rules:
 
   console.log("[generate-playlist] Total URIs found:", uris.length, "of", tracks.length);
 
+  let tracksAdded = 0;
+  let tracksWarning: string | undefined;
+
   if (uris.length > 0) {
     try {
       await addTracksToPlaylist(user.spotify_access_token, playlist.id, uris);
+      tracksAdded = uris.length;
       console.log("[generate-playlist] Tracks added to playlist successfully");
     } catch (e) {
       console.error("[generate-playlist] addTracksToPlaylist failed:", e);
-      return Response.json({ error: "Failed to add tracks to playlist" }, { status: 500 });
+      tracksWarning = "Playlist created but tracks could not be added — reconnect Spotify from your profile to grant full permissions.";
     }
   }
 
-  console.log("[generate-playlist] Done —", uris.length, "tracks added to", playlistName);
+  console.log("[generate-playlist] Done —", tracksAdded, "tracks added to", playlistName);
   return Response.json({
     playlistName,
     playlistUrl: playlist.external_urls.spotify,
-    tracksAdded: uris.length,
+    tracksAdded,
     tracksTotal: tracks.length,
     tracks,
+    warning: tracksWarning,
   });
 }

@@ -12,6 +12,7 @@ interface GeneratedPlaylist {
   tracksAdded: number;
   tracksTotal: number;
   tracks: { title: string; artist: string }[];
+  warning?: string;
 }
 
 const PROMPT_SUGGESTIONS = [
@@ -90,6 +91,13 @@ export function PlaylistGenerator() {
               Open
             </a>
           </div>
+
+          {/* Warning if tracks couldn't be added */}
+          {result.warning && (
+            <p className="text-xs text-amber-400 bg-amber-400/10 rounded-lg px-3 py-2">
+              {result.warning}
+            </p>
+          )}
 
           {/* Track list toggle */}
           <button
