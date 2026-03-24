@@ -6,6 +6,22 @@ import { Bookmark, BookmarkCheck, Plus, ExternalLink } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
 import { cn } from "@/lib/utils";
 
+async function fetchItunesAlbumArt(title: string, artist: string): Promise<string | null> {
+  try {
+    const query = encodeURIComponent(`${title} ${artist}`);
+    const res = await fetch(
+      `https://itunes.apple.com/search?term=${query}&media=music&entity=musicTrack&limit=1`
+    );
+    const data = await res.json();
+    const art: string | undefined = data.results?.[0]?.artworkUrl100;
+    if (!art) return null;
+    // Upgrade to 600x600 for high-res
+    return art.replace("100x100bb", "600x600bb");
+  } catch {
+    return null;
+  }
+}
+
 interface MusicCardProps {
   type: "music";
   item: MusicItem;
@@ -33,6 +49,16 @@ function MusicCard({
   onAddToPlaylist?: (item: MusicItem) => void;
 }) {
   const [saved, setSaved] = useState(false);
+  const [albumArt, setAlbumArt] = useState<string | null>(item.albumArt ?? null);
+
+  useEffect(() => {
+    if (albumArt) return;
+    fetchItunesAlbumArt(item.title, item.artist).then((art) => {
+      if (art) setAlbumArt(art);
+    });
+  }, [item.title, item.artist, albumArt]);
+
+  const spotifySearchUrl = `https://open.spotify.com/search/${encodeURIComponent(`${item.title} ${item.artist}`)}`;
 
   async function handleSave(e: React.MouseEvent) {
     e.stopPropagation();
@@ -53,9 +79,9 @@ function MusicCard({
   return (
     <div className="group/card relative rounded-xl bg-surface border border-white/5 overflow-hidden transition-all duration-300 hover:border-[var(--music-accent)]/30 hover:scale-105 hover:z-10 hover:shadow-xl hover:shadow-black/40">
       <div className="aspect-square bg-surface-light relative overflow-hidden">
-        {item.albumArt ? (
+        {albumArt ? (
           <Image
-            src={item.albumArt}
+            src={albumArt}
             alt={item.title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 16vw"
@@ -67,16 +93,28 @@ function MusicCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onAddToPlaylist?.(item);
-            }}
+          <a
+            href={spotifySearchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="w-9 h-9 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
-            title="Add to Playlist"
+            title="Open in Spotify"
           >
-            <Plus className="w-4 h-4" />
-          </button>
+            <ExternalLink className="w-4 h-4" />
+          </a>
+          {onAddToPlaylist && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToPlaylist(item);
+              }}
+              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:scale-110 transition-transform"
+              title="Add to Playlist"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
           <button
             onClick={handleSave}
             className={cn(

@@ -12,6 +12,11 @@ const nextConfig = {
         hostname: "i.scdn.co",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "*.mzstatic.com",
+        pathname: "/**",
+      },
     ],
   },
 };
