@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const POSTER_URL =
-  "https://image.tmdb.org/t/p/w1280/gEU2QniE6E77NI6lCU6MxlNBvIe.jpg";
+  "https://image.tmdb.org/t/p/w1280/ilRyazdMJwN3JIKUQ0lViniMr6g.jpg";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -34,14 +34,12 @@ export default function SignInPage() {
   return (
     <div
       className="relative min-h-screen flex items-center justify-center overflow-hidden"
-      style={{ backgroundColor: "#0a0a0a" }}
+      style={{
+        backgroundImage: `url(${POSTER_URL})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
     >
-      {/* Movie poster background — CSS background avoids Next.js fill/height constraints */}
-      <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
-        style={{ backgroundImage: `url('${POSTER_URL}')` }}
-      />
-
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/65" />
 

@@ -204,4 +204,78 @@ Route now always returns the playlist URL on success, even if some tracks were s
 
 ---
 
-**Total bugs:** 13 · **All resolved** ✅
+## BUG-14 · Wrong movie posters — AI hallucinated `tmdbId` values
+**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** High
+
+**What happened:**
+Movie recommendation cards showed incorrect posters. A film like "Blood Diamond" displayed the poster for an entirely different movie.
+
+**Root cause:**
+The Gemini model hallucinated `tmdbId` values — it invented numeric IDs that didn't match the actual TMDB records. The poster proxy (`/api/tmdb/poster?id=<id>`) silently fetched whatever movie TMDB returned for that wrong ID.
+
+**Fix:**
+Added server-side TMDB enrichment in `recommend/route.ts`. After Gemini returns movie titles, the route calls `searchMovieTMDB(title, year)` in parallel for all items, replacing the AI's `tmdbId`, `posterPath`, `genres`, `rating`, and `synopsis` with verified TMDB data. Falls back to AI values only if TMDB returns no match.
+
+---
+
+## BUG-15 · Explicit/adult content appearing in movie recommendations
+**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** High
+
+**What happened:**
+Some movie recommendation results included adult content titles.
+
+**Root cause:**
+No adult content filter was applied anywhere — neither in the AI prompt nor in TMDB API calls. TMDB returns adult titles by default if `include_adult` is not explicitly set to `false`.
+
+**Fix:**
+- Added `include_adult=false` to all `searchMovieTMDB` TMDB API calls in `lib/tmdb.ts`
+- Added explicit rule to Gemini system prompt: "NEVER recommend explicit, adult, or pornographic content under any circumstances"
+
+---
+
+## BUG-16 · Recommendations not relevant to user query
+**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** High
+
+**What happened:**
+When a user typed a specific query (e.g. "movie about diamond trade in Africa"), the AI returned loosely related or entirely off-topic recommendations, diluted by the user's Spotify listening context.
+
+**Root cause:**
+Two compounding causes:
+1. `temperature: 0.8` allowed the model to creatively wander from the query
+2. The system prompt listed Spotify/genre context *before* the user query, causing the model to weight them equally — user context dominated when it should have been secondary
+
+**Fix:**
+- Lowered `temperature` to `0.3` and set `topP: 0.8` in `recommend/route.ts`
+- Rewrote `buildSystemPrompt` in `lib/gemini/prompt.ts` with query-first structure: user query appears at the top as the PRIMARY directive, Spotify/genre context is explicitly labelled as "secondary tiebreaker only"
+
+---
+
+## BUG-17 · Sign-in page background image not visible
+**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** Medium
+
+**What happened:**
+The movie poster background on the `/signin` page was invisible — only the dark overlay was rendered.
+
+**Root cause:**
+The background used `<Image fill>` from `next/image`. Next.js `<Image fill>` renders as `position: absolute; height: 100%`. For `height: 100%` to resolve, the parent element needs an explicit `height` property — but the parent only had `min-height: 100vh` (Tailwind `min-h-screen`). With no explicit height, the image height resolved to `0` and nothing was displayed.
+
+**Fix:**
+Replaced `<Image fill>` with a plain `<div>` using inline `style={{ backgroundImage: \`url('...')\` }}` and Tailwind classes `bg-cover bg-center` — same pattern used on the working 404 page. No height resolution issue with CSS backgrounds.
+
+---
+
+## BUG-18 · ⏺ record symbol not rendering red in browser tab title
+**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** Low
+
+**What happened:**
+The tab title showed `⏺ RecMe — Your taste. Amplified.` but the ⏺ symbol appeared black/gray instead of red on most browsers and operating systems.
+
+**Root cause:**
+`⏺` (U+23FA BLACK CIRCLE FOR RECORD) is a Unicode symbol without color semantics. OS font rendering treats it as a monochrome glyph — it inherits the system text color (black/gray), not the app's accent red.
+
+**Fix:**
+Replaced `⏺` with `🔴` emoji in `src/app/layout.tsx`. The 🔴 emoji is universally rendered as a red circle across all platforms and browsers.
+
+---
+
+**Total bugs:** 18 · **All resolved** ✅

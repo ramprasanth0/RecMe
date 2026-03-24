@@ -6,13 +6,14 @@ const POSTER_URL =
 
 export default function NotFound() {
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      {/* Movie poster background */}
-      <div
-        className="absolute inset-0 bg-cover bg-center scale-105"
-        style={{ backgroundImage: `url(${POSTER_URL})` }}
-      />
-
+    <div
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      style={{
+        backgroundImage: `url(${POSTER_URL})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
+    >
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/70" />
 
