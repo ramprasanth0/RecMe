@@ -92,18 +92,20 @@ export function useRecommendations(
 
         // Parse the complete accumulated response
         const jsonStr = extractJSON(accumulated);
-        if (jsonStr) {
-          const parsed = JSON.parse(jsonStr);
-
-          if (options.type === "music") {
-            const validated = MusicRecommendationSchema.parse(parsed);
-            setItems(validated.items);
-          } else {
-            const validated = MovieRecommendationSchema.parse(parsed);
-            setItems(validated.items);
-          }
-        } else {
+        if (!jsonStr) {
+          console.error("extractJSON failed, accumulated:", accumulated.slice(0, 300));
           setError("Could not parse AI response");
+          return;
+        }
+
+        const parsed = JSON.parse(jsonStr);
+
+        if (options.type === "music") {
+          const validated = MusicRecommendationSchema.parse(parsed);
+          setItems(validated.items);
+        } else {
+          const validated = MovieRecommendationSchema.parse(parsed);
+          setItems(validated.items);
         }
       } catch (err) {
         console.error("Recommendation fetch error:", err);

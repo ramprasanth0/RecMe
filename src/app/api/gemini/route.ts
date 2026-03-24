@@ -68,9 +68,8 @@ export async function POST(request: NextRequest) {
             contents: [{ role: "user", parts: [{ text: parsed.mood }] }],
             config: {
               systemInstruction: systemPrompt,
-              maxOutputTokens: 1500,
+              maxOutputTokens: 2000,
               temperature: 0.8,
-              responseMimeType: "application/json",
             },
           });
           for await (const chunk of stream) {
