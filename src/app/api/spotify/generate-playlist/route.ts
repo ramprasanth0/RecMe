@@ -1,3 +1,5 @@
+export const maxDuration = 60; // playlist generation needs multiple API calls
+
 import { NextRequest } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
 import { createPlaylist, addTracksToPlaylist, searchTrack, getTopArtists, getTopTracks } from "@/lib/spotify";
@@ -102,11 +104,16 @@ Rules:
     `Created by RecMe AI — "${parsed.prompt}"`
   );
 
-  // Search for all tracks in parallel
-  const uriResults = await Promise.all(
-    tracks.map((t) => searchTrack(user.spotify_access_token!, t.title, t.artist))
-  );
-  const uris = uriResults.filter((uri): uri is string => uri !== null);
+  // Search for tracks in batches of 5 to avoid Spotify rate limits
+  const uris: string[] = [];
+  const batchSize = 5;
+  for (let i = 0; i < tracks.length; i += batchSize) {
+    const batch = tracks.slice(i, i + batchSize);
+    const results = await Promise.all(
+      batch.map((t) => searchTrack(user.spotify_access_token!, t.title, t.artist))
+    );
+    uris.push(...results.filter((uri): uri is string => uri !== null));
+  }
 
   if (uris.length > 0) {
     await addTracksToPlaylist(user.spotify_access_token, playlist.id, uris);
