@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { Sparkles, TrendingUp } from "lucide-react";
+import { Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
+import { useRecommendations } from "@/hooks/useRecommendations";
 import type { MusicItem } from "@/types/recommendations";
 
 const SAMPLE_RECS: MusicItem[] = [
@@ -27,27 +27,24 @@ const TRENDING: MusicItem[] = [
 ];
 
 export function MusicTab() {
-  const [recs] = useState<MusicItem[]>(SAMPLE_RECS);
-  const [isLoading, setIsLoading] = useState(false);
-  const [lastMood, setLastMood] = useState<string | null>(null);
+  const { items: aiRecs, isLoading, error, lastMood, fetchRecs } = useRecommendations({
+    type: "music",
+  });
 
-  const handleMoodSubmit = async (mood: string) => {
-    setIsLoading(true);
-    setLastMood(mood);
-    // Phase 5: Replace with actual Gemini API call
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-  };
+  const displayRecs = (aiRecs.length > 0 ? aiRecs : SAMPLE_RECS) as MusicItem[];
 
   return (
     <div className="space-y-10">
       {/* Mood input */}
-      <MoodInput
-        activeTab="music"
-        onSubmit={handleMoodSubmit}
-        isLoading={isLoading}
-      />
+      <MoodInput activeTab="music" onSubmit={fetchRecs} isLoading={isLoading} />
+
+      {/* Error display */}
+      {error && (
+        <div className="flex items-center gap-2 text-sm text-red-400 bg-red-400/10 rounded-lg px-4 py-2.5">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* AI Recommendations */}
       <section>
@@ -56,7 +53,7 @@ export function MusicTab() {
           <h2 className="text-base font-semibold">
             {lastMood ? `Recommendations for "${lastMood}"` : "Picked for you"}
           </h2>
-          <span className="text-[10px] font-mono text-muted-foreground px-1.5 py-0.5 rounded bg-music-accent/10 text-music-accent ml-auto">
+          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-music-accent/10 text-music-accent ml-auto">
             AI
           </span>
         </div>
@@ -75,8 +72,8 @@ export function MusicTab() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {recs.map((item, i) => (
-              <RecommendationCard key={i} type="music" item={item} />
+            {displayRecs.map((item, i) => (
+              <RecommendationCard key={`${item.title}-${i}`} type="music" item={item} />
             ))}
           </div>
         )}
@@ -88,7 +85,6 @@ export function MusicTab() {
           <TrendingUp className="w-4 h-4 text-muted-foreground" />
           <h2 className="text-base font-semibold">Trending now</h2>
         </div>
-
         <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
           {TRENDING.map((item, i) => (
             <div key={i} className="shrink-0 w-[160px]">
