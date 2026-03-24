@@ -49,7 +49,7 @@ export async function createPlaylist(
     body: JSON.stringify({
       name,
       description,
-      public: false,
+      public: true,
     }),
   });
   if (!res.ok) {
@@ -73,7 +73,10 @@ export async function addTracksToPlaylist(
     },
     body: JSON.stringify({ uris }),
   });
-  if (!res.ok) throw new Error(`Add tracks failed: ${res.status}`);
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Add tracks failed: ${res.status} — ${body}`);
+  }
   return res.json();
 }
 
