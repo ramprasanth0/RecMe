@@ -1,5 +1,4 @@
 <img src="src/app/icon.svg" width="52" height="52" alt="RecMe logo" align="left" style="margin-right:12px">
-
 # RecMe — Your taste. Amplified.
 
 > AI-powered music and movie recommendations, personalised to your Spotify listening history.
@@ -14,7 +13,7 @@
 
 ## What is RecMe?
 
-RecMe is a dark, editorial-grade web app that uses your Spotify listening history as input and Google Gemini AI as its engine to recommend music and movies that actually fit your taste.
+RecMe is a minimalistic, editorial-grade web app that uses your Spotify listening history as input and Google Gemini AI as its engine to recommend music and movies that actually fit your taste.
 
 Every recommendation comes with a human-readable reason explaining *why* it was picked for you — not just a ranked list.
 
