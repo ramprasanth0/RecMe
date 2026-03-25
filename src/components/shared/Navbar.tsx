@@ -41,7 +41,7 @@ export function Navbar({ user }: NavbarProps) {
           <span className="font-display text-xl font-bold tracking-tight flex items-baseline overflow-hidden">
             Rec
             <motion.span
-              animate={{ maxWidth: logoExpanded ? 72 : 0, opacity: logoExpanded ? 1 : 0 }}
+              animate={{ maxWidth: logoExpanded ? 90 : 0, opacity: logoExpanded ? 1 : 0 }}
               transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
               className="inline-block overflow-hidden whitespace-nowrap"
             >
