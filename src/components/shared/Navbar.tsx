@@ -22,11 +22,16 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoExpanded, setLogoExpanded] = useState(false);
+  const [shaking, setShaking] = useState(false);
 
   // One-shot brand animation: RecMe → RecommendMe → RecMe
   useEffect(() => {
     const expand = setTimeout(() => setLogoExpanded(true), 1000);
-    const collapse = setTimeout(() => setLogoExpanded(false), 3200); // hold 2.2s then collapse
+    const collapse = setTimeout(() => {
+      setLogoExpanded(false);
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+    }, 3200);
     return () => {
       clearTimeout(expand);
       clearTimeout(collapse);
@@ -39,7 +44,13 @@ export function Navbar({ user }: NavbarProps) {
         {/* Logo — left */}
         <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
           <span className="font-display text-xl font-bold tracking-tight flex items-baseline overflow-hidden">
-            Rec
+            <motion.span
+              animate={shaking ? { x: [0, -2, 2, -1.5, 1.5, -1, 1, 0] } : { x: 0 }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+              className="inline-block"
+            >
+              Rec
+            </motion.span>
             <motion.span
               animate={{ maxWidth: logoExpanded ? 90 : 0, opacity: logoExpanded ? 1 : 0 }}
               transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
