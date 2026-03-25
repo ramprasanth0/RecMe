@@ -12,6 +12,9 @@ interface NavbarProps {
   user?: { display_name: string | null; avatar_url: string | null } | null;
 }
 
+// Module-level flag — persists for the tab session, prevents re-animation on route change
+let logoAnimationDone = false;
+
 const NAV_LINKS = [
   { href: "/home", label: "Home" },
   { href: "/personalize", label: "Personalize" },
@@ -25,8 +28,10 @@ export function Navbar({ user }: NavbarProps) {
   // "idle" | "expanding" | "crushing"
   const [logoPhase, setLogoPhase] = useState<"idle" | "expanding" | "crushing">("idle");
 
-  // One-shot brand animation: RecMe → RecommendMe → RecMe
+  // One-shot brand animation: RecMe → RecommendMe → RecMe (page load only, not on route change)
   useEffect(() => {
+    if (logoAnimationDone) return;
+    logoAnimationDone = true;
     const expand = setTimeout(() => {
       setLogoExpanded(true);
       setLogoPhase("expanding");
@@ -55,6 +60,7 @@ export function Navbar({ user }: NavbarProps) {
           >
             Rec
             <motion.span
+              initial={{ maxWidth: 0, opacity: 0 }}
               animate={{ maxWidth: logoExpanded ? 90 : 0, opacity: logoExpanded ? 1 : 0 }}
               transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
               className="inline-block overflow-hidden whitespace-nowrap"
