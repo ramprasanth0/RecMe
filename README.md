@@ -1,4 +1,5 @@
 <img src="src/app/icon.svg" width="52" height="52" alt="RecMe logo" align="left" style="margin-right:12px">
+
 # RecMe — Your taste. Amplified.
 
 > AI-powered music and movie recommendations, personalised to your Spotify listening history.
