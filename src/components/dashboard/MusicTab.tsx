@@ -6,7 +6,6 @@ import { Sparkles, TrendingUp, AlertCircle, ListMusic } from "lucide-react";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { PlaylistCreator } from "@/components/shared/PlaylistCreator";
-import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { AiThinkingLoader } from "@/components/shared/AiThinkingLoader";
 import type { MusicItem } from "@/types/recommendations";
@@ -80,9 +79,6 @@ export function MusicTab() {
           }}
         />
       )}
-
-      {/* AI Playlist Generator */}
-      <PlaylistGenerator />
 
       {/* Mood input */}
       <MoodInput activeTab="music" onSubmit={fetchRecs} isLoading={isLoading} />

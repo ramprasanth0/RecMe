@@ -76,7 +76,7 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
                 {artists.map((artist, i) => (
                   <div key={i} className="group space-y-1.5">
                     <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light">
-                      {artist.images[0]?.url ? (
+                      {artist.images?.[0]?.url ? (
                         <Image
                           src={artist.images[0].url}
                           alt={artist.name}
@@ -91,7 +91,7 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
                       )}
                     </div>
                     <p className="text-xs font-medium truncate leading-tight">{artist.name}</p>
-                    {artist.genres[0] && (
+                    {artist.genres?.[0] && (
                       <p className="text-[10px] text-muted-foreground truncate">{artist.genres[0]}</p>
                     )}
                   </div>
@@ -127,7 +127,7 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
                     {i + 1}
                   </span>
                   <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0">
-                    {track.album.images[0]?.url ? (
+                    {track.album?.images?.[0]?.url ? (
                       <Image
                         src={track.album.images[0].url}
                         alt={track.album.name}

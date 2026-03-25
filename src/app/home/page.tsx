@@ -1,33 +1,34 @@
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import { Navbar } from "@/components/shared/Navbar";
-import { DashboardContent } from "@/components/dashboard/DashboardContent";
+import { LandingContent } from "@/components/landing/LandingContent";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function HomePage() {
+  // SSR auth detection — no redirect, no layout shift
   const userId = cookies().get("recme_user_id")?.value;
-
-  if (!userId) {
-    redirect("/?error=unauthenticated");
-  }
-
   let user = null;
-  try {
-    const admin = createAdminClient();
-    const { data } = await admin
-      .from("users")
-      .select("display_name, avatar_url")
-      .eq("id", userId)
-      .single();
-    user = data;
-  } catch {
-    redirect("/?error=user_not_found");
+
+  if (userId) {
+    try {
+      const admin = createAdminClient();
+      const { data } = await admin
+        .from("users")
+        .select("display_name, avatar_url")
+        .eq("id", userId)
+        .single();
+      user = data;
+    } catch {
+      // Invalid cookie — treat as guest
+    }
   }
 
   return (
     <>
       <Navbar user={user} />
-      <DashboardContent userName={user?.display_name ?? null} />
+      <LandingContent
+        isAuthenticated={!!user}
+        userName={user?.display_name}
+      />
     </>
   );
 }
