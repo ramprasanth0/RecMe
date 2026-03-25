@@ -46,8 +46,9 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
         spotify_refresh_token: tokens.refresh_token,
       }),
     };
-  } catch {
+  } catch (err) {
     // If refresh fails, return user with existing token — caller handles errors
+    console.warn("Spotify token refresh failed (stale tokens?):", err instanceof Error ? err.message : err);
     return user;
   }
 }

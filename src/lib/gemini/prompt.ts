@@ -59,7 +59,9 @@ RULES:
 2. If fewer than 10 tracks are a strong match, return only those that truly fit — do NOT pad with weak matches
 3. Items are already ordered most → least relevant; maintain this order
 4. The "reason" must explain the specific connection to the query, not describe the track in general
-5. Return ONLY the JSON object`);
+5. Use the EXACT official song title and artist name as they appear on Spotify (correct capitalisation, no extra words)
+6. Only recommend songs you are confident exist on Spotify — skip obscure regional or unavailable tracks
+7. Return ONLY the JSON object`);
   } else {
     lines.push(`
 TASK: Return exactly 10 movies that DIRECTLY match the query above, ordered from most to least relevant. The user may describe by: mood, partial plot/story, cast, director, year, genre, theme, setting, or relevancy (e.g. "movie about diamond trade in Africa", "film starring Cate Blanchett", "90s sci-fi thriller", "something like Parasite but funnier").

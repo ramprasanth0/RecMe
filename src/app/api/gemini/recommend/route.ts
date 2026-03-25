@@ -5,7 +5,7 @@ import { getGeminiClient, AI_MODEL } from "@/lib/gemini";
 import { buildSystemPrompt } from "@/lib/gemini/prompt";
 import { z } from "zod/v4";
 import { getCurrentUser } from "@/lib/auth/session";
-import { getTopArtists, getTopTracks } from "@/lib/spotify";
+import { getTopArtists, getTopTracks, searchTrack } from "@/lib/spotify";
 import { searchMovieTMDB } from "@/lib/tmdb";
 import { MovieRecommendationSchema, MusicRecommendationSchema } from "@/types/recommendations";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -26,9 +26,10 @@ export async function POST(request: NextRequest) {
     let favoriteGenres: string[] | undefined;
     let movieGenres: string[] | undefined;
     let userId: string | undefined;
+    let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
 
     try {
-      const user = await getCurrentUser();
+      user = await getCurrentUser();
       if (user) userId = user.id;
       if (user?.spotify_access_token) {
         const [artists, tracks] = await Promise.all([
@@ -119,11 +120,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Music — no enrichment needed, return raw text for client-side parsing
+    // Music — enrich with Spotify URIs so playlist creation skips search
     if (parsed.type === "music") {
       try {
         const rawParsed = JSON.parse(text.replace(/```(?:json)?\n?/g, "").trim());
         const validated = MusicRecommendationSchema.parse(rawParsed);
+
+        // If user has Spotify connected, resolve URIs now and filter unmatched tracks
+        if (user?.spotify_access_token) {
+          const enriched = await Promise.allSettled(
+            validated.items.map(async (item) => {
+              const uri = await searchTrack(
+                user.spotify_access_token!,
+                item.title,
+                item.artist
+              );
+              if (!uri) return null; // drop tracks not found on Spotify
+              return { ...item, spotifyUri: uri };
+            })
+          );
+          const items = enriched
+            .map((r) => (r.status === "fulfilled" ? r.value : null))
+            .filter(Boolean);
+          return Response.json({ type: "music", items });
+        }
+
         return Response.json({ type: "music", items: validated.items });
       } catch {
         return Response.json({ text });

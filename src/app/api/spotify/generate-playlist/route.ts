@@ -68,10 +68,11 @@ Return exactly ${parsed.trackCount} songs as a JSON object:
 }
 
 Rules:
-- Pick real songs that exist on Spotify
+- Pick real songs that exist on Spotify — only well-known tracks you are confident are available
+- Use the EXACT official song title and artist name as they appear on Spotify (correct spelling, no extra words)
 - Match the mood, genre, and energy of the request
 - Use the user's taste as a guide but explore beyond their known artists
-- Mix well-known and lesser-known tracks for variety
+- Mix well-known and lesser-known tracks for variety, but never sacrifice Spotify availability
 - Return ONLY the JSON object, no markdown fences, no extra text`;
 
   // Generate playlist with Gemini
