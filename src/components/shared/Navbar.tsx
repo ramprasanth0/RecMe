@@ -13,8 +13,8 @@ interface NavbarProps {
 }
 
 const NAV_LINKS = [
-  { href: "/home", label: "Dashboard" },
-  { href: "/chat", label: "Chat" },
+  { href: "/home", label: "Home" },
+  { href: "/personalize", label: "Personalize" },
   { href: "/profile", label: "Profile" },
 ];
 

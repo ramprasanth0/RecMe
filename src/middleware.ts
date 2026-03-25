@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PROTECTED_ROUTES = ["/home", "/chat", "/profile"];
+const PROTECTED_ROUTES = ["/home", "/personalize", "/profile"];
 
 export function middleware(request: NextRequest) {
   const userId = request.cookies.get("recme_user_id")?.value;
@@ -16,5 +16,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/home/:path*", "/chat/:path*", "/profile/:path*"],
+  matcher: ["/home/:path*", "/personalize/:path*", "/profile/:path*"],
 };
