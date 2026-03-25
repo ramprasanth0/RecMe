@@ -39,8 +39,16 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
     setGreeting(getGreeting());
   }, []);
 
-  const musicRecs = useRecommendations({ type: "music" });
-  const movieRecs = useRecommendations({ type: "movie" });
+  const musicRecs = useRecommendations({
+    type: "music",
+    autoFetch: isAuthenticated,
+    autoPrompt: "songs I probably haven't heard yet but would love — deep cuts and hidden gems from artists similar to my taste, no chart hits or songs already in my top tracks",
+  });
+  const movieRecs = useRecommendations({
+    type: "movie",
+    autoFetch: isAuthenticated,
+    autoPrompt: "movies that match my preferred genres — acclaimed and underrated films I might have missed",
+  });
 
   const active = activeTab === "music" ? musicRecs : movieRecs;
   const displayMusic = (musicRecs.items.length > 0 ? musicRecs.items : SAMPLE_MUSIC) as MusicItem[];
@@ -51,7 +59,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="min-h-screen pt-20 px-4 sm:px-6 pb-12"
+      className="min-h-screen pt-32 px-4 sm:px-6 pb-12"
     >
       <div className="max-w-5xl mx-auto">
         {/* Greeting or tagline */}

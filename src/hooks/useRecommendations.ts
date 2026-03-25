@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { MusicRecommendationSchema, MovieRecommendationSchema } from "@/types/recommendations";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
 
@@ -10,6 +10,9 @@ interface UseRecommendationsOptions {
   topTracks?: string[];
   favoriteGenres?: string[];
   movieGenres?: string[];
+  /** If true, fetch automatically on mount using autoPrompt */
+  autoFetch?: boolean;
+  autoPrompt?: string;
 }
 
 interface UseRecommendationsReturn {
@@ -27,12 +30,13 @@ export function useRecommendations(
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastMood, setLastMood] = useState<string | null>(null);
+  const hasFetched = useRef(false);
 
   const fetchRecs = useCallback(
-    async (mood: string) => {
+    async (mood: string, silent = false) => {
       setIsLoading(true);
       setError(null);
-      setLastMood(mood);
+      if (!silent) setLastMood(mood);
 
       try {
         const res = await fetch("/api/gemini/recommend", {
@@ -86,6 +90,15 @@ export function useRecommendations(
     },
     [options.type, options.topArtists, options.topTracks, options.favoriteGenres, options.movieGenres]
   );
+
+  // Auto-fetch once on mount when requested
+  useEffect(() => {
+    if (options.autoFetch && options.autoPrompt && !hasFetched.current) {
+      hasFetched.current = true;
+      fetchRecs(options.autoPrompt, true); // silent=true keeps lastMood null → shows "Picked for you"
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { items, isLoading, error, lastMood, fetchRecs };
 }
