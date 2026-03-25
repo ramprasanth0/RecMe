@@ -47,28 +47,13 @@ export function Navbar({ user }: NavbarProps) {
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
         {/* Logo — left */}
         <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
-          {/* Outer wrapper — whole logo drifts right on expand, returns on crush */}
+          {/* Whole logo drifts right on expand, slides back in sync with ommend collapse */}
           <motion.span
             animate={logoPhase === "expanding" ? { x: 4 } : { x: 0 }}
             transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
             className="font-display text-xl font-bold tracking-tight flex items-baseline overflow-hidden"
           >
-            {/* Rec — pushed progressively left during crush, then springs to rest */}
-            <motion.span
-              animate={
-                logoPhase === "crushing"
-                  ? { x: [0, -2, -4, -5, -4, -2, 0] }
-                  : { x: 0 }
-              }
-              transition={
-                logoPhase === "crushing"
-                  ? { duration: 0.55, ease: "easeInOut" }
-                  : { duration: 0.2 }
-              }
-              className="inline-block"
-            >
-              Rec
-            </motion.span>
+            Rec
             <motion.span
               animate={{ maxWidth: logoExpanded ? 90 : 0, opacity: logoExpanded ? 1 : 0 }}
               transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
