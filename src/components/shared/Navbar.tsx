@@ -22,15 +22,19 @@ export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoExpanded, setLogoExpanded] = useState(false);
-  const [shaking, setShaking] = useState(false);
+  // "idle" | "expanding" | "crushing"
+  const [logoPhase, setLogoPhase] = useState<"idle" | "expanding" | "crushing">("idle");
 
   // One-shot brand animation: RecMe → RecommendMe → RecMe
   useEffect(() => {
-    const expand = setTimeout(() => setLogoExpanded(true), 1000);
+    const expand = setTimeout(() => {
+      setLogoExpanded(true);
+      setLogoPhase("expanding");
+    }, 1000);
     const collapse = setTimeout(() => {
       setLogoExpanded(false);
-      setShaking(true);
-      setTimeout(() => setShaking(false), 500);
+      setLogoPhase("crushing");
+      setTimeout(() => setLogoPhase("idle"), 500);
     }, 3200);
     return () => {
       clearTimeout(expand);
@@ -45,8 +49,20 @@ export function Navbar({ user }: NavbarProps) {
         <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
           <span className="font-display text-xl font-bold tracking-tight flex items-baseline overflow-hidden">
             <motion.span
-              animate={shaking ? { x: [0, -2, 2, -1.5, 1.5, -1, 1, 0] } : { x: 0 }}
-              transition={{ duration: 0.4, ease: "easeOut" }}
+              animate={
+                logoPhase === "expanding"
+                  ? { x: 3 }                              // nudge right as ommend pushes out
+                  : logoPhase === "crushing"
+                  ? { x: [-3, -2, -1.5, -1, 0] }         // leftward-only shake back to rest
+                  : { x: 0 }
+              }
+              transition={
+                logoPhase === "expanding"
+                  ? { duration: 0.55, ease: [0.4, 0, 0.2, 1] }
+                  : logoPhase === "crushing"
+                  ? { duration: 0.4, ease: "easeOut" }
+                  : { duration: 0.2 }
+              }
               className="inline-block"
             >
               Rec
