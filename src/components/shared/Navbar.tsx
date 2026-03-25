@@ -5,7 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { User, LogOut, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 interface NavbarProps {
@@ -21,14 +21,33 @@ const NAV_LINKS = [
 export function Navbar({ user }: NavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [logoExpanded, setLogoExpanded] = useState(false);
+
+  // One-shot brand animation: RecMe → RecommendMe → RecMe
+  useEffect(() => {
+    const expand = setTimeout(() => setLogoExpanded(true), 1000);
+    const collapse = setTimeout(() => setLogoExpanded(false), 3200); // hold 2.2s then collapse
+    return () => {
+      clearTimeout(expand);
+      clearTimeout(collapse);
+    };
+  }, []);
 
   return (
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
         {/* Logo — left */}
         <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
-          <span className="font-display text-xl font-bold tracking-tight">
-            Rec<span className="text-[var(--music-accent)]">Me</span>
+          <span className="font-display text-xl font-bold tracking-tight flex items-baseline overflow-hidden">
+            Rec
+            <motion.span
+              animate={{ maxWidth: logoExpanded ? 72 : 0, opacity: logoExpanded ? 1 : 0 }}
+              transition={{ duration: 0.55, ease: [0.4, 0, 0.2, 1] }}
+              className="inline-block overflow-hidden whitespace-nowrap"
+            >
+              ommend
+            </motion.span>
+            <span className="text-[var(--music-accent)]">Me</span>
           </span>
         </Link>
 
