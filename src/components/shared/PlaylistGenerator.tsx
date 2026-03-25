@@ -142,6 +142,10 @@ export function PlaylistGenerator() {
           >
             Generate another →
           </button>
+
+          <p className="text-[10px] text-muted-foreground/50 leading-relaxed">
+            AI may occasionally match the wrong version of a song. Double-check your playlist in Spotify before sharing.
+          </p>
         </div>
       ) : (
         <div className="space-y-3">

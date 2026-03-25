@@ -80,23 +80,30 @@ export async function addTracksToPlaylist(
   return res.json();
 }
 
-/** Search for a track on Spotify and return its URI. */
+/** Search for a track on Spotify and return its URI.
+ *  Pass 1: title + artist  →  Pass 2: title only (wider net for name mismatches) */
 export async function searchTrack(
   accessToken: string,
   title: string,
   artist: string
 ): Promise<string | null> {
-  const query = encodeURIComponent(`${title} ${artist}`);
-  const res = await fetch(
-    `${SPOTIFY_API}/search?q=${query}&type=track&limit=1`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
-  );
-  if (!res.ok) {
-    console.error(`Spotify search failed: ${res.status} for "${title}" by "${artist}"`);
-    return null;
-  }
-  const data = await res.json();
-  const uri = data.tracks?.items?.[0]?.uri ?? null;
-  if (!uri) console.warn(`No Spotify match for: "${title}" by "${artist}"`);
-  return uri;
+  const search = async (q: string) => {
+    const res = await fetch(
+      `${SPOTIFY_API}/search?q=${encodeURIComponent(q)}&type=track&limit=1`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data.tracks?.items?.[0]?.uri as string) ?? null;
+  };
+
+  const uri = await search(`${title} ${artist}`);
+  if (uri) return uri;
+
+  // Fallback: title only — catches artist name mismatches
+  const uriFallback = await search(title);
+  if (uriFallback) return uriFallback;
+
+  console.warn(`No Spotify match for: "${title}" by "${artist}"`);
+  return null;
 }
