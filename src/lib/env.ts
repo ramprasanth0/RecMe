@@ -8,9 +8,6 @@ function required(key: string): string {
   return value;
 }
 
-function optional(key: string, fallback: string = ""): string {
-  return process.env[key] ?? fallback;
-}
 
 export const env = {
   spotify: {
@@ -28,9 +25,5 @@ export const env = {
     url: () => required("NEXT_PUBLIC_SUPABASE_URL"),
     anonKey: () => required("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
     serviceRoleKey: () => required("SUPABASE_SERVICE_ROLE_KEY"),
-  },
-  app: {
-    nextAuthSecret: () => required("NEXTAUTH_SECRET"),
-    nextAuthUrl: () => optional("NEXTAUTH_URL", "http://localhost:3000"),
   },
 } as const;

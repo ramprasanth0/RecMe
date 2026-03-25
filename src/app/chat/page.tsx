@@ -20,7 +20,7 @@ export default async function ChatPage() {
   return (
     <>
       <Navbar user={user} />
-      <main className="h-screen pt-16">
+      <main className="h-[100dvh] pt-16">
         <ChatPageClient />
       </main>
     </>

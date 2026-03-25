@@ -54,7 +54,7 @@ export default function SignInPage() {
         </div>
 
         {/* Sign-in box */}
-        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-8 space-y-5">
+        <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 p-6 sm:p-8 space-y-5">
           <div>
             <h1 className="text-white text-xl font-semibold">Sign in</h1>
             <p className="text-white/50 text-sm mt-1">

@@ -185,7 +185,7 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
         <button
           onClick={savePreferences}
           disabled={saving}
-          className="text-sm px-5 py-2 rounded-lg bg-foreground text-background font-medium hover:opacity-90 transition-all disabled:opacity-50"
+          className="text-sm px-5 py-2.5 rounded-lg bg-foreground text-background font-medium hover:opacity-90 transition-all disabled:opacity-50"
         >
           {saving ? "Saving..." : "Save Preferences"}
         </button>
@@ -242,7 +242,7 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
                 </div>
                 <button
                   onClick={() => deleteRec(rec.id)}
-                  className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-400/10 transition-all"
+                  className="opacity-60 sm:opacity-0 group-hover:opacity-100 p-2 rounded hover:bg-red-400/10 transition-all shrink-0"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-400" />
                 </button>

@@ -46,7 +46,7 @@ export default function NotFound() {
           </a>
           <Link
             href="/"
-            className="text-sm text-white/50 hover:text-white transition-colors"
+            className="text-sm text-white/50 hover:text-white transition-colors py-3 px-2 inline-block"
           >
             ← Back to home
           </Link>

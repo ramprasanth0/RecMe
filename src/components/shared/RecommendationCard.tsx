@@ -87,13 +87,13 @@ function MusicCard({
             <MusicIcon className="w-12 h-12" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover/card:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300 flex items-end justify-center pb-4 gap-2">
           <a
             href={spotifySearchUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="w-9 h-9 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
+            className="w-10 h-10 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
             title="Open in Spotify"
           >
             <ExternalLink className="w-4 h-4" />
@@ -104,7 +104,7 @@ function MusicCard({
                 e.stopPropagation();
                 onAddToPlaylist(item);
               }}
-              className="w-9 h-9 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:scale-110 transition-transform"
+              className="w-10 h-10 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-white hover:scale-110 transition-transform"
               title="Add to Playlist"
             >
               <Plus className="w-4 h-4" />
@@ -113,7 +113,7 @@ function MusicCard({
           <button
             onClick={handleSave}
             className={cn(
-              "w-9 h-9 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
+              "w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
               saved
                 ? "bg-[var(--music-accent)] text-black"
                 : "bg-white/15 backdrop-blur-sm text-white"
@@ -200,9 +200,9 @@ function MovieCard({ item }: { item: MovieItem }) {
             {rating.toFixed(1)}
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover/card:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 gap-2">
-          {/* AI reason shown on hover */}
-          <p className="text-[11px] text-white/80 font-mono leading-relaxed line-clamp-3 mb-1">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent opacity-0 group-hover/card:opacity-100 [@media(hover:none)]:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3 gap-2">
+          {/* AI reason shown on hover (desktop) / always (touch) */}
+          <p className="text-[11px] text-white/80 font-mono leading-relaxed line-clamp-3 mb-1 hidden [@media(hover:none)]:hidden group-hover/card:block">
             {item.reason}
           </p>
           <div className="flex items-center gap-2">
@@ -211,22 +211,22 @@ function MovieCard({ item }: { item: MovieItem }) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="w-8 h-8 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
+              className="w-10 h-10 rounded-full bg-[var(--movie-accent)] flex items-center justify-center text-black hover:scale-110 transition-transform"
               title="View on TMDB"
             >
-              <ExternalLink className="w-3.5 h-3.5" />
+              <ExternalLink className="w-4 h-4" />
             </a>
             <button
               onClick={handleSave}
               className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
+                "w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
                 saved
                   ? "bg-[var(--movie-accent)] text-black"
                   : "bg-white/15 backdrop-blur-sm text-white"
               )}
               title={saved ? "Saved" : "Save"}
             >
-              {saved ? <BookmarkCheck className="w-3.5 h-3.5" /> : <Bookmark className="w-3.5 h-3.5" />}
+              {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
             </button>
           </div>
         </div>

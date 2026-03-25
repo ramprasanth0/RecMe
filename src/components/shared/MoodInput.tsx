@@ -50,7 +50,7 @@ export function MoodInput({ activeTab, onSubmit, isLoading }: MoodInputProps) {
           type="submit"
           disabled={!value.trim() || isLoading}
           className={cn(
-            "mr-2 w-8 h-8 rounded-lg flex items-center justify-center transition-all shrink-0",
+            "mr-2 w-11 h-11 rounded-lg flex items-center justify-center transition-all shrink-0",
             "disabled:opacity-30 disabled:cursor-not-allowed",
             value.trim() && !isLoading
               ? "text-black"

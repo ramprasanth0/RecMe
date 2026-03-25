@@ -16,10 +16,25 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "💿 RecMe — Your taste. Amplified.",
+  metadataBase: new URL("https://rec-me-mu.vercel.app"),
+  title: "RecMe",
   description:
     "AI-powered music and movie recommendations based on your Spotify listening history, mood, and preferences.",
   keywords: ["music", "movies", "recommendations", "AI", "Spotify", "TMDB"],
+  openGraph: {
+    title: "RecMe",
+    description:
+      "AI-powered music and movie recommendations based on your Spotify listening history, mood, and preferences.",
+    url: "https://rec-me-mu.vercel.app",
+    siteName: "RecMe",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "RecMe",
+    description:
+      "AI-powered music and movie recommendations based on your Spotify listening history, mood, and preferences.",
+  },
 };
 
 export default function RootLayout({

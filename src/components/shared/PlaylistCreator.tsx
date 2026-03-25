@@ -69,7 +69,7 @@ export function PlaylistCreator({ tracks, onClose }: PlaylistCreatorProps) {
           <h2 className="text-lg font-semibold">Create Spotify Playlist</h2>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-light transition-colors"
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-surface-light transition-colors"
           >
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
@@ -150,7 +150,7 @@ export function PlaylistCreator({ tracks, onClose }: PlaylistCreatorProps) {
                 onClick={handleCreate}
                 disabled={!name.trim() || status === "creating"}
                 className={cn(
-                  "w-full py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2",
+                  "w-full py-3 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2",
                   name.trim() && status !== "creating"
                     ? "bg-[var(--music-accent)] text-black hover:brightness-110"
                     : "bg-surface-light text-muted-foreground cursor-not-allowed"

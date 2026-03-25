@@ -133,9 +133,9 @@ export function ChatSidebar({
                   </div>
                   <button
                     onClick={(e) => deleteSession(session.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-400/10 transition-all"
+                    className="opacity-60 sm:opacity-0 group-hover:opacity-100 p-2 rounded hover:bg-red-400/10 transition-all"
                   >
-                    <Trash2 className="w-3 h-3 text-muted-foreground hover:text-red-400" />
+                    <Trash2 className="w-3.5 h-3.5 text-muted-foreground hover:text-red-400" />
                   </button>
                 </div>
               </button>

@@ -169,7 +169,7 @@ export function PlaylistGenerator() {
                 key={n}
                 onClick={() => setTrackCount(n)}
                 className={cn(
-                  "px-2 py-0.5 rounded transition-all",
+                  "px-3 py-1.5 rounded transition-all min-w-[36px]",
                   trackCount === n
                     ? "bg-[var(--music-accent)]/10 text-[var(--music-accent)]"
                     : "hover:text-foreground"
@@ -188,7 +188,7 @@ export function PlaylistGenerator() {
             onClick={handleGenerate}
             disabled={!prompt.trim() || status === "generating"}
             className={cn(
-              "w-full py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2",
+              "w-full py-3 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2",
               prompt.trim() && status !== "generating"
                 ? "bg-[var(--music-accent)] text-black hover:brightness-110"
                 : "bg-surface-light text-muted-foreground cursor-not-allowed"

@@ -101,12 +101,15 @@ export function MoviesTab() {
             <TrendingUp className="w-4 h-4 text-muted-foreground" />
             <h2 className="text-base font-semibold">Trending this week</h2>
           </div>
-          <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-            {trending.map((item, i) => (
-              <div key={i} className="shrink-0 w-[160px]">
-                <RecommendationCard type="movie" item={item} />
-              </div>
-            ))}
+          <div className="relative">
+            <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+              {trending.map((item, i) => (
+                <div key={i} className="shrink-0 w-[160px]">
+                  <RecommendationCard type="movie" item={item} />
+                </div>
+              ))}
+            </div>
+            <div className="absolute right-0 top-0 bottom-2 w-12 bg-gradient-to-l from-background to-transparent pointer-events-none" />
           </div>
         </section>
       )}

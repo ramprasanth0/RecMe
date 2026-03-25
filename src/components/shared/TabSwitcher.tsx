@@ -32,7 +32,7 @@ export function TabSwitcher({ defaultTab = "music", onTabChange }: TabSwitcherPr
             key={tab.id}
             onClick={() => handleTabChange(tab.id)}
             className={cn(
-              "relative flex items-center gap-2 px-5 py-2 rounded-full text-sm font-medium transition-colors z-10",
+              "relative flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-colors z-10",
               isActive ? "text-black" : "text-muted-foreground hover:text-foreground"
             )}
           >

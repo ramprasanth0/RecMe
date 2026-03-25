@@ -56,7 +56,7 @@ export function ChatPageClient() {
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(!sidebarOpen)}
-        className="fixed top-[72px] left-4 z-30 lg:hidden w-9 h-9 rounded-lg bg-surface border border-border flex items-center justify-center"
+        className="fixed top-[72px] left-4 z-30 lg:hidden w-11 h-11 rounded-lg bg-surface border border-border flex items-center justify-center"
       >
         {sidebarOpen ? (
           <X className="w-4 h-4 text-muted-foreground" />
@@ -68,7 +68,7 @@ export function ChatPageClient() {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed lg:static inset-y-0 left-0 z-20 w-72 bg-surface border-r border-border pt-16 lg:pt-0 transition-transform lg:translate-x-0",
+          "fixed lg:static inset-y-0 left-0 z-20 w-[80vw] max-w-[288px] bg-surface border-r border-border pt-16 lg:pt-0 transition-transform lg:translate-x-0",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
