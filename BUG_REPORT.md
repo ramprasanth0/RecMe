@@ -278,4 +278,34 @@ Replaced `⏺` with `🔴` emoji in `src/app/layout.tsx`. The 🔴 emoji is univ
 
 ---
 
-**Total bugs:** 18 · **All resolved** ✅
+## BUG-19 · Logo animation flashing "RecommendMe" on page load
+**Time:** Session 3 · **Commit:** `cd15e01`
+**Status:** ✅ Fixed · **Severity:** Low
+
+**What happened:**
+On every hard page load or reload, "RecommendMe" was briefly visible for a split second before collapsing to "RecMe". The "ommend" span appeared at full width immediately, then animated to `maxWidth: 0`.
+
+**Root cause:**
+The `motion.span` for "ommend" had no `initial` prop. Before Framer Motion hydrates and takes control, the element renders with its natural CSS width (all text visible). The `animate={{ maxWidth: 0 }}` target wasn't applied until the JS bundle executed, leaving a flash window.
+
+**Fix:**
+Added `initial={{ maxWidth: 0, opacity: 0 }}` to the `motion.span` so it starts collapsed from the very first render.
+
+---
+
+## BUG-20 · Logo animation re-triggering on every route change
+**Time:** Session 3 · **Commit:** `9512264`
+**Status:** ✅ Fixed · **Severity:** Low
+
+**What happened:**
+Navigating between pages (Home → Personalize → Profile etc.) triggered the "RecommendMe" logo animation every time, because the Navbar component remounts on each route change (it is rendered by each page's Server Component, not the root layout).
+
+**Root cause:**
+The `useEffect` with `[]` dependency array fires on every component mount. Since `Navbar` remounts on route navigation, the animation fired on every page visit, not just on initial page load.
+
+**Fix:**
+Added a module-level boolean flag `logoAnimationDone` (outside the component, at module scope). The `useEffect` checks this flag before running: if `true`, returns early. Sets it to `true` before starting the animation. Module-level variables persist for the browser tab session, surviving component unmount/remount — same pattern as `autoRecCache`.
+
+---
+
+**Total bugs:** 20 · **All resolved** ✅
