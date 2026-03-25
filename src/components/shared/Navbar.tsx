@@ -24,16 +24,16 @@ export function Navbar({ user }: NavbarProps) {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-40 grid grid-cols-3 items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
+      <nav className="fixed top-0 left-0 right-0 z-40 flex items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
         {/* Logo — left */}
-        <Link href="/" className="flex items-center gap-2 justify-self-start" onClick={() => setMobileOpen(false)}>
+        <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
           <span className="font-display text-xl font-bold tracking-tight">
             Rec<span className="text-[var(--music-accent)]">Me</span>
           </span>
         </Link>
 
-        {/* Nav links — center (hidden on mobile) */}
-        <div className="hidden sm:flex items-center justify-center gap-1">
+        {/* Nav links — center (hidden on mobile, flex-1 keeps them centered on desktop) */}
+        <div className="hidden sm:flex flex-1 items-center justify-center gap-1">
           {user ? (
             NAV_LINKS.map(({ href, label }) => {
               const isActive = pathname === href;
@@ -55,8 +55,8 @@ export function Navbar({ user }: NavbarProps) {
           ) : null}
         </div>
 
-        {/* Right side */}
-        <div className="flex items-center gap-2 justify-self-end">
+        {/* Right side — ml-auto pushes to far right on mobile when center is hidden */}
+        <div className="flex items-center gap-2 ml-auto">
           {user ? (
             <>
               {/* Hamburger — mobile only */}
