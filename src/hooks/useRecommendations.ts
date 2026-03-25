@@ -4,6 +4,9 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { MusicRecommendationSchema, MovieRecommendationSchema } from "@/types/recommendations";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
 
+// Module-level cache — survives component unmount/remount within the same browser tab
+const autoRecCache: Partial<Record<"music" | "movie", MusicItem[] | MovieItem[]>> = {};
+
 interface UseRecommendationsOptions {
   type: "music" | "movie";
   topArtists?: string[];
@@ -26,11 +29,13 @@ interface UseRecommendationsReturn {
 export function useRecommendations(
   options: UseRecommendationsOptions
 ): UseRecommendationsReturn {
-  const [items, setItems] = useState<MusicItem[] | MovieItem[]>([]);
+  const [items, setItems] = useState<MusicItem[] | MovieItem[]>(
+    () => autoRecCache[options.type] ?? []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastMood, setLastMood] = useState<string | null>(null);
-  const hasFetched = useRef(false);
+  const hasFetched = useRef(!!autoRecCache[options.type]);
 
   const fetchRecs = useCallback(
     async (mood: string, silent = false) => {
@@ -54,9 +59,11 @@ export function useRecommendations(
           if (options.type === "music") {
             const validated = MusicRecommendationSchema.parse({ type: "music", items: data.items });
             setItems(validated.items);
+            if (silent) autoRecCache["music"] = validated.items;
           } else {
             const validated = MovieRecommendationSchema.parse({ type: "movie", items: data.items });
             setItems(validated.items);
+            if (silent) autoRecCache["movie"] = validated.items;
           }
           return;
         }
@@ -77,9 +84,11 @@ export function useRecommendations(
         if (options.type === "music") {
           const validated = MusicRecommendationSchema.parse(parsed);
           setItems(validated.items);
+          if (silent) autoRecCache["music"] = validated.items;
         } else {
           const validated = MovieRecommendationSchema.parse(parsed);
           setItems(validated.items);
+          if (silent) autoRecCache["movie"] = validated.items;
         }
       } catch (err) {
         console.error("Recommendation fetch error:", err);
