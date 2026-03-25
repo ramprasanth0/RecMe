@@ -86,12 +86,18 @@ export async function searchTrack(
   title: string,
   artist: string
 ): Promise<string | null> {
-  const query = encodeURIComponent(`track:${title} artist:${artist}`);
+  // Plain query is more forgiving of AI-generated title/artist variations
+  const query = encodeURIComponent(`${title} ${artist}`);
   const res = await fetch(
     `${SPOTIFY_API}/search?q=${query}&type=track&limit=1`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
-  if (!res.ok) return null;
+  if (!res.ok) {
+    console.error(`Spotify search failed: ${res.status} for "${title}" by "${artist}"`);
+    return null;
+  }
   const data = await res.json();
-  return data.tracks?.items?.[0]?.uri ?? null;
+  const uri = data.tracks?.items?.[0]?.uri ?? null;
+  if (!uri) console.warn(`No Spotify URI found for: "${title}" by "${artist}"`);
+  return uri;
 }

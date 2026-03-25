@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/lib/auth/session";
 import { getTopArtists, getTopTracks } from "@/lib/spotify";
 import { searchMovieTMDB } from "@/lib/tmdb";
 import { MovieRecommendationSchema, MusicRecommendationSchema } from "@/types/recommendations";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const RequestSchema = z.object({
   type: z.enum(["music", "movie"]),
@@ -24,9 +25,11 @@ export async function POST(request: NextRequest) {
     let topTracks: string[] | undefined;
     let favoriteGenres: string[] | undefined;
     let movieGenres: string[] | undefined;
+    let userId: string | undefined;
 
     try {
       const user = await getCurrentUser();
+      if (user) userId = user.id;
       if (user?.spotify_access_token) {
         const [artists, tracks] = await Promise.all([
           getTopArtists(user.spotify_access_token, 10),
@@ -55,6 +58,18 @@ export async function POST(request: NextRequest) {
       favoriteGenres,
       movieGenres,
     });
+
+    // Persist the current mood as the user's most recent mood (fire-and-forget)
+    if (userId) {
+      void (async () => {
+        try {
+          const admin = createAdminClient();
+          const { data } = await admin.from("users").select("preferences").eq("id", userId!).single();
+          const current = (data?.preferences as Record<string, unknown>) ?? {};
+          await admin.from("users").update({ preferences: { ...current, mood: parsed.mood } }).eq("id", userId!);
+        } catch {}
+      })();
+    }
 
     const client = getGeminiClient();
     const result = await client.models.generateContent({

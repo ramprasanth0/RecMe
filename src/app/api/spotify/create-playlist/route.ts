@@ -33,20 +33,15 @@ export async function POST(request: NextRequest) {
       parsed.description
     );
 
-    // Resolve track URIs — use provided URI or search
-    const uris: string[] = [];
-    for (const track of parsed.tracks) {
-      if (track.spotifyUri) {
-        uris.push(track.spotifyUri);
-      } else {
-        const uri = await searchTrack(
-          user.spotify_access_token,
-          track.title,
-          track.artist
-        );
-        if (uri) uris.push(uri);
-      }
-    }
+    // Resolve track URIs in parallel — use provided URI or search Spotify
+    const results = await Promise.all(
+      parsed.tracks.map((track) =>
+        track.spotifyUri
+          ? Promise.resolve(track.spotifyUri)
+          : searchTrack(user.spotify_access_token!, track.title, track.artist)
+      )
+    );
+    const uris = results.filter((uri): uri is string => uri !== null);
 
     // Add tracks to playlist
     if (uris.length > 0) {
