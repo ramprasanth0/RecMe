@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Sparkles, Loader2, ExternalLink, Music, ChevronDown, ChevronUp } from "lucide-react";
+import { Sparkles, Loader2, ExternalLink, Music, ChevronDown, ChevronUp, CheckCircle2, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Status = "idle" | "generating" | "success" | "error";
@@ -12,6 +12,7 @@ interface GeneratedPlaylist {
   tracksAdded: number;
   tracksTotal: number;
   tracks: { title: string; artist: string }[];
+  notFound: { title: string; artist: string }[];
   warning?: string;
 }
 
@@ -109,14 +110,29 @@ export function PlaylistGenerator() {
           </button>
 
           {showTracks && (
-            <div className="rounded-lg bg-surface-light p-3 max-h-48 overflow-y-auto space-y-1.5">
+            <div className="rounded-lg bg-surface-light p-3 max-h-64 overflow-y-auto space-y-1">
+              {/* Added tracks */}
               {result.tracks.map((t, i) => (
-                <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className="text-muted-foreground/40 w-4 shrink-0 text-right">{i + 1}</span>
+                <div key={i} className="flex items-center gap-2 text-xs py-0.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-[var(--music-accent)]" />
                   <span className="truncate">{t.title}</span>
                   <span className="text-muted-foreground truncate ml-auto">{t.artist}</span>
                 </div>
               ))}
+              {/* Not found on Spotify */}
+              {result.notFound?.length > 0 && (
+                <>
+                  {result.tracks.length > 0 && <div className="border-t border-border my-2" />}
+                  <p className="text-[10px] text-muted-foreground/60 mb-1">Not available on Spotify — add manually:</p>
+                  {result.notFound.map((t, i) => (
+                    <div key={i} className="flex items-center gap-2 text-xs py-0.5 opacity-60">
+                      <XCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />
+                      <span className="truncate">{t.title}</span>
+                      <span className="text-muted-foreground truncate ml-auto">{t.artist}</span>
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
           )}
 

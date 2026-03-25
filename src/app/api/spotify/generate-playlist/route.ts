@@ -125,16 +125,17 @@ Rules:
     return Response.json({ error: "Failed to create Spotify playlist" }, { status: 500 });
   }
 
-  // Search for tracks in batches of 5 to avoid Spotify rate limits
-  const uris: string[] = [];
-  const batchSize = 5;
-  for (let i = 0; i < tracks.length; i += batchSize) {
-    const batch = tracks.slice(i, i + batchSize);
-    const results = await Promise.all(
-      batch.map((t) => searchTrack(user.spotify_access_token!, t.title, t.artist))
-    );
-    uris.push(...results.filter((uri): uri is string => uri !== null));
-  }
+  // Search for all tracks in parallel, tracking found vs not-found
+  const searchResults = await Promise.all(
+    tracks.map(async (t) => {
+      const uri = await searchTrack(user.spotify_access_token!, t.title, t.artist);
+      return { ...t, uri };
+    })
+  );
+
+  const found = searchResults.filter((r) => r.uri !== null) as (typeof searchResults[number] & { uri: string })[];
+  const notFound = searchResults.filter((r) => r.uri === null).map(({ title, artist }) => ({ title, artist }));
+  const uris = found.map((r) => r.uri);
 
   let tracksAdded = 0;
   let tracksWarning: string | undefined;
@@ -154,7 +155,8 @@ Rules:
     playlistUrl: playlist.external_urls.spotify,
     tracksAdded,
     tracksTotal: tracks.length,
-    tracks,
+    tracks: found.map(({ title, artist }) => ({ title, artist })),
+    notFound,
     warning: tracksWarning,
   });
 }
