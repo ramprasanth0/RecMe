@@ -16,7 +16,7 @@
 
 RecMe is a minimalistic, editorial-grade web app that uses your Spotify listening history as input and Google Gemini AI as its engine to recommend music and movies that actually fit your taste.
 
-Every recommendation comes with a human-readable reason explaining *why* it was picked for you — not just a ranked list.
+> Every recommendation comes with a human-readable reason explaining *why* it was picked for you — not just a ranked list.
 
 ### Core ideas
 
