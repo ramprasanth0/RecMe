@@ -65,7 +65,7 @@ export async function addTracksToPlaylist(
   playlistId: string,
   uris: string[]
 ) {
-  const res = await fetch(`${SPOTIFY_API}/playlists/${playlistId}/tracks`, {
+  const res = await fetch(`${SPOTIFY_API}/playlists/${playlistId}/items`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${accessToken}`,
