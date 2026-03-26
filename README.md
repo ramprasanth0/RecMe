@@ -456,4 +456,4 @@ create table recommendations (
 
 ---
 
-*Built with Next.js · Supabase · Google Gemini · Spotify API · TMDB · Deployed on Vercel*
+*Built with Next.js · Supabase · Google Gemini API · Spotify API · TMDB · Deployed on Vercel*
