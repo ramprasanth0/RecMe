@@ -8,11 +8,10 @@ import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
 import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
-import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle, Info } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
-import type { TrendingMovie, TrendingSong, TrendingPlaylist } from "@/types/trending";
+import type { TrendingMovie, TrendingSong } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 
 const SAMPLE_MUSIC: MusicItem[] = [
@@ -55,25 +54,23 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   const [trendingMoviesLoaded, setTrendingMoviesLoaded] = useState(false);
   const [globalSongs, setGlobalSongs] = useState<TrendingSong[]>([]);
   const [indiaSongs, setIndiaSongs] = useState<TrendingSong[]>([]);
-  const [featuredPlaylists, setFeaturedPlaylists] = useState<TrendingPlaylist[]>([]);
   const [musicTrendingLoaded, setMusicTrendingLoaded] = useState(false);
 
   useEffect(() => {
     setGreeting(getGreeting());
   }, []);
 
-  // Fetch music trending data (Top Global, Top India, Featured Playlists) on mount
+  // Fetch music trending data from iTunes RSS (no auth required)
   useEffect(() => {
     if (musicTrendingLoaded) return;
     setMusicTrendingLoaded(true);
-    Promise.all([
-      fetch("/api/spotify/trending-songs").then((r) => r.json()).catch(() => ({ global: [], india: [] })),
-      fetch("/api/spotify/featured-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
-    ]).then(([songsData, playlistsData]) => {
-      setGlobalSongs(songsData.global ?? []);
-      setIndiaSongs(songsData.india ?? []);
-      setFeaturedPlaylists(playlistsData.playlists ?? []);
-    });
+    fetch("/api/itunes/top-songs")
+      .then((r) => r.json())
+      .then((data) => {
+        setGlobalSongs(data.global ?? []);
+        setIndiaSongs(data.india ?? []);
+      })
+      .catch(() => {});
   }, [musicTrendingLoaded]);
 
   // Fetch trending movies when movies tab is opened
@@ -300,10 +297,21 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           )}
         </div>
 
-        {/* Trending rows — Music tab */}
+        {/* Trending rows — Music tab (iTunes RSS) */}
         {activeTab === "music" && globalSongs.length > 0 && (
           <div className="mt-2">
-            <CardCarousel title="Top 50 — Global" accentColor="var(--music-accent)">
+            <CardCarousel
+              title="Top Songs — US"
+              accentColor="var(--music-accent)"
+              titleExtra={
+                <span className="relative group/tip">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2.5 py-1 rounded-md bg-surface-light border border-border text-[11px] text-muted-foreground whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-20 shadow-md">
+                    Chart data from Apple Music / iTunes
+                  </span>
+                </span>
+              }
+            >
               {globalSongs.map((song) => (
                 <TrendingSongCard key={song.id} {...song} />
               ))}
@@ -312,18 +320,20 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
         )}
         {activeTab === "music" && indiaSongs.length > 0 && (
           <div className="mt-8">
-            <CardCarousel title="Top 50 — India" accentColor="var(--music-accent)">
+            <CardCarousel
+              title="Top Songs — India"
+              accentColor="var(--music-accent)"
+              titleExtra={
+                <span className="relative group/tip">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
+                  <span className="absolute left-1/2 -translate-x-1/2 top-full mt-1.5 px-2.5 py-1 rounded-md bg-surface-light border border-border text-[11px] text-muted-foreground whitespace-nowrap opacity-0 group-hover/tip:opacity-100 transition-opacity pointer-events-none z-20 shadow-md">
+                    Chart data from Apple Music / iTunes
+                  </span>
+                </span>
+              }
+            >
               {indiaSongs.map((song) => (
                 <TrendingSongCard key={song.id} {...song} />
-              ))}
-            </CardCarousel>
-          </div>
-        )}
-        {activeTab === "music" && featuredPlaylists.length > 0 && (
-          <div className="mt-8">
-            <CardCarousel title="Featured Playlists" accentColor="var(--music-accent)">
-              {featuredPlaylists.map((pl) => (
-                <TrendingPlaylistCard key={pl.id} {...pl} />
               ))}
             </CardCarousel>
           </div>

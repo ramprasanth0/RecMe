@@ -6,12 +6,13 @@ import { cn } from "@/lib/utils";
 
 interface CardCarouselProps {
   title?: string;
+  titleExtra?: React.ReactNode;
   accentColor?: string;
   children: React.ReactNode;
   className?: string;
 }
 
-export function CardCarousel({ title, accentColor, children, className }: CardCarouselProps) {
+export function CardCarousel({ title, titleExtra, accentColor, children, className }: CardCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -46,8 +47,9 @@ export function CardCarousel({ title, accentColor, children, className }: CardCa
   return (
     <div className={cn("space-y-3", className)}>
       {title && (
-        <h3 className="text-sm font-semibold" style={accentColor ? { color: accentColor } : undefined}>
+        <h3 className="text-sm font-semibold flex items-center gap-1.5" style={accentColor ? { color: accentColor } : undefined}>
           {title}
+          {titleExtra}
         </h3>
       )}
       <div className="group relative">
