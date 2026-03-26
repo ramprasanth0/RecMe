@@ -7,9 +7,11 @@ import { User, LogOut, Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { ProBadge } from "@/components/shared/ProBadge";
 
 interface NavbarProps {
   user?: { display_name: string | null; avatar_url: string | null } | null;
+  isPro?: boolean;
 }
 
 // Module-level flag — persists for the tab session, prevents re-animation on route change
@@ -21,7 +23,7 @@ const NAV_LINKS = [
   { href: "/profile", label: "Profile" },
 ];
 
-export function Navbar({ user }: NavbarProps) {
+export function Navbar({ user, isPro }: NavbarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [logoExpanded, setLogoExpanded] = useState(false);
@@ -112,6 +114,9 @@ export function Navbar({ user }: NavbarProps) {
                 )}
               </button>
 
+              {/* PRO badge — desktop only */}
+              {isPro && <ProBadge size="sm" />}
+
               {/* Profile avatar — desktop only */}
               <Link
                 href="/profile"
@@ -196,6 +201,7 @@ export function Navbar({ user }: NavbarProps) {
                     )}
                   </div>
                   <span className="text-sm text-muted-foreground">{user.display_name ?? "Profile"}</span>
+                  {isPro && <ProBadge size="sm" className="ml-1" />}
                 </Link>
                 <form action="/api/auth/logout" method="POST">
                   <button

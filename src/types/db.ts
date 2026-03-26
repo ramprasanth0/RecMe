@@ -7,6 +7,7 @@ export interface DBUser {
   spotify_token_expires_at: string | null;
   display_name: string | null;
   avatar_url: string | null;
+  is_pro: boolean;
   preferences: {
     music_genres?: string[];
     movie_genres?: string[];

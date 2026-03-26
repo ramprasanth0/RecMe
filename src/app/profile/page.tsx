@@ -12,7 +12,7 @@ export default async function ProfilePage() {
     const admin = createAdminClient();
     const { data } = await admin
       .from("users")
-      .select("id, email, display_name, avatar_url, spotify_id, preferences, created_at")
+      .select("id, email, display_name, avatar_url, spotify_id, preferences, created_at, is_pro")
       .eq("id", userId)
       .single();
     user = data as DBUser | null;
@@ -20,16 +20,17 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Navbar user={user} />
+      <Navbar user={user} isPro={user?.is_pro ?? false} />
       <main className="min-h-screen pt-20 px-4 sm:px-6 pb-12">
         <div className="max-w-4xl mx-auto">
           <h1 className="font-display text-2xl sm:text-3xl font-bold mb-1">Profile</h1>
           <p className="text-sm text-muted-foreground mb-8">
             Manage your preferences and connected accounts.
           </p>
-          <ProfileClient user={user} />
+          <ProfileClient user={user} isPro={user?.is_pro ?? false} />
         </div>
       </main>
     </>
   );
 }
+

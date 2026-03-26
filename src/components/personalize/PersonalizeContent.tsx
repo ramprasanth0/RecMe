@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Music2, Mic2, AlertCircle, ExternalLink } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
+import { ProFeatureGate } from "@/components/shared/ProFeatureGate";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,10 @@ interface Track {
 
 interface PersonalizeContentProps {
   hasSpotify: boolean;
+  isPro: boolean;
 }
 
-export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
+export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProps) {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,7 +74,9 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
 
         {/* Top row — playlist generator + top artists */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PlaylistGenerator />
+          <ProFeatureGate featureId="ai_playlist" isPro={isPro}>
+            <PlaylistGenerator />
+          </ProFeatureGate>
 
           {/* Top Artists */}
           <div className="rounded-xl bg-surface border border-border p-5 space-y-4">

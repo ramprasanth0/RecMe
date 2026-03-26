@@ -1,10 +1,9 @@
 import { cookies } from "next/headers";
 import { Navbar } from "@/components/shared/Navbar";
-import { LandingContent } from "@/components/landing/LandingContent";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { UpgradeContent } from "@/components/upgrade/UpgradeContent";
 
-export default async function RootPage() {
-  // SSR auth detection — no redirect, no layout shift
+export default async function UpgradePage() {
   const userId = cookies().get("recme_user_id")?.value;
   let user = null;
 
@@ -18,18 +17,14 @@ export default async function RootPage() {
         .single();
       user = data;
     } catch {
-      // Invalid cookie — treat as guest
+      // treat as guest
     }
   }
 
   return (
     <>
       <Navbar user={user} isPro={user?.is_pro ?? false} />
-      <LandingContent
-        isAuthenticated={!!user}
-        userName={user?.display_name}
-      />
+      <UpgradeContent isPro={user?.is_pro ?? false} isAuthenticated={!!user} />
     </>
   );
 }
-

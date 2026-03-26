@@ -5,6 +5,7 @@ import Image from "next/image";
 import { User, Music, Film, Bookmark, Check, Trash2 } from "lucide-react";
 import type { DBUser } from "@/types/db";
 import { cn } from "@/lib/utils";
+import { ProBadge } from "@/components/shared/ProBadge";
 
 const MUSIC_GENRES = [
   "Pop", "Rock", "Hip-Hop", "R&B", "Electronic", "Jazz",
@@ -23,7 +24,7 @@ interface SavedRec {
   saved_at: string;
 }
 
-export function ProfileClient({ user }: { user: DBUser | null }) {
+export function ProfileClient({ user, isPro }: { user: DBUser | null; isPro: boolean }) {
   const [musicGenres, setMusicGenres] = useState<string[]>(
     user?.preferences?.music_genres ?? []
   );
@@ -119,7 +120,10 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
             </div>
           )}
           <div className="min-w-0 flex-1">
-            <p className="font-medium truncate">{user.display_name || "User"}</p>
+            <p className="font-medium truncate flex items-center gap-2">
+              {user.display_name || "User"}
+              {isPro && <ProBadge size="md" />}
+            </p>
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">

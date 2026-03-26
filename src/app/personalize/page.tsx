@@ -16,7 +16,7 @@ export default async function PersonalizePage() {
     const admin = createAdminClient();
     const { data } = await admin
       .from("users")
-      .select("display_name, avatar_url, spotify_access_token")
+      .select("display_name, avatar_url, spotify_access_token, is_pro")
       .eq("id", userId)
       .single();
     user = data;
@@ -26,8 +26,9 @@ export default async function PersonalizePage() {
 
   return (
     <>
-      <Navbar user={user} />
-      <PersonalizeContent hasSpotify={!!user?.spotify_access_token} />
+      <Navbar user={user} isPro={user?.is_pro ?? false} />
+      <PersonalizeContent hasSpotify={!!user?.spotify_access_token} isPro={user?.is_pro ?? false} />
     </>
   );
 }
+
