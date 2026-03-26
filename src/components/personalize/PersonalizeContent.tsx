@@ -2,20 +2,25 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Music2, Mic2, AlertCircle } from "lucide-react";
+import { Music2, Mic2, AlertCircle, ExternalLink } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
+import { CardCarousel } from "@/components/shared/CardCarousel";
+import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { cn } from "@/lib/utils";
+import type { TrendingPlaylist } from "@/types/trending";
 
 interface Artist {
   name: string;
   images: { url: string }[];
   genres: string[];
+  external_urls?: { spotify?: string };
 }
 
 interface Track {
   name: string;
   artists: { name: string }[];
   album: { name: string; images: { url: string }[] };
+  external_urls?: { spotify?: string };
 }
 
 interface PersonalizeContentProps {
@@ -27,9 +32,14 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
   const [tracks, setTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [userPlaylists, setUserPlaylists] = useState<TrendingPlaylist[]>([]);
+  const [tastePlaylists, setTastePlaylists] = useState<TrendingPlaylist[]>([]);
+  const [playlistsLoading, setPlaylistsLoading] = useState(true);
+
   useEffect(() => {
     if (!hasSpotify) {
       setLoading(false);
+      setPlaylistsLoading(false);
       return;
     }
     fetch("/api/spotify/top-data")
@@ -40,6 +50,15 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    Promise.all([
+      fetch("/api/spotify/user-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
+      fetch("/api/spotify/taste-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
+    ]).then(([userPl, tastePl]) => {
+      setUserPlaylists(userPl.playlists ?? []);
+      setTastePlaylists(tastePl.playlists ?? []);
+      setPlaylistsLoading(false);
+    });
   }, [hasSpotify]);
 
   return (
@@ -74,7 +93,13 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
             ) : (
               <div className="grid grid-cols-3 gap-3">
                 {artists.map((artist, i) => (
-                  <div key={i} className="group space-y-1.5">
+                  <a
+                    key={i}
+                    href={artist.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(artist.name)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group space-y-1.5"
+                  >
                     <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light">
                       {artist.images?.[0]?.url ? (
                         <Image
@@ -89,12 +114,15 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
                           <Mic2 className="w-6 h-6 text-muted-foreground/30" />
                         </div>
                       )}
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-1.5">
+                        <ExternalLink className="w-3 h-3 text-white" />
+                      </div>
                     </div>
                     <p className="text-xs font-medium truncate leading-tight">{artist.name}</p>
                     {artist.genres?.[0] && (
                       <p className="text-[10px] text-muted-foreground truncate">{artist.genres[0]}</p>
                     )}
-                  </div>
+                  </a>
                 ))}
               </div>
             )}
@@ -117,10 +145,13 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
               {tracks.map((track, i) => (
-                <div
+                <a
                   key={i}
+                  href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light",
+                    "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light",
                   )}
                 >
                   <span className="text-xs text-muted-foreground/40 w-5 text-right shrink-0 font-mono">
@@ -147,11 +178,54 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
                       {track.artists.map((a) => a.name).join(", ")}
                     </p>
                   </div>
-                </div>
+                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </a>
               ))}
             </div>
           )}
         </div>
+
+        {/* Your Playlists */}
+        {hasSpotify && (
+          <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
+              <h2 className="text-sm font-semibold">Your Playlists</h2>
+            </div>
+            {playlistsLoading ? (
+              <PlaylistsSkeleton />
+            ) : userPlaylists.length === 0 ? (
+              <Empty text="No playlists found on your Spotify account." />
+            ) : (
+              <CardCarousel>
+                {userPlaylists.map((pl) => (
+                  <TrendingPlaylistCard key={pl.id} {...pl} />
+                ))}
+              </CardCarousel>
+            )}
+          </div>
+        )}
+
+        {/* Playlists For Your Taste */}
+        {hasSpotify && (
+          <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Mic2 className="w-4 h-4 text-[var(--music-accent)]" />
+              <h2 className="text-sm font-semibold">Playlists For Your Taste</h2>
+            </div>
+            {playlistsLoading ? (
+              <PlaylistsSkeleton />
+            ) : tastePlaylists.length === 0 ? (
+              <Empty text="No taste playlists found — listen more on Spotify." />
+            ) : (
+              <CardCarousel>
+                {tastePlaylists.map((pl) => (
+                  <TrendingPlaylistCard key={pl.id} {...pl} />
+                ))}
+              </CardCarousel>
+            )}
+          </div>
+        )}
       </div>
     </main>
   );
@@ -200,6 +274,20 @@ function TracksSkeleton() {
             <div className="h-3 w-1/2 rounded bg-surface-light" />
             <div className="h-2.5 w-1/3 rounded bg-surface-light" />
           </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function PlaylistsSkeleton() {
+  return (
+    <div className="flex gap-3 animate-pulse">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="w-36 flex-shrink-0 space-y-2">
+          <div className="aspect-square rounded-xl bg-surface-light" />
+          <div className="h-3 w-3/4 rounded bg-surface-light" />
+          <div className="h-2.5 w-1/2 rounded bg-surface-light" />
         </div>
       ))}
     </div>

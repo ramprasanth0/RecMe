@@ -5,9 +5,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
+import { CardCarousel } from "@/components/shared/CardCarousel";
+import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
+import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
+import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Sparkles, AlertCircle } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
+import type { TrendingSong, TrendingPlaylist, TrendingMovie } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 
 const SAMPLE_MUSIC: MusicItem[] = [
@@ -35,22 +40,63 @@ interface LandingContentProps {
 
 export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
+  const [greeting, setGreeting] = useState<string>("");
+
+  // Trending state
+  const [trendingSongs, setTrendingSongs] = useState<TrendingSong[]>([]);
+  const [featuredPlaylists, setFeaturedPlaylists] = useState<TrendingPlaylist[]>([]);
+  const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
+  const [trendingMusicLoaded, setTrendingMusicLoaded] = useState(false);
+  const [trendingMoviesLoaded, setTrendingMoviesLoaded] = useState(false);
+
+  useEffect(() => {
+    setGreeting(getGreeting());
+  }, []);
+
+  // Fetch trending music (songs + playlists) on mount
+  useEffect(() => {
+    if (trendingMusicLoaded) return;
+    setTrendingMusicLoaded(true);
+    Promise.all([
+      fetch("/api/spotify/trending-songs").then((r) => r.json()).catch(() => ({ songs: [] })),
+      fetch("/api/spotify/featured-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
+    ]).then(([songsData, playlistsData]) => {
+      setTrendingSongs(songsData.songs ?? []);
+      setFeaturedPlaylists(playlistsData.playlists ?? []);
+    });
+  }, [trendingMusicLoaded]);
+
+  // Fetch trending movies when movies tab is opened
+  useEffect(() => {
+    if (activeTab !== "movies" || trendingMoviesLoaded) return;
+    setTrendingMoviesLoaded(true);
+    fetch("/api/tmdb/trending")
+      .then((r) => r.json())
+      .then((data) => {
+        const movies: TrendingMovie[] = (data.results ?? []).slice(0, 20).map(
+          (m: { id: number; title: string; release_date: string; poster_path: string | null; vote_average: number }) => ({
+            tmdbId: m.id,
+            title: m.title,
+            year: m.release_date ? parseInt(m.release_date.slice(0, 4), 10) : 0,
+            posterPath: m.poster_path,
+            rating: m.vote_average > 0 ? m.vote_average : null,
+          })
+        );
+        setTrendingMovies(movies);
+      })
+      .catch(() => {});
+  }, [activeTab, trendingMoviesLoaded]);
 
   function handleTabChange(tab: "music" | "movies") {
     setActiveTab(tab);
     if (tab === "movies" && isAuthenticated) movieRecs.triggerAutoFetch();
   }
-  const [greeting, setGreeting] = useState<string>("");
-  useEffect(() => {
-    setGreeting(getGreeting());
-  }, []);
 
   const musicRecs = useRecommendations({
     type: "music",
     autoFetch: isAuthenticated,
     autoPrompt: "songs I probably haven't heard yet but would love — deep cuts and hidden gems from artists similar to my taste, no chart hits or songs already in my top tracks",
   });
-  // Movies auto-fetch only when the Movies tab is first opened, not on initial load
   const movieRecs = useRecommendations({
     type: "movie",
     autoFetch: false,
@@ -119,7 +165,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
         )}
 
         {/* Section header */}
-        <div className="flex items-center gap-2 mb-6">
+        <div className="flex items-center gap-2 mb-4">
           <Sparkles
             className="w-4 h-4"
             style={{
@@ -138,11 +184,14 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           </span>
         </div>
 
-        {/* Recommendation grid */}
+        {/* AI Recommendation carousel */}
         {active.isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="flex gap-3 overflow-hidden pb-1">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="rounded-xl bg-surface border border-border overflow-hidden">
+              <div
+                key={i}
+                className={`rounded-xl bg-surface border border-border overflow-hidden flex-shrink-0 ${activeTab === "music" ? "w-44" : "w-36"}`}
+              >
                 <div className={`${activeTab === "music" ? "aspect-square" : "aspect-[2/3]"} bg-surface-light animate-pulse`} />
                 <div className="p-3 space-y-2">
                   <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />
@@ -155,30 +204,64 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
               initial="hidden"
               animate="show"
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
             >
-              {activeTab === "music"
-                ? displayMusic.map((item, i) => (
-                    <motion.div
-                      key={`${item.title}-${i}`}
-                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
-                    >
-                      <RecommendationCard type="music" item={item} />
-                    </motion.div>
-                  ))
-                : displayMovies.map((item, i) => (
-                    <motion.div
-                      key={`${item.title}-${i}`}
-                      variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
-                    >
-                      <RecommendationCard type="movie" item={item} />
-                    </motion.div>
-                  ))}
+              <CardCarousel>
+                {activeTab === "music"
+                  ? displayMusic.map((item, i) => (
+                      <motion.div
+                        key={`${item.title}-${i}`}
+                        className="w-44 flex-shrink-0"
+                        variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                      >
+                        <RecommendationCard type="music" item={item} />
+                      </motion.div>
+                    ))
+                  : displayMovies.map((item, i) => (
+                      <motion.div
+                        key={`${item.title}-${i}`}
+                        className="w-36 flex-shrink-0"
+                        variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                      >
+                        <RecommendationCard type="movie" item={item} />
+                      </motion.div>
+                    ))}
+              </CardCarousel>
             </motion.div>
           </AnimatePresence>
+        )}
+
+        {/* Trending rows — Music tab */}
+        {activeTab === "music" && (
+          <div className="mt-10 space-y-8">
+            {trendingSongs.length > 0 && (
+              <CardCarousel title="Trending Songs" accentColor="var(--music-accent)">
+                {trendingSongs.map((song) => (
+                  <TrendingSongCard key={song.id} {...song} />
+                ))}
+              </CardCarousel>
+            )}
+            {featuredPlaylists.length > 0 && (
+              <CardCarousel title="Featured Playlists" accentColor="var(--music-accent)">
+                {featuredPlaylists.map((pl) => (
+                  <TrendingPlaylistCard key={pl.id} {...pl} />
+                ))}
+              </CardCarousel>
+            )}
+          </div>
+        )}
+
+        {/* Trending rows — Movies tab */}
+        {activeTab === "movies" && trendingMovies.length > 0 && (
+          <div className="mt-10">
+            <CardCarousel title="Trending This Week" accentColor="var(--movie-accent)">
+              {trendingMovies.map((movie) => (
+                <TrendingMovieCard key={movie.tmdbId} {...movie} />
+              ))}
+            </CardCarousel>
+          </div>
         )}
 
         {/* Sign-in prompt for guests */}
@@ -199,4 +282,3 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
     </motion.div>
   );
 }
-
