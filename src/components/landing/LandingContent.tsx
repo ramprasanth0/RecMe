@@ -7,10 +7,12 @@ import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
+import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
+import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Sparkles, AlertCircle } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
-import type { TrendingMovie } from "@/types/trending";
+import type { TrendingMovie, TrendingSong, TrendingPlaylist } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 
 const SAMPLE_MUSIC: MusicItem[] = [
@@ -51,10 +53,28 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   // Trending state
   const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
   const [trendingMoviesLoaded, setTrendingMoviesLoaded] = useState(false);
+  const [globalSongs, setGlobalSongs] = useState<TrendingSong[]>([]);
+  const [indiaSongs, setIndiaSongs] = useState<TrendingSong[]>([]);
+  const [featuredPlaylists, setFeaturedPlaylists] = useState<TrendingPlaylist[]>([]);
+  const [musicTrendingLoaded, setMusicTrendingLoaded] = useState(false);
 
   useEffect(() => {
     setGreeting(getGreeting());
   }, []);
+
+  // Fetch music trending data (Top Global, Top India, Featured Playlists) on mount
+  useEffect(() => {
+    if (musicTrendingLoaded) return;
+    setMusicTrendingLoaded(true);
+    Promise.all([
+      fetch("/api/spotify/trending-songs").then((r) => r.json()).catch(() => ({ global: [], india: [] })),
+      fetch("/api/spotify/featured-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
+    ]).then(([songsData, playlistsData]) => {
+      setGlobalSongs(songsData.global ?? []);
+      setIndiaSongs(songsData.india ?? []);
+      setFeaturedPlaylists(playlistsData.playlists ?? []);
+    });
+  }, [musicTrendingLoaded]);
 
   // Fetch trending movies when movies tab is opened
   useEffect(() => {
@@ -280,9 +300,38 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           )}
         </div>
 
+        {/* Trending rows — Music tab */}
+        {activeTab === "music" && globalSongs.length > 0 && (
+          <div className="mt-2">
+            <CardCarousel title="Top 50 — Global" accentColor="var(--music-accent)">
+              {globalSongs.map((song) => (
+                <TrendingSongCard key={song.id} {...song} />
+              ))}
+            </CardCarousel>
+          </div>
+        )}
+        {activeTab === "music" && indiaSongs.length > 0 && (
+          <div className="mt-8">
+            <CardCarousel title="Top 50 — India" accentColor="var(--music-accent)">
+              {indiaSongs.map((song) => (
+                <TrendingSongCard key={song.id} {...song} />
+              ))}
+            </CardCarousel>
+          </div>
+        )}
+        {activeTab === "music" && featuredPlaylists.length > 0 && (
+          <div className="mt-8">
+            <CardCarousel title="Featured Playlists" accentColor="var(--music-accent)">
+              {featuredPlaylists.map((pl) => (
+                <TrendingPlaylistCard key={pl.id} {...pl} />
+              ))}
+            </CardCarousel>
+          </div>
+        )}
+
         {/* Trending rows — Movies tab */}
         {activeTab === "movies" && trendingMovies.length > 0 && (
-          <div className="mt-10">
+          <div className="mt-2">
             <CardCarousel title="Trending This Week" accentColor="var(--movie-accent)">
               {trendingMovies.map((movie) => (
                 <TrendingMovieCard key={movie.tmdbId} {...movie} />

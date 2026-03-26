@@ -3,7 +3,7 @@ import type { TrendingPlaylist, TrendingSong } from "@/types/trending";
 
 const SPOTIFY_API = "https://api.spotify.com/v1";
 export const GLOBAL_TOP_50_ID = "37i9dQZEVXbMDoHDwVN2tF";
-export const INDIA_TOP_50_ID = "4WHXG53hCiMoFMbNouNM0t";
+export const INDIA_TOP_50_ID = "37i9dQZEVXbLZ52XmnySIA";
 
 export async function getTopArtists(accessToken: string, limit = 20) {
   const res = await fetch(
