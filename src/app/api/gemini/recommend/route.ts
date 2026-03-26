@@ -4,7 +4,7 @@ import { NextRequest } from "next/server";
 import { getGeminiClient, AI_MODEL } from "@/lib/gemini";
 import { buildSystemPrompt } from "@/lib/gemini/prompt";
 import { z } from "zod/v4";
-import { getCurrentUser } from "@/lib/auth/session";
+import { getUserWithFreshToken } from "@/lib/auth/session";
 import { getTopArtists, getTopTracks, searchTrack } from "@/lib/spotify";
 import { searchMovieTMDB } from "@/lib/tmdb";
 import { MovieRecommendationSchema, MusicRecommendationSchema } from "@/types/recommendations";
@@ -26,10 +26,10 @@ export async function POST(request: NextRequest) {
     let favoriteGenres: string[] | undefined;
     let movieGenres: string[] | undefined;
     let userId: string | undefined;
-    let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+    let user: Awaited<ReturnType<typeof getUserWithFreshToken>> = null;
 
     try {
-      user = await getCurrentUser();
+      user = await getUserWithFreshToken();
       if (user) userId = user.id;
       if (user?.spotify_access_token) {
         const [artists, tracks] = await Promise.all([
