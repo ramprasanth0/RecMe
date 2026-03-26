@@ -20,10 +20,10 @@ RecMe is a minimalistic, editorial-grade web app that uses your Spotify listenin
 
 ### Core ideas
 
-- **It knows you** — uses your real Spotify top artists, top tracks, and genre preferences, not generic popularity signals.
-- **It explains itself** — every rec includes a one-sentence reason tied to the specific query.
-- **It acts** — can push AI-generated playlists directly into your Spotify account.
-- **It looks great** — cinematic dark UI inspired by Letterboxd × Spotify × luxury editorial.
+- **It knows you** — uses your real Spotify top artists, top tracks, and genre preferences, not generic popularity signals
+- **It explains itself** — every rec includes a one-sentence reason tied to the specific query
+- **It acts** — can push AI-generated playlists directly into your Spotify account
+- **It looks great** — cinematic dark UI inspired by Letterboxd × Spotify × luxury editorial
 
 ---
 
