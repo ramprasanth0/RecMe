@@ -10,7 +10,7 @@ import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Sparkles, AlertCircle } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
-import type { TrendingSong, TrendingPlaylist, TrendingMovie } from "@/types/trending";
+import type { TrendingMovie } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 
 const SAMPLE_MUSIC: MusicItem[] = [
