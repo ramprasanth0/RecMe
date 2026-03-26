@@ -6,6 +6,7 @@ import type { MusicItem, MovieItem } from "@/types/recommendations";
 
 // Module-level cache — survives component unmount/remount within the same browser tab
 const autoRecCache: Partial<Record<"music" | "movie", MusicItem[] | MovieItem[]>> = {};
+const searchRecCache: Partial<Record<"music" | "movie", MusicItem[] | MovieItem[]>> = {};
 
 interface UseRecommendationsOptions {
   type: "music" | "movie";
@@ -19,8 +20,10 @@ interface UseRecommendationsOptions {
 }
 
 interface UseRecommendationsReturn {
-  items: MusicItem[] | MovieItem[];
+  autoItems: MusicItem[] | MovieItem[];
+  searchedItems: MusicItem[] | MovieItem[];
   isLoading: boolean;
+  isAutoLoading: boolean;
   error: string | null;
   lastMood: string | null;
   fetchRecs: (mood: string) => Promise<void>;
@@ -31,17 +34,22 @@ interface UseRecommendationsReturn {
 export function useRecommendations(
   options: UseRecommendationsOptions
 ): UseRecommendationsReturn {
-  const [items, setItems] = useState<MusicItem[] | MovieItem[]>(
+  const [autoItems, setAutoItems] = useState<MusicItem[] | MovieItem[]>(
     () => autoRecCache[options.type] ?? []
   );
+  const [searchedItems, setSearchedItems] = useState<MusicItem[] | MovieItem[]>(
+    () => searchRecCache[options.type] ?? []
+  );
   const [isLoading, setIsLoading] = useState(false);
+  const [isAutoLoading, setIsAutoLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastMood, setLastMood] = useState<string | null>(null);
   const hasFetched = useRef(!!autoRecCache[options.type]);
 
   const fetchRecs = useCallback(
     async (mood: string, silent = false) => {
-      setIsLoading(true);
+      if (silent) setIsAutoLoading(true);
+      else setIsLoading(true);
       setError(null);
       if (!silent) setLastMood(mood);
 
@@ -60,12 +68,22 @@ export function useRecommendations(
         if (data.items) {
           if (options.type === "music") {
             const validated = MusicRecommendationSchema.parse({ type: "music", items: data.items });
-            setItems(validated.items);
-            if (silent) autoRecCache["music"] = validated.items;
+            if (silent) {
+              setAutoItems(validated.items);
+              autoRecCache["music"] = validated.items;
+            } else {
+              setSearchedItems(validated.items);
+              searchRecCache["music"] = validated.items;
+            }
           } else {
             const validated = MovieRecommendationSchema.parse({ type: "movie", items: data.items });
-            setItems(validated.items);
-            if (silent) autoRecCache["movie"] = validated.items;
+            if (silent) {
+              setAutoItems(validated.items);
+              autoRecCache["movie"] = validated.items;
+            } else {
+              setSearchedItems(validated.items);
+              searchRecCache["movie"] = validated.items;
+            }
           }
           return;
         }
@@ -85,18 +103,29 @@ export function useRecommendations(
 
         if (options.type === "music") {
           const validated = MusicRecommendationSchema.parse(parsed);
-          setItems(validated.items);
-          if (silent) autoRecCache["music"] = validated.items;
+          if (silent) {
+             setAutoItems(validated.items);
+             autoRecCache["music"] = validated.items;
+          } else {
+             setSearchedItems(validated.items);
+             searchRecCache["music"] = validated.items;
+          }
         } else {
           const validated = MovieRecommendationSchema.parse(parsed);
-          setItems(validated.items);
-          if (silent) autoRecCache["movie"] = validated.items;
+          if (silent) {
+             setAutoItems(validated.items);
+             autoRecCache["movie"] = validated.items;
+          } else {
+             setSearchedItems(validated.items);
+             searchRecCache["movie"] = validated.items;
+          }
         }
       } catch (err) {
         console.error("Recommendation fetch error:", err);
         setError(err instanceof Error ? err.message : "Something went wrong");
       } finally {
         setIsLoading(false);
+        setIsAutoLoading(false);
       }
     },
     [options.type]
@@ -118,7 +147,7 @@ export function useRecommendations(
     fetchRecs(options.autoPrompt, true);
   }, [fetchRecs, options.autoPrompt]);
 
-  return { items, isLoading, error, lastMood, fetchRecs, triggerAutoFetch };
+  return { autoItems, searchedItems, isLoading, isAutoLoading, error, lastMood, fetchRecs, triggerAutoFetch };
 }
 
 /** Extract JSON object from a string that might have surrounding text or markdown fences */

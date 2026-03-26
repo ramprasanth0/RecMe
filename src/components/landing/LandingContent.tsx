@@ -89,13 +89,13 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   });
   const movieRecs = useRecommendations({
     type: "movie",
-    autoFetch: false,
+    autoFetch: isAuthenticated,
     autoPrompt: "movies that match my preferred genres — acclaimed and underrated films I might have missed",
   });
 
   const active = activeTab === "music" ? musicRecs : movieRecs;
-  const displayMusic = (musicRecs.items.length > 0 ? musicRecs.items : SAMPLE_MUSIC) as MusicItem[];
-  const displayMovies = (movieRecs.items.length > 0 ? movieRecs.items : SAMPLE_MOVIES) as MovieItem[];
+  const displayMusic = (musicRecs.autoItems.length > 0 ? musicRecs.autoItems : SAMPLE_MUSIC) as MusicItem[];
+  const displayMovies = (movieRecs.autoItems.length > 0 ? movieRecs.autoItems : SAMPLE_MOVIES) as MovieItem[];
 
   return (
     <motion.div
@@ -154,74 +154,131 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
           </div>
         )}
 
-        {/* Section header */}
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles
-            className="w-4 h-4"
-            style={{
-              color: activeTab === "music" ? "var(--music-accent)" : "var(--movie-accent)",
-            }}
-          />
-          <h2 className="text-lg font-semibold">
-            {active.lastMood
-              ? `Recommendations for "${active.lastMood}"`
-              : isAuthenticated
-                ? "Picked for you"
-                : "Trending recommendations"}
-          </h2>
-          <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] dark:bg-white/5 text-muted-foreground ml-auto">
-            AI
-          </span>
-        </div>
+        {/* Searched Recommendation Section */}
+        {(active.searchedItems.length > 0 || (active.isLoading && !active.isAutoLoading)) && (
+          <div className="mb-10">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles
+                className="w-4 h-4"
+                style={{
+                  color: activeTab === "music" ? "var(--music-accent)" : "var(--movie-accent)",
+                }}
+              />
+              <h2 className="text-lg font-semibold">
+                {active.lastMood ? `Recommendations for "${active.lastMood}"` : "Searching..."}
+              </h2>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-black/[0.05] dark:bg-white/5 text-muted-foreground ml-auto">
+                AI
+              </span>
+            </div>
 
-        {/* AI Recommendation carousel */}
-        {active.isLoading ? (
-          <div className="flex gap-3 overflow-hidden pb-1">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div
-                key={i}
-                className={`rounded-xl bg-surface border border-border overflow-hidden flex-shrink-0 ${activeTab === "music" ? "w-44" : "w-36"}`}
-              >
-                <div className={`${activeTab === "music" ? "aspect-square" : "aspect-[2/3]"} bg-surface-light animate-pulse`} />
-                <div className="p-3 space-y-2">
-                  <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />
-                  <div className="h-2 bg-surface-light rounded animate-pulse w-1/2" />
-                </div>
+            {active.isLoading && !active.isAutoLoading ? (
+              <div className="flex gap-3 overflow-hidden pb-1">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`rounded-xl bg-surface border border-border overflow-hidden flex-shrink-0 ${activeTab === "music" ? "w-44" : "w-36"}`}
+                  >
+                    <div className={`${activeTab === "music" ? "aspect-square" : "aspect-[2/3]"} bg-surface-light animate-pulse`} />
+                    <div className="p-3 space-y-2">
+                      <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />
+                      <div className="h-2 bg-surface-light rounded animate-pulse w-1/2" />
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`search-${activeTab}`}
+                  initial="hidden"
+                  animate="show"
+                  variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+                >
+                  <CardCarousel>
+                    {activeTab === "music"
+                      ? (active.searchedItems as MusicItem[]).map((item, i) => (
+                          <motion.div
+                            key={`search-${item.title}-${i}`}
+                            className="w-44 flex-shrink-0"
+                            variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                          >
+                            <RecommendationCard type="music" item={item} />
+                          </motion.div>
+                        ))
+                      : (active.searchedItems as MovieItem[]).map((item, i) => (
+                          <motion.div
+                            key={`search-${item.title}-${i}`}
+                            className="w-36 flex-shrink-0"
+                            variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                          >
+                            <RecommendationCard type="movie" item={item} />
+                          </motion.div>
+                        ))}
+                  </CardCarousel>
+                </motion.div>
+              </AnimatePresence>
+            )}
           </div>
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial="hidden"
-              animate="show"
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
-            >
-              <CardCarousel>
-                {activeTab === "music"
-                  ? displayMusic.map((item, i) => (
-                      <motion.div
-                        key={`${item.title}-${i}`}
-                        className="w-44 flex-shrink-0"
-                        variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
-                      >
-                        <RecommendationCard type="music" item={item} />
-                      </motion.div>
-                    ))
-                  : displayMovies.map((item, i) => (
-                      <motion.div
-                        key={`${item.title}-${i}`}
-                        className="w-36 flex-shrink-0"
-                        variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
-                      >
-                        <RecommendationCard type="movie" item={item} />
-                      </motion.div>
-                    ))}
-              </CardCarousel>
-            </motion.div>
-          </AnimatePresence>
         )}
+
+        {/* AI Picked for You / Trending Placeholder */}
+        <div className="mb-10">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="w-4 h-4 text-muted-foreground" />
+            <h2 className="text-lg font-semibold text-muted-foreground">
+              {isAuthenticated ? "Picked for you" : "Trending recommendations"}
+            </h2>
+          </div>
+
+          {active.isAutoLoading ? (
+            <div className="flex gap-3 overflow-hidden pb-1">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`rounded-xl bg-surface border border-border overflow-hidden flex-shrink-0 ${activeTab === "music" ? "w-44" : "w-36"}`}
+                >
+                  <div className={`${activeTab === "music" ? "aspect-square" : "aspect-[2/3]"} bg-surface-light animate-pulse`} />
+                  <div className="p-3 space-y-2">
+                    <div className="h-3 bg-surface-light rounded animate-pulse w-3/4" />
+                    <div className="h-2 bg-surface-light rounded animate-pulse w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`auto-${activeTab}`}
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05 } } }}
+              >
+                <CardCarousel>
+                  {activeTab === "music"
+                    ? displayMusic.map((item, i) => (
+                        <motion.div
+                          key={`auto-${item.title}-${i}`}
+                          className="w-44 flex-shrink-0"
+                          variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                        >
+                          <RecommendationCard type="music" item={item} />
+                        </motion.div>
+                      ))
+                    : displayMovies.map((item, i) => (
+                        <motion.div
+                          key={`auto-${item.title}-${i}`}
+                          className="w-36 flex-shrink-0"
+                          variants={{ hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } } }}
+                        >
+                          <RecommendationCard type="movie" item={item} />
+                        </motion.div>
+                      ))}
+                </CardCarousel>
+              </motion.div>
+            </AnimatePresence>
+          )}
+        </div>
 
         {/* Trending rows — Movies tab */}
         {activeTab === "movies" && trendingMovies.length > 0 && (
