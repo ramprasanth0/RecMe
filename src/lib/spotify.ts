@@ -2,7 +2,8 @@ import type { SpotifyTopData } from "@/types/spotify";
 import type { TrendingPlaylist, TrendingSong } from "@/types/trending";
 
 const SPOTIFY_API = "https://api.spotify.com/v1";
-const GLOBAL_TOP_50_ID = "37i9dQZEVXbMDoHDwVN2tF";
+export const GLOBAL_TOP_50_ID = "37i9dQZEVXbMDoHDwVN2tF";
+export const INDIA_TOP_50_ID = "4WHXG53hCiMoFMbNouNM0t";
 
 export async function getTopArtists(accessToken: string, limit = 20) {
   const res = await fetch(
@@ -82,14 +83,15 @@ export async function addTracksToPlaylist(
   return res.json();
 }
 
-/** Fetch tracks from the Global Top 50 playlist */
-export async function getGlobalTop50(
+/** Fetch tracks from any Spotify playlist using the correct /items endpoint */
+export async function getPlaylistTracks(
   accessToken: string,
+  playlistId: string,
   limit = 20
 ): Promise<TrendingSong[]> {
   const fields = "items(track(id,name,artists(id,name),album(images),external_urls))";
   const res = await fetch(
-    `${SPOTIFY_API}/playlists/${GLOBAL_TOP_50_ID}/tracks?limit=${limit}&fields=${encodeURIComponent(fields)}`,
+    `${SPOTIFY_API}/playlists/${playlistId}/items?limit=${limit}&fields=${encodeURIComponent(fields)}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!res.ok) return [];
@@ -109,6 +111,30 @@ export async function getGlobalTop50(
     });
   }
   return result;
+}
+
+/** Get Spotify recommendations seeded from track IDs */
+export async function getRecommendations(
+  accessToken: string,
+  seedTrackIds: string[],
+  limit = 20
+): Promise<TrendingSong[]> {
+  const seeds = seedTrackIds.slice(0, 5).join(","); // max 5 seeds
+  const res = await fetch(
+    `${SPOTIFY_API}/recommendations?seed_tracks=${seeds}&limit=${limit}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  const tracks = (data.tracks ?? []) as Array<{ id: string; name: string; artists: { id: string; name: string }[]; album: { images: { url: string }[] }; external_urls: { spotify: string } }>;
+  return tracks.map((track) => ({
+    id: track.id,
+    title: track.name,
+    artist: track.artists[0]?.name ?? "",
+    ...(track.artists[0]?.id ? { artistId: track.artists[0].id } : {}),
+    albumArt: track.album?.images?.[0]?.url ?? null,
+    spotifyUrl: track.external_urls?.spotify ?? `https://open.spotify.com/track/${track.id}`,
+  }));
 }
 
 /** Fetch Spotify featured playlists */

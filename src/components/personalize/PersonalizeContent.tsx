@@ -6,8 +6,9 @@ import { Music2, Mic2, AlertCircle, ExternalLink } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
+import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
 import { cn } from "@/lib/utils";
-import type { TrendingPlaylist } from "@/types/trending";
+import type { TrendingPlaylist, TrendingSong } from "@/types/trending";
 
 interface Artist {
   name: string;
@@ -33,7 +34,7 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
   const [loading, setLoading] = useState(true);
 
   const [userPlaylists, setUserPlaylists] = useState<TrendingPlaylist[]>([]);
-  const [tastePlaylists, setTastePlaylists] = useState<TrendingPlaylist[]>([]);
+  const [recommendedSongs, setRecommendedSongs] = useState<TrendingSong[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
   useEffect(() => {
@@ -53,10 +54,10 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
 
     Promise.all([
       fetch("/api/spotify/user-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
-      fetch("/api/spotify/taste-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
-    ]).then(([userPl, tastePl]) => {
+      fetch("/api/spotify/recommendations").then((r) => r.json()).catch(() => ({ songs: [] })),
+    ]).then(([userPl, recsData]) => {
       setUserPlaylists(userPl.playlists ?? []);
-      setTastePlaylists(tastePl.playlists ?? []);
+      setRecommendedSongs(recsData.songs ?? []);
       setPlaylistsLoading(false);
     });
   }, [hasSpotify]);
@@ -206,21 +207,21 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
           </div>
         )}
 
-        {/* Playlists For Your Taste */}
+        {/* Recommended For You */}
         {hasSpotify && (
           <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
             <div className="flex items-center gap-2">
               <Mic2 className="w-4 h-4 text-[var(--music-accent)]" />
-              <h2 className="text-sm font-semibold">Playlists For Your Taste</h2>
+              <h2 className="text-sm font-semibold">Recommended For You</h2>
             </div>
             {playlistsLoading ? (
-              <PlaylistsSkeleton />
-            ) : tastePlaylists.length === 0 ? (
-              <Empty text="No taste playlists found — listen more on Spotify." />
+              <SongsSkeleton />
+            ) : recommendedSongs.length === 0 ? (
+              <Empty text="No recommendations yet — listen more on Spotify." />
             ) : (
               <CardCarousel>
-                {tastePlaylists.map((pl) => (
-                  <TrendingPlaylistCard key={pl.id} {...pl} />
+                {recommendedSongs.map((song) => (
+                  <TrendingSongCard key={song.id} {...song} />
                 ))}
               </CardCarousel>
             )}
@@ -284,6 +285,20 @@ function PlaylistsSkeleton() {
   return (
     <div className="flex gap-3 animate-pulse">
       {Array.from({ length: 5 }).map((_, i) => (
+        <div key={i} className="w-36 flex-shrink-0 space-y-2">
+          <div className="aspect-square rounded-xl bg-surface-light" />
+          <div className="h-3 w-3/4 rounded bg-surface-light" />
+          <div className="h-2.5 w-1/2 rounded bg-surface-light" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SongsSkeleton() {
+  return (
+    <div className="flex gap-3 animate-pulse">
+      {Array.from({ length: 6 }).map((_, i) => (
         <div key={i} className="w-36 flex-shrink-0 space-y-2">
           <div className="aspect-square rounded-xl bg-surface-light" />
           <div className="h-3 w-3/4 rounded bg-surface-light" />
