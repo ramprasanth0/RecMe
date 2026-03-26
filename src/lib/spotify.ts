@@ -178,7 +178,10 @@ export async function getUserPlaylists(
     `${SPOTIFY_API}/me/playlists?limit=${limit}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error("[getUserPlaylists] Spotify API Error:", res.status, await res.text());
+    return [];
+  }
   const data = await res.json();
   return ((data.items ?? []) as Array<{ id: string; name: string; images: { url: string }[]; external_urls: { spotify: string }; tracks: { total: number }; description: string }>)
     .map((p) => ({
