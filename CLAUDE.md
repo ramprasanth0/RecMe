@@ -355,6 +355,63 @@ Built with Next.js · Supabase · Google Gemini · Spotify API · TMDB · Deploy
 📋 Changelog & Decision Log
 All changes, decisions, tools, and optimizations are documented here in reverse chronological order.
 ---
+v0.8 — 2026-03-27 · Spotify Endpoint Fixes + Recommendations API
+
+Change: Corrected deprecated Spotify endpoint, added India Top 50 to trending, replaced fragile artist-search playlist logic with Spotify's native recommendations engine.
+
+Endpoint fixes:
+- `lib/spotify.ts` — `getGlobalTop50()` renamed to `getPlaylistTracks(token, playlistId, limit)`. Endpoint changed from `/playlists/{id}/tracks` (deprecated) to `/playlists/{id}/items` (current). Accepts any playlist ID.
+- Added `INDIA_TOP_50_ID = "4WHXG53hCiMoFMbNouNM0t"` alongside `GLOBAL_TOP_50_ID = "37i9dQZEVXbMDoHDwVN2tF"` — both exported.
+
+New Spotify helpers:
+- `getRecommendations(token, seedTrackIds, limit)` — calls `GET /v1/recommendations?seed_tracks={ids}` (max 5 seeds). Returns `TrendingSong[]`.
+
+Trending songs:
+- `app/api/spotify/trending-songs/route.ts` — now fetches Global Top 50 + India Top 50 in parallel, deduplicates by track ID, returns up to 30 songs.
+
+New recommendations route:
+- `app/api/spotify/recommendations/route.ts` — NEW. Gets user's top 5 short-term tracks, seeds `GET /v1/recommendations`, returns `{ songs: TrendingSong[] }`. Replaces taste-playlists.
+
+Removed:
+- `app/api/spotify/taste-playlists/route.ts` — DELETED. Was searching playlists by artist name (fragile, unrelated to Spotify's recommendations engine).
+
+Personalize page:
+- "Playlists For Your Taste" section replaced by "Recommended For You" — shows `TrendingSongCard` carousel seeded from `GET /v1/recommendations`.
+
+---
+v0.7 — 2026-03-27 · Carousel Cards, Trending Rows, Playlist Sections & Spotify Links
+
+Change: All recommendation grids replaced with horizontal carousels. Trending content rows added to Music and Movies tabs. Personalize page extended with playlist and recommendation sections. Spotify links added across all artist/song entries.
+
+New components:
+- `components/shared/CardCarousel.tsx` — horizontal scroll wrapper with left/right `ChevronLeft/ChevronRight` arrows. Tracks scroll state via `ResizeObserver`. Arrows visible on hover (desktop), always visible when scrollable. Scrolls 75% of container width per click.
+- `components/shared/TrendingSongCard.tsx` — `w-36 flex-shrink-0`, album art, Spotify link on hover (green circle overlay).
+- `components/shared/TrendingPlaylistCard.tsx` — `w-36 flex-shrink-0`, cover art, Spotify link, description or track count subtitle.
+- `components/shared/TrendingMovieCard.tsx` — `w-28 flex-shrink-0 aspect-[2/3]`, TMDB poster, amber rating badge (top-right), links to TMDB movie page.
+
+New types:
+- `types/trending.ts` — `TrendingSong`, `TrendingPlaylist`, `TrendingMovie` interfaces.
+
+New API routes:
+- `app/api/spotify/trending-songs/route.ts` — Global Top 50 + India Top 50, deduplicated, up to 30 songs. Returns `{ songs: [] }` for guests. `Cache-Control: public, max-age=3600`.
+- `app/api/spotify/featured-playlists/route.ts` — `GET /v1/browse/featured-playlists?limit=10`. Returns `{ playlists: [] }` for guests. `Cache-Control: public, max-age=3600`.
+- `app/api/spotify/user-playlists/route.ts` — `GET /v1/me/playlists?limit=20`. Returns 401 if unauthenticated.
+
+New Spotify lib helpers:
+- `getFeaturedPlaylists(token, limit)` — browse/featured-playlists
+- `getUserPlaylists(token, limit)` — /me/playlists
+- `searchPlaylists(token, query, limit)` — /search?type=playlist (retained but now unused by routes)
+
+Modified:
+- `components/landing/LandingContent.tsx` — AI rec grid replaced with `CardCarousel`. Music tab: Trending Songs + Featured Playlists rows fetched on mount. Movies tab: Trending This Week row fetched on first tab open.
+- `components/personalize/PersonalizeContent.tsx` — Artist tiles now link to Spotify. Top tracks now link to Spotify with `ExternalLink` icon on hover. "Your Playlists" carousel (user-playlists) added. "Recommended For You" carousel (recommendations) added.
+
+Decision:
+- Personalization bug root cause found: `getCurrentUser()` in recommend route didn't check token expiry — expired tokens caused silent 401 from Spotify, catch swallowed the error, Gemini got no user context. Fixed by using `getUserWithFreshToken()`.
+- AI model reverted from `gemini-3-flash` (remote had changed it) back to `gemini-2.5-flash`.
+- Playfair Display font revert — user wanted logo/headings to stay as Inter. Removed Playfair_Display import from layout and reverted `font-display` in tailwind.config.ts.
+
+---
 v0.6 — 2026-03-26 · Security Audit, Regression Tests & Full Optimization Pass
 
 Change: Systematic audit of the entire codebase. Identified and resolved 11 issues across security, correctness, performance, and hygiene. Introduced a full regression test suite (Vitest + Playwright).
@@ -524,4 +581,4 @@ Vercel Analytics	Usage analytics	Free tier	Page views, Core Web Vitals
 Vercel Speed Insights	Performance monitoring	Free tier	Real-time performance tracking
 ---
 Built with Next.js · Supabase · Google Gemini · Spotify API · TMDB · Deployed on Vercel
-Last updated: 2026-03-24 · Version: 0.5
+Last updated: 2026-03-27 · Version: 0.8
