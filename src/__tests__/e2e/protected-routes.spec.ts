@@ -27,31 +27,6 @@ test("/personalize redirects unauthenticated users", async ({ page }) => {
   await expect(page).toHaveURL(/^\/(signin|$|\?)/);
 });
 
-// ─── /chat — currently no guard (fix #7) ─────────────────────────────────────
-
-test("/chat does not crash for unauthenticated users", async ({ page }) => {
-  await page.goto("/chat");
-  // Must not show a 500 error page
-  await expect(page.locator("body")).toBeVisible();
-  const errorText = page.getByText(/application error|500|internal server/i);
-  await expect(errorText).not.toBeVisible({ timeout: 5_000 });
-});
-
-// FAILS UNTIL FIX #7: /chat should redirect or prompt sign-in for guests
-test("/chat shows sign-in prompt or redirects for unauthenticated users", async ({
-  page,
-}) => {
-  await page.goto("/chat");
-  await page.waitForLoadState("networkidle");
-  const isRedirected = page.url().includes("/signin");
-  const hasSignInPrompt =
-    (await page
-      .getByRole("link", { name: /sign in/i })
-      .or(page.getByRole("button", { name: /sign in/i }))
-      .count()) > 0;
-  expect(isRedirected || hasSignInPrompt).toBe(true);
-});
-
 // ─── Token leakage — /profile HTML must not contain Spotify tokens ────────────
 
 test("/profile page HTML does not expose Spotify tokens (requires auth cookie)", async ({

@@ -15,9 +15,9 @@ export async function getTopArtists(accessToken: string, limit = 20) {
   return data.items;
 }
 
-export async function getTopTracks(accessToken: string, limit = 50) {
+export async function getTopTracks(accessToken: string, limit = 50, timeRange: "short_term" | "medium_term" | "long_term" = "long_term") {
   const res = await fetch(
-    `${SPOTIFY_API}/me/top/tracks?time_range=long_term&limit=${limit}`,
+    `${SPOTIFY_API}/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
@@ -92,10 +92,17 @@ export async function getPlaylistTracks(
   const fields = "items(track(id,name,artists(id,name),album(images),external_urls))";
   const res = await fetch(
     `${SPOTIFY_API}/playlists/${playlistId}/items?limit=${limit}&fields=${encodeURIComponent(fields)}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } , cache: 'no-store' }
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error("[getPlaylistTracks] Spotify API Error:", res.status, await res.text());
+    return [];
+  }
   const data = await res.json();
+  console.log(`[getPlaylistTracks] Raw JSON length for ${playlistId}:`, JSON.stringify(data).length, "Items:", data.items?.length);
+  if (!data.items || data.items.length === 0) {
+    console.log(`[getPlaylistTracks] Empty items payload for ${playlistId}:`, JSON.stringify(data).substring(0, 300));
+  }
   const items = (data.items ?? []) as Array<{ track: { id: string; name: string; artists: { id: string; name: string }[]; album: { images: { url: string }[] }; external_urls: { spotify: string } } }>;
   const result: TrendingSong[] = [];
   for (const item of items) {
@@ -144,9 +151,12 @@ export async function getFeaturedPlaylists(
 ): Promise<TrendingPlaylist[]> {
   const res = await fetch(
     `${SPOTIFY_API}/browse/featured-playlists?limit=${limit}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } , cache: 'no-store' }
   );
-  if (!res.ok) return [];
+  if (!res.ok) {
+    console.error("[getFeaturedPlaylists] Spotify API Error:", res.status, await res.text());
+    return [];
+  }
   const data = await res.json();
   return ((data.playlists?.items ?? []) as Array<{ id: string; name: string; images: { url: string }[]; external_urls: { spotify: string }; tracks: { total: number }; description: string }>)
     .map((p) => ({

@@ -94,36 +94,4 @@ RULES:
   return lines.join("\n");
 }
 
-export function buildChatSystemPrompt(context?: {
-  topArtists?: string[];
-  topTracks?: string[];
-  musicGenres?: string[];
-  movieGenres?: string[];
-}): string {
-  const sections: string[] = [
-    `You are RecMe's AI assistant — a taste-aware recommendation engine that knows music and movies deeply.`,
-    `You can recommend both music and movies based on the user's mood, preferences, and conversation.`,
-  ];
 
-  if (context?.topArtists?.length) {
-    sections.push(`User's top artists: ${context.topArtists.slice(0, 10).join(", ")}`);
-  }
-
-  if (context?.topTracks?.length) {
-    sections.push(`User's top tracks: ${context.topTracks.slice(0, 10).join(", ")}`);
-  }
-
-  sections.push(`
-When recommending, always respond with structured JSON:
-
-For music:
-{"type": "music", "items": [{"title": "...", "artist": "...", "reason": "..."}]}
-
-For movies:
-{"type": "movie", "items": [{"title": "...", "year": 2024, "tmdbId": 0, "genres": ["..."], "reason": "..."}]}
-
-For general conversation (not a recommendation request), respond normally as text.
-Always be warm, confident, and conversational. Every recommendation must include a reason.`);
-
-  return sections.join("\n\n");
-}

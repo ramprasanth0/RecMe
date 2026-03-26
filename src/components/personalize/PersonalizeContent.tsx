@@ -6,9 +6,8 @@ import { Music2, Mic2, AlertCircle, ExternalLink } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
-import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
 import { cn } from "@/lib/utils";
-import type { TrendingPlaylist, TrendingSong } from "@/types/trending";
+import type { TrendingPlaylist } from "@/types/trending";
 
 interface Artist {
   name: string;
@@ -34,7 +33,6 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
   const [loading, setLoading] = useState(true);
 
   const [userPlaylists, setUserPlaylists] = useState<TrendingPlaylist[]>([]);
-  const [recommendedSongs, setRecommendedSongs] = useState<TrendingSong[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
   useEffect(() => {
@@ -54,10 +52,8 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
 
     Promise.all([
       fetch("/api/spotify/user-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
-      fetch("/api/spotify/recommendations").then((r) => r.json()).catch(() => ({ songs: [] })),
-    ]).then(([userPl, recsData]) => {
+    ]).then(([userPl]) => {
       setUserPlaylists(userPl.playlists ?? []);
-      setRecommendedSongs(recsData.songs ?? []);
       setPlaylistsLoading(false);
     });
   }, [hasSpotify]);
@@ -207,26 +203,7 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
           </div>
         )}
 
-        {/* Recommended For You */}
-        {hasSpotify && (
-          <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <Mic2 className="w-4 h-4 text-[var(--music-accent)]" />
-              <h2 className="text-sm font-semibold">Recommended For You</h2>
-            </div>
-            {playlistsLoading ? (
-              <SongsSkeleton />
-            ) : recommendedSongs.length === 0 ? (
-              <Empty text="No recommendations yet — listen more on Spotify." />
-            ) : (
-              <CardCarousel>
-                {recommendedSongs.map((song) => (
-                  <TrendingSongCard key={song.id} {...song} />
-                ))}
-              </CardCarousel>
-            )}
-          </div>
-        )}
+        {/* Recommended For You removed due to Spotify Web API deprecations */}
       </div>
     </main>
   );
@@ -295,16 +272,4 @@ function PlaylistsSkeleton() {
   );
 }
 
-function SongsSkeleton() {
-  return (
-    <div className="flex gap-3 animate-pulse">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i} className="w-36 flex-shrink-0 space-y-2">
-          <div className="aspect-square rounded-xl bg-surface-light" />
-          <div className="h-3 w-3/4 rounded bg-surface-light" />
-          <div className="h-2.5 w-1/2 rounded bg-surface-light" />
-        </div>
-      ))}
-    </div>
-  );
-}
+

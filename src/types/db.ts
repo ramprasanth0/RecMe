@@ -15,18 +15,6 @@ export interface DBUser {
   created_at: string;
 }
 
-export interface DBChatSession {
-  id: string;
-  user_id: string;
-  type: "music" | "movie";
-  messages: {
-    role: "user" | "assistant";
-    content: string;
-    timestamp: string;
-  }[];
-  created_at: string;
-}
-
 export interface DBRecommendation {
   id: string;
   user_id: string;

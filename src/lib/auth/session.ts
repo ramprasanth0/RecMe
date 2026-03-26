@@ -33,11 +33,12 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
   if (Date.now() < expiresAt - 60_000) return user;
 
   try {
+    console.log(`[session] Token expired for user ${user.id}, refreshing...`);
     const tokens = await refreshAccessToken(user.spotify_refresh_token);
     const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
     const admin = createAdminClient();
 
-    await admin
+    const { error: updateError } = await admin
       .from("users")
       .update({
         spotify_access_token: tokens.access_token,
@@ -48,6 +49,12 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
       })
       .eq("id", user.id);
 
+    if (updateError) {
+      console.error("[session] Failed to update user in Supabase after refresh:", updateError);
+    } else {
+      console.log(`[session] Successfully refreshed token for user ${user.id}`);
+    }
+
     return {
       ...user,
       spotify_access_token: tokens.access_token,
@@ -57,7 +64,7 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
       }),
     };
   } catch (err) {
-    console.warn("Spotify token refresh failed (stale tokens?):", err instanceof Error ? err.message : err);
+    console.error("[session] Spotify token refresh failed (stale tokens?):", err instanceof Error ? err.message : err);
     return user;
   }
 }

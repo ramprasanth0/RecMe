@@ -10,6 +10,8 @@ const SCOPES = [
   "user-library-read",
   "playlist-modify-public",
   "playlist-modify-private",
+  "playlist-read-private",
+  "playlist-read-collaborative",
 ].join(" ");
 
 export function getSpotifyAuthUrl(state: string, showDialog = false): string {

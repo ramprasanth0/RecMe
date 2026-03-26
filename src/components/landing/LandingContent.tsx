@@ -6,8 +6,6 @@ import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { CardCarousel } from "@/components/shared/CardCarousel";
-import { TrendingSongCard } from "@/components/shared/TrendingSongCard";
-import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Sparkles, AlertCircle } from "lucide-react";
@@ -22,6 +20,10 @@ const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Electric Feel", artist: "MGMT", reason: "Bright indie pop with irresistible groove" },
   { title: "Midnight City", artist: "M83", reason: "Euphoric synth-pop that feels like a night drive" },
   { title: "Do I Wanna Know?", artist: "Arctic Monkeys", reason: "Dark, brooding rock with a magnetic riff" },
+  { title: "Nights", artist: "Frank Ocean", reason: "A perfect beat switch halfway through" },
+  { title: "Losing It", artist: "FISHER", reason: "High energy tech house for late nights" },
+  { title: "The Less I Know The Better", artist: "Tame Impala", reason: "Iconic bassline with a psychedelic pop feel" },
+  { title: "Bad Guy", artist: "Billie Eilish", reason: "Whisper-pop with a heavy, bouncy bass" },
 ];
 
 const SAMPLE_MOVIES: MovieItem[] = [
@@ -31,6 +33,10 @@ const SAMPLE_MOVIES: MovieItem[] = [
   { title: "Moonlight", year: 2016, tmdbId: 376867, genres: ["Drama"], reason: "Intimate and beautifully crafted character study", rating: 7.4 },
   { title: "Blade Runner 2049", year: 2017, tmdbId: 335984, genres: ["Sci-Fi"], reason: "Visually stunning sequel that surpasses the original", rating: 7.5 },
   { title: "Parasite", year: 2019, tmdbId: 496243, genres: ["Thriller", "Drama"], reason: "Masterful genre-blending social commentary", rating: 8.5 },
+  { title: "Dune", year: 2021, tmdbId: 438631, genres: ["Sci-Fi", "Adventure"], reason: "A monumental cinematic achievement with stunning score", rating: 7.8 },
+  { title: "The Dark Knight", year: 2008, tmdbId: 155, genres: ["Action", "Crime", "Drama"], reason: "A gripping and psychologically complex thriller", rating: 9.0 },
+  { title: "Inception", year: 2010, tmdbId: 27205, genres: ["Action", "Sci-Fi", "Thriller"], reason: "Mind-bending original concept with incredible visuals", rating: 8.8 },
+  { title: "Everything Everywhere All at Once", year: 2022, tmdbId: 545611, genres: ["Action", "Adventure", "Sci-Fi"], reason: "Wildly inventive and deeply emotional multiverse story", rating: 8.0 },
 ];
 
 interface LandingContentProps {
@@ -43,28 +49,12 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   const [greeting, setGreeting] = useState<string>("");
 
   // Trending state
-  const [trendingSongs, setTrendingSongs] = useState<TrendingSong[]>([]);
-  const [featuredPlaylists, setFeaturedPlaylists] = useState<TrendingPlaylist[]>([]);
   const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
-  const [trendingMusicLoaded, setTrendingMusicLoaded] = useState(false);
   const [trendingMoviesLoaded, setTrendingMoviesLoaded] = useState(false);
 
   useEffect(() => {
     setGreeting(getGreeting());
   }, []);
-
-  // Fetch trending music (songs + playlists) on mount
-  useEffect(() => {
-    if (trendingMusicLoaded) return;
-    setTrendingMusicLoaded(true);
-    Promise.all([
-      fetch("/api/spotify/trending-songs").then((r) => r.json()).catch(() => ({ songs: [] })),
-      fetch("/api/spotify/featured-playlists").then((r) => r.json()).catch(() => ({ playlists: [] })),
-    ]).then(([songsData, playlistsData]) => {
-      setTrendingSongs(songsData.songs ?? []);
-      setFeaturedPlaylists(playlistsData.playlists ?? []);
-    });
-  }, [trendingMusicLoaded]);
 
   // Fetch trending movies when movies tab is opened
   useEffect(() => {
@@ -231,26 +221,6 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
               </CardCarousel>
             </motion.div>
           </AnimatePresence>
-        )}
-
-        {/* Trending rows — Music tab */}
-        {activeTab === "music" && (
-          <div className="mt-10 space-y-8">
-            {trendingSongs.length > 0 && (
-              <CardCarousel title="Trending Songs" accentColor="var(--music-accent)">
-                {trendingSongs.map((song) => (
-                  <TrendingSongCard key={song.id} {...song} />
-                ))}
-              </CardCarousel>
-            )}
-            {featuredPlaylists.length > 0 && (
-              <CardCarousel title="Featured Playlists" accentColor="var(--music-accent)">
-                {featuredPlaylists.map((pl) => (
-                  <TrendingPlaylistCard key={pl.id} {...pl} />
-                ))}
-              </CardCarousel>
-            )}
-          </div>
         )}
 
         {/* Trending rows — Movies tab */}
