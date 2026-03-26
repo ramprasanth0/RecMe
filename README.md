@@ -53,7 +53,7 @@ RecMe is a minimalistic, editorial-grade web app that uses your Spotify listenin
 | Styling | Tailwind CSS v3 + CSS variables + Framer Motion |
 | Database | Supabase (Postgres + RLS) |
 | Auth | Custom httpOnly cookie session over Supabase |
-| AI Engine | Google Gemini `gemini-2.0-flash` via `@google/genai` |
+| AI Engine | Google Gemini `gemini-2.5-flash` via `@google/genai` |
 | Music data | Spotify Web API |
 | Movie data | TMDB API |
 | Album art | iTunes Search API (server-side proxy) |
