@@ -104,7 +104,7 @@ export function UpgradeContent({ isPro, isAuthenticated }: UpgradeContentProps) 
             </div>
 
             <ul className="space-y-3 flex-1 mb-8">
-              {PRO_FEATURES_LIST.map(({ label, included, highlight }) => (
+              {PRO_FEATURES_LIST.map(({ label, highlight }) => (
                 <li key={label} className="flex items-center gap-2.5 text-sm">
                   <Check
                     className={cn(
