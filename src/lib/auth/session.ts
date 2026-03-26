@@ -19,20 +19,29 @@ export async function getCurrentUser(): Promise<DBUser | null> {
   return data as DBUser;
 }
 
-/** Get user with a fresh Spotify access token (refreshes if needed) */
+/** Get user with a fresh Spotify access token — only refreshes when token is expired or close to expiry */
 export async function getUserWithFreshToken(): Promise<DBUser | null> {
   const user = await getCurrentUser();
   if (!user || !user.spotify_refresh_token) return user;
 
-  // Try refreshing the token proactively
+  // null expiry → treat as expired so we refresh and store the timestamp going forward
+  const expiresAt = user.spotify_token_expires_at
+    ? new Date(user.spotify_token_expires_at).getTime()
+    : 0;
+
+  // Token is still valid with >60s to spare — skip the refresh entirely
+  if (Date.now() < expiresAt - 60_000) return user;
+
   try {
     const tokens = await refreshAccessToken(user.spotify_refresh_token);
+    const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
     const admin = createAdminClient();
 
     await admin
       .from("users")
       .update({
         spotify_access_token: tokens.access_token,
+        spotify_token_expires_at: tokenExpiresAt,
         ...(tokens.refresh_token && {
           spotify_refresh_token: tokens.refresh_token,
         }),
@@ -42,12 +51,12 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
     return {
       ...user,
       spotify_access_token: tokens.access_token,
+      spotify_token_expires_at: tokenExpiresAt,
       ...(tokens.refresh_token && {
         spotify_refresh_token: tokens.refresh_token,
       }),
     };
   } catch (err) {
-    // If refresh fails, return user with existing token — caller handles errors
     console.warn("Spotify token refresh failed (stale tokens?):", err instanceof Error ? err.message : err);
     return user;
   }

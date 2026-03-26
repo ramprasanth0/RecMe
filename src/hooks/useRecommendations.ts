@@ -24,6 +24,8 @@ interface UseRecommendationsReturn {
   error: string | null;
   lastMood: string | null;
   fetchRecs: (mood: string) => Promise<void>;
+  /** Trigger the auto-fetch silently (no lastMood set) — safe to call multiple times; fires once */
+  triggerAutoFetch: () => void;
 }
 
 export function useRecommendations(
@@ -97,7 +99,7 @@ export function useRecommendations(
         setIsLoading(false);
       }
     },
-    [options.type, options.topArtists, options.topTracks, options.favoriteGenres, options.movieGenres]
+    [options.type]
   );
 
   // Auto-fetch once on mount when requested
@@ -109,7 +111,14 @@ export function useRecommendations(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { items, isLoading, error, lastMood, fetchRecs };
+  // Callable trigger for deferred auto-fetch (e.g. when a tab is first opened)
+  const triggerAutoFetch = useCallback(() => {
+    if (!options.autoPrompt || hasFetched.current) return;
+    hasFetched.current = true;
+    fetchRecs(options.autoPrompt, true);
+  }, [fetchRecs, options.autoPrompt]);
+
+  return { items, isLoading, error, lastMood, fetchRecs, triggerAutoFetch };
 }
 
 /** Extract JSON object from a string that might have surrounding text or markdown fences */

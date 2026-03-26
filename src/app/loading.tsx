@@ -1,4 +1,4 @@
-export default function HomeLoading() {
+export default function RootLoading() {
   return (
     <div className="min-h-screen bg-background pt-20 px-4 sm:px-6 max-w-7xl mx-auto animate-pulse">
       {/* Greeting skeleton */}

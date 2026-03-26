@@ -25,11 +25,14 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    return Response.json({
-      posterPath: data.poster_path || null,
-      backdropPath: data.backdrop_path || null,
-      rating: data.vote_average || null,
-    });
+    return Response.json(
+      {
+        posterPath: data.poster_path || null,
+        backdropPath: data.backdrop_path || null,
+        rating: data.vote_average || null,
+      },
+      { headers: { "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600" } }
+    );
   } catch {
     return Response.json({ posterPath: null });
   }

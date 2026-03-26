@@ -251,16 +251,19 @@ Two compounding causes:
 ---
 
 ## BUG-17 · Sign-in page background image not visible
-**Time:** Session 2 · **Status:** ✅ Fixed · **Severity:** Medium
+**Time:** Session 2 (round 1) · Session 4 (round 2) · **Status:** ✅ Fixed · **Severity:** Medium
 
 **What happened:**
 The movie poster background on the `/signin` page was invisible — only the dark overlay was rendered.
 
 **Root cause:**
-The background used `<Image fill>` from `next/image`. Next.js `<Image fill>` renders as `position: absolute; height: 100%`. For `height: 100%` to resolve, the parent element needs an explicit `height` property — but the parent only had `min-height: 100vh` (Tailwind `min-h-screen`). With no explicit height, the image height resolved to `0` and nothing was displayed.
+`<Image fill>` from `next/image` requires the parent container to have an explicit `height`. The parent only had `min-height: 100vh` (`min-h-screen`), which does not satisfy `height: 100%` resolution in all browsers, so the image resolved to height `0`.
 
-**Fix:**
-Replaced `<Image fill>` with a plain `<div>` using inline `style={{ backgroundImage: \`url('...')\` }}` and Tailwind classes `bg-cover bg-center` — same pattern used on the working 404 page. No height resolution issue with CSS backgrounds.
+**Fix (round 1 — Session 2):**
+Replaced `<Image fill>` with a plain `<div>` using inline `style={{ backgroundImage }}` and Tailwind `bg-cover bg-center`. No height resolution issue with CSS backgrounds.
+
+**Fix (round 2 — Session 4):**
+Switched to a `fixed inset-0 overflow-hidden` wrapper that contains the `<Image fill>`. Because the wrapper uses `position: fixed` (viewport-relative), its dimensions are always exactly 100vw × 100vh regardless of the outer container's height. This restores Next.js image optimization (format conversion, CDN caching, lazy decode) that the CSS background approach bypassed.
 
 ---
 
@@ -308,4 +311,141 @@ Added a module-level boolean flag `logoAnimationDone` (outside the component, at
 
 ---
 
-**Total bugs:** 20 · **All resolved** ✅
+---
+
+## Session 4 — Audit & Optimization Pass
+
+The following were identified and resolved as part of a systematic codebase audit (not triggered by production incidents). All fixes were covered by a new Vitest regression suite (24 tests).
+
+---
+
+## OPT-01 · Spotify tokens serialised into RSC payload
+**Session:** 4 · **Severity:** Critical (security)
+
+**What happened:**
+`/app/profile/page.tsx` called `select("*")` on the `users` table. Next.js serialises the full row into the RSC payload, meaning `spotify_access_token` and `spotify_refresh_token` appeared in the HTML source sent to the browser.
+
+**Fix:**
+Narrowed `select()` to explicit safe columns: `id, email, display_name, avatar_url, spotify_id, preferences, created_at`.
+
+---
+
+## OPT-02 · Chat page crashed with 500 on DB failure
+**Session:** 4 · **Severity:** High
+
+**What happened:**
+Any Supabase error in `app/chat/page.tsx` propagated as an unhandled exception, returning a 500 page to the user.
+
+**Fix:**
+Wrapped the admin DB call in a `try/catch`. On failure, the page renders with `user=null` (graceful degradation) instead of crashing.
+
+---
+
+## OPT-03 · `/home` was the canonical landing — `/` just redirected
+**Session:** 4 · **Severity:** Medium (UX / SEO)
+
+**What happened:**
+`app/page.tsx` contained only `redirect("/home")`. All SSR auth logic, SEO metadata, and page content lived on `/home`. The canonical route advertised in the product was `/`, but it was never the real landing page.
+
+**Fix:**
+Moved all SSR logic to `app/page.tsx`. `app/home/page.tsx` now contains only `redirect("/")`. All internal `/home` hrefs updated to `/`.
+
+---
+
+## OPT-04 · Spotify token refreshed on every request regardless of expiry
+**Session:** 4 · **Severity:** Medium (performance / Spotify rate limit)
+
+**What happened:**
+`getUserWithFreshToken()` unconditionally called `refreshAccessToken()` on every invocation, even for tokens still valid for hours. This wasted a Spotify API call per authenticated request and could hit Spotify's token refresh rate limits.
+
+**Fix:**
+Added `spotify_token_expires_at timestamptz` column to the `users` table. Token refresh now fires only when the token is within 60 seconds of expiry. The column is written on both initial auth and on every successful refresh.
+
+**Migration required:**
+```sql
+alter table users
+  add column if not exists spotify_token_expires_at timestamptz;
+```
+
+---
+
+## OPT-05 · Double Spotify token refresh per personalise page load
+**Session:** 4 · **Severity:** Medium
+
+**What happened:**
+`PersonalizeContent.tsx` made two sequential fetches — `/api/spotify/top-artists` then `/api/spotify/top-tracks`. Each route called `getUserWithFreshToken()` independently. If the token needed refreshing, it was refreshed twice in parallel, causing a Supabase write conflict.
+
+**Fix:**
+Replaced the two routes with a single `/api/spotify/top-data` endpoint that calls `getUserWithFreshToken()` once, then fetches artists and tracks in parallel with `Promise.all`.
+
+---
+
+## OPT-06 · N+1 iTunes album art waterfall on every recommendation load
+**Session:** 4 · **Severity:** Medium (performance)
+
+**What happened:**
+`RecommendationCard` fetched album artwork client-side via `/api/itunes/artwork` — one request per card, after the card mounted. On a 6-card grid, this triggered 6 sequential waterfall fetches that staggered the visual layout.
+
+**Fix:**
+Moved iTunes artwork fetching server-side into the Gemini recommend route. The route batch-fetches artwork for all music items in parallel using `Promise.all` before returning the response. Cards arrive pre-populated with `albumArt` URLs.
+
+---
+
+## OPT-07 · Movie recs auto-fetched on page load even when Music tab was active
+**Session:** 4 · **Severity:** Low (wasted AI calls)
+
+**What happened:**
+Both music and movie `useRecommendations` hooks were initialised with `autoFetch: true` on page load, triggering Gemini calls for both tabs simultaneously — even though only the Music tab was visible.
+
+**Fix:**
+Movie hook initialised with `autoFetch: false`. Added `triggerAutoFetch()` to the hook interface. `LandingContent` calls `movieRecs.triggerAutoFetch()` when the Movies tab is first opened.
+
+---
+
+## OPT-08 · `/chat` unprotected — unauthenticated users could reach chat page
+**Session:** 4 · **Severity:** Medium (auth)
+
+**What happened:**
+`middleware.ts` protected `/personalize` and `/profile` but not `/chat`. An unauthenticated user could navigate directly to `/chat`.
+
+**Fix:**
+Added `/chat` to `PROTECTED_ROUTES` and the middleware `matcher` config.
+
+---
+
+## OPT-09 · Session update query lacked `user_id` filter
+**Session:** 4 · **Severity:** Medium (defense-in-depth)
+
+**What happened:**
+`PATCH /api/chat/sessions/[id]` verified session ownership with a `SELECT` query but the subsequent `UPDATE` only filtered on `id` — not `user_id`. If the ownership check were ever bypassed (e.g. a race condition or future refactor), the update could modify another user's session.
+
+**Fix:**
+Added `.eq("user_id", userId)` to the `UPDATE` query so both the verification and the mutation enforce ownership.
+
+---
+
+## OPT-10 · iTunes and TMDB proxy routes had no Cache-Control headers
+**Session:** 4 · **Severity:** Low (performance)
+
+**What happened:**
+`/api/itunes/artwork` and `/api/tmdb/poster` fetched from external APIs with server-side caching (`revalidate: 86400`) but returned no `Cache-Control` headers to the browser. Every card mount triggered a new request to the Next.js proxy even if the same image had been fetched seconds ago.
+
+**Fix:**
+Added `Cache-Control: public, max-age=86400, stale-while-revalidate=3600` to both route responses.
+
+---
+
+## OPT-11 · Silent catch blocks gave no user feedback on save/preference failures
+**Session:** 4 · **Severity:** Low (UX)
+
+**What happened:**
+`RecommendationCard` save failures and `ProfileClient` preferences save failures were swallowed silently. Users received no indication that their action had failed.
+
+**Fix:**
+- Bookmark button turns red for 2 seconds with title "Save failed" on save error
+- Save Preferences button shows error text below on failure; shows "Saved!" confirmation on success
+- Saved recs load failure shows an inline error message instead of empty state
+
+---
+
+**Total bugs/issues tracked:** 31 · **All resolved** ✅

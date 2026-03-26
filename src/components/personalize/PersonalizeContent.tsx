@@ -32,14 +32,14 @@ export function PersonalizeContent({ hasSpotify }: PersonalizeContentProps) {
       setLoading(false);
       return;
     }
-    Promise.all([
-      fetch("/api/spotify/top-artists").then((r) => r.json()),
-      fetch("/api/spotify/top-tracks").then((r) => r.json()),
-    ]).then(([artistData, trackData]) => {
-      setArtists(artistData.artists?.slice(0, 12) ?? []);
-      setTracks(trackData.tracks?.slice(0, 10) ?? []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetch("/api/spotify/top-data")
+      .then((r) => r.json())
+      .then((data) => {
+        setArtists(data.artists?.slice(0, 12) ?? []);
+        setTracks(data.tracks?.slice(0, 10) ?? []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, [hasSpotify]);
 
   return (

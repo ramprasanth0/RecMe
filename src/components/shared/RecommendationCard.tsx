@@ -44,6 +44,7 @@ function MusicCard({
   onAddToPlaylist?: (item: MusicItem) => void;
 }) {
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
   const [albumArt, setAlbumArt] = useState<string | null>(item.albumArt ?? null);
 
   useEffect(() => {
@@ -67,8 +68,16 @@ function MusicCard({
           item_data: { title: item.title, artist: item.artist, reason: item.reason },
         }),
       });
-      if (res.ok) setSaved(true);
-    } catch {}
+      if (res.ok) {
+        setSaved(true);
+      } else {
+        setSaveError(true);
+        setTimeout(() => setSaveError(false), 2000);
+      }
+    } catch {
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 2000);
+    }
   }
 
   return (
@@ -116,9 +125,11 @@ function MusicCard({
               "w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
               saved
                 ? "bg-[var(--music-accent)] text-black"
-                : "bg-white/15 backdrop-blur-sm text-white"
+                : saveError
+                  ? "bg-red-500/80 text-white"
+                  : "bg-white/15 backdrop-blur-sm text-white"
             )}
-            title={saved ? "Saved" : "Save"}
+            title={saved ? "Saved" : saveError ? "Save failed" : "Save"}
           >
             {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
           </button>
@@ -139,6 +150,7 @@ function MovieCard({ item }: { item: MovieItem }) {
   const [posterPath, setPosterPath] = useState<string | null>(item.posterPath ?? null);
   const [rating, setRating] = useState<number | null>(item.rating ?? null);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState(false);
 
   useEffect(() => {
     if (posterPath || !item.tmdbId || item.tmdbId === 0) return;
@@ -171,8 +183,16 @@ function MovieCard({ item }: { item: MovieItem }) {
           },
         }),
       });
-      if (res.ok) setSaved(true);
-    } catch {}
+      if (res.ok) {
+        setSaved(true);
+      } else {
+        setSaveError(true);
+        setTimeout(() => setSaveError(false), 2000);
+      }
+    } catch {
+      setSaveError(true);
+      setTimeout(() => setSaveError(false), 2000);
+    }
   }
 
   const posterUrl = posterPath
@@ -222,9 +242,11 @@ function MovieCard({ item }: { item: MovieItem }) {
                 "w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform",
                 saved
                   ? "bg-[var(--movie-accent)] text-black"
-                  : "bg-white/15 backdrop-blur-sm text-white"
+                  : saveError
+                    ? "bg-red-500/80 text-white"
+                    : "bg-white/15 backdrop-blur-sm text-white"
               )}
-              title={saved ? "Saved" : "Save"}
+              title={saved ? "Saved" : saveError ? "Save failed" : "Save"}
             >
               {saved ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
             </button>

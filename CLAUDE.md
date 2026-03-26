@@ -355,6 +355,62 @@ Built with Next.js · Supabase · Google Gemini · Spotify API · TMDB · Deploy
 📋 Changelog & Decision Log
 All changes, decisions, tools, and optimizations are documented here in reverse chronological order.
 ---
+v0.6 — 2026-03-26 · Security Audit, Regression Tests & Full Optimization Pass
+
+Change: Systematic audit of the entire codebase. Identified and resolved 11 issues across security, correctness, performance, and hygiene. Introduced a full regression test suite (Vitest + Playwright).
+
+Security fixes:
+- `app/profile/page.tsx` — Narrowed `select("*")` to explicit safe columns. Previously `spotify_access_token` and `spotify_refresh_token` were serialised into the RSC payload and visible in browser HTML.
+- `app/api/chat/sessions/[id]/route.ts` — Added `user_id` filter to the `UPDATE` query (defense-in-depth after the ownership `SELECT`).
+- `middleware.ts` — Added `/chat` to `PROTECTED_ROUTES` and the matcher; previously unauthenticated users could reach the chat page.
+
+Correctness fixes:
+- `app/chat/page.tsx` — DB failure now degrades gracefully (`user = null`) instead of crashing to 500.
+- `lib/auth/session.ts` — `getUserWithFreshToken()` now checks `spotify_token_expires_at` before refreshing. Token only refreshes when within 60 seconds of expiry. Previously refreshed unconditionally on every call.
+- `app/api/auth/callback/spotify/route.ts` — Writes `spotify_token_expires_at` on first auth and on every refresh.
+- `app/page.tsx` → now the canonical landing with full SSR logic. `app/home/page.tsx` → `redirect("/")`. All `/home` hrefs updated to `/`.
+- `components/landing/LandingContent.tsx` — Movie recs `autoFetch: false`; Movies tab triggers fetch only when first opened via `triggerAutoFetch()`.
+- `hooks/useRecommendations.ts` — Added `triggerAutoFetch()` to interface. Removed incorrect `useCallback` deps (`topArtists`, `topTracks`, etc.) that were listed but not used in the callback body.
+
+Performance fixes:
+- `app/api/gemini/recommend/route.ts` — iTunes artwork now batch-fetched server-side via `Promise.all` for all music items. Eliminates 6-per-page client-side waterfall requests.
+- `app/api/spotify/top-data/route.ts` — New combined endpoint replaces two separate `/top-artists` + `/top-tracks` routes. Single `getUserWithFreshToken()` call prevents double token refresh on personalise page load.
+- `app/api/itunes/artwork/route.ts` + `app/api/tmdb/poster/route.ts` — Added `Cache-Control: public, max-age=86400, stale-while-revalidate=3600` response headers.
+
+UX fixes:
+- `components/shared/RecommendationCard.tsx` — Save failures now turn the bookmark button red for 2 seconds.
+- `components/profile/ProfileClient.tsx` — Save Preferences shows "Saved!" confirmation and inline error text. Saved recs load failure renders a visible error message.
+
+Hygiene:
+- `lib/supabase/admin.ts` — Module-level singleton; one Supabase admin client per process.
+- `app/layout.tsx` + `tailwind.config.ts` — `Playfair_Display` loaded and wired to `font-display` Tailwind family (was falling back to Inter).
+- `components/shared/SpotifyIcon.tsx` — Extracted from inline duplicates in `app/signin/page.tsx` and `app/not-found.tsx`.
+- `app/signin/page.tsx` + `app/not-found.tsx` — Background image switched from CSS `style={{ backgroundImage }}` to `<Image fill>` inside a `fixed inset-0` wrapper. Restores Next.js image optimisation (CDN, format conversion) while avoiding the `min-h-screen` height-resolution issue documented in BUG-17.
+- `components/landing/LandingContent.tsx` — Removed duplicate `getGreeting()` function; imports from `lib/utils.ts`.
+- `app/api/gemini/route.ts` — Deleted (dead legacy streaming endpoint).
+- `components/dashboard/` — Deleted `DashboardContent.tsx`, `MoviesTab.tsx`, `MusicTab.tsx` (unreferenced stubs).
+
+New test infrastructure:
+- `vitest.config.ts` — Vitest configured with `@vitejs/plugin-react`, `environment: "node"`, path alias `@/`.
+- `playwright.config.ts` — E2E config targeting Chromium, `webServer` on port 3000.
+- `src/__tests__/setup.ts` — Global env stubs for all test files.
+- `src/__tests__/unit/profile-page.test.ts` — 4 tests: verifies `select()` never includes token columns.
+- `src/__tests__/unit/chat-page.test.ts` — 4 tests: verifies graceful degradation on DB success/fail/error/no-cookie.
+- `src/__tests__/unit/session-refresh.test.ts` — 6 tests: token expiry logic (future expiry skips refresh, near-expiry triggers, refresh updates DB and returns new token, etc.).
+- `src/__tests__/unit/proxy-cache-headers.test.ts` — 9 tests: iTunes and TMDB proxy routes return correct `Cache-Control` headers and status codes.
+- `src/__tests__/e2e/guest-landing.spec.ts` — Playwright: `/` loads without redirect, `/home` redirects to `/`, guest sees sign-in option.
+- `src/__tests__/e2e/protected-routes.spec.ts` — Playwright: protected routes redirect guests, token columns absent from page HTML.
+
+New DB migration required:
+```sql
+-- supabase/migrations/002_add_token_expiry.sql
+alter table users
+  add column if not exists spotify_token_expires_at timestamptz;
+```
+
+New devDependencies added: `vitest`, `@vitejs/plugin-react`, `@playwright/test`.
+
+---
 v0.5 — 2026-03-24 · AI Engine Switch: Claude → Gemini
 Change: Replaced Anthropic Claude SDK with Google Gemini SDK (`@google/genai`) as the AI recommendation engine.
 What changed:

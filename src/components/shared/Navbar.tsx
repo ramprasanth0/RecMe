@@ -16,7 +16,7 @@ interface NavbarProps {
 let logoAnimationDone = false;
 
 const NAV_LINKS = [
-  { href: "/home", label: "Home" },
+  { href: "/", label: "Home" },
   { href: "/personalize", label: "Personalize" },
   { href: "/profile", label: "Profile" },
 ];
@@ -51,7 +51,7 @@ export function Navbar({ user }: NavbarProps) {
     <>
       <nav className="fixed top-0 left-0 right-0 z-40 flex items-center px-6 py-4 border-b border-border bg-background backdrop-blur-md shadow-sm dark:shadow-none dark:bg-background/80">
         {/* Logo — left */}
-        <Link href="/home" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
+        <Link href="/" className="flex items-center gap-2 shrink-0" onClick={() => setMobileOpen(false)}>
           {/* Whole logo drifts right on expand, slides back in sync with ommend collapse */}
           <motion.span
             animate={logoPhase === "expanding" ? { x: 4 } : { x: 0 }}

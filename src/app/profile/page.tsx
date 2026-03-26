@@ -10,7 +10,11 @@ export default async function ProfilePage() {
 
   if (userId) {
     const admin = createAdminClient();
-    const { data } = await admin.from("users").select("*").eq("id", userId).single();
+    const { data } = await admin
+      .from("users")
+      .select("id, email, display_name, avatar_url, spotify_id, preferences, created_at")
+      .eq("id", userId)
+      .single();
     user = data as DBUser | null;
   }
 

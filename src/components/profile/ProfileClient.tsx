@@ -32,12 +32,15 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
   );
   const [savedRecs, setSavedRecs] = useState<SavedRec[]>([]);
   const [saving, setSaving] = useState(false);
+  const [prefsError, setPrefsError] = useState<string | null>(null);
+  const [prefsSaved, setPrefsSaved] = useState(false);
+  const [recsError, setRecsError] = useState(false);
 
   useEffect(() => {
     fetch("/api/recommendations")
       .then((res) => res.json())
       .then((data) => setSavedRecs(data.recommendations || []))
-      .catch(() => {});
+      .catch(() => setRecsError(true));
   }, []);
 
   function toggleGenre(
@@ -54,8 +57,10 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
 
   async function savePreferences() {
     setSaving(true);
+    setPrefsError(null);
+    setPrefsSaved(false);
     try {
-      await fetch("/api/profile/preferences", {
+      const res = await fetch("/api/profile/preferences", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -63,15 +68,24 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
           movie_genres: movieGenres,
         }),
       });
-    } catch {}
+      if (!res.ok) throw new Error("Failed to save");
+      setPrefsSaved(true);
+      setTimeout(() => setPrefsSaved(false), 3000);
+    } catch {
+      setPrefsError("Could not save preferences — please try again.");
+    }
     setSaving(false);
   }
 
   async function deleteRec(id: string) {
     try {
-      await fetch(`/api/recommendations/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/recommendations/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete");
       setSavedRecs((prev) => prev.filter((r) => r.id !== id));
-    } catch {}
+    } catch {
+      // Non-blocking: log but don't interrupt the UI — item stays in list
+      console.error("Failed to delete recommendation");
+    }
   }
 
   if (!user) {
@@ -182,13 +196,18 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
           ))}
         </div>
 
-        <button
-          onClick={savePreferences}
-          disabled={saving}
-          className="text-sm px-5 py-2.5 rounded-lg bg-foreground text-background font-medium hover:opacity-90 transition-all disabled:opacity-50"
-        >
-          {saving ? "Saving..." : "Save Preferences"}
-        </button>
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={savePreferences}
+            disabled={saving}
+            className="text-sm px-5 py-2.5 rounded-lg bg-foreground text-background font-medium hover:opacity-90 transition-all disabled:opacity-50"
+          >
+            {saving ? "Saving..." : prefsSaved ? "Saved!" : "Save Preferences"}
+          </button>
+          {prefsError && (
+            <p className="text-xs text-red-500">{prefsError}</p>
+          )}
+        </div>
       </section>
 
       {/* Saved Recommendations */}
@@ -201,7 +220,11 @@ export function ProfileClient({ user }: { user: DBUser | null }) {
           </span>
         </div>
 
-        {savedRecs.length === 0 ? (
+        {recsError ? (
+          <p className="text-sm text-red-500 py-4 text-center">
+            Could not load saved recommendations — please refresh.
+          </p>
+        ) : savedRecs.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
             Save music or movies from your recommendations to see them here.
           </p>

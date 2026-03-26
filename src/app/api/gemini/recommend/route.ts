@@ -126,17 +126,33 @@ export async function POST(request: NextRequest) {
         const rawParsed = JSON.parse(text.replace(/```(?:json)?\n?/g, "").trim());
         const validated = MusicRecommendationSchema.parse(rawParsed);
 
+        // Batch-fetch iTunes artwork for all tracks server-side so cards don't
+        // each fire their own /api/itunes/artwork request on the client
+        const fetchArtwork = async (title: string, artist: string): Promise<string | null> => {
+          try {
+            const q = encodeURIComponent(`${title} ${artist}`);
+            const res = await fetch(
+              `https://itunes.apple.com/search?term=${q}&media=music&entity=musicTrack&limit=1`,
+              { next: { revalidate: 86400 } }
+            );
+            const data = await res.json();
+            const url: string | undefined = data.results?.[0]?.artworkUrl100;
+            return url ? url.replace("100x100bb", "600x600bb") : null;
+          } catch {
+            return null;
+          }
+        };
+
         // If user has Spotify connected, resolve URIs now and filter unmatched tracks
         if (user?.spotify_access_token) {
           const enriched = await Promise.allSettled(
             validated.items.map(async (item) => {
-              const uri = await searchTrack(
-                user.spotify_access_token!,
-                item.title,
-                item.artist
-              );
+              const [uri, albumArt] = await Promise.all([
+                searchTrack(user.spotify_access_token!, item.title, item.artist),
+                fetchArtwork(item.title, item.artist),
+              ]);
               if (!uri) return null; // drop tracks not found on Spotify
-              return { ...item, spotifyUri: uri };
+              return { ...item, spotifyUri: uri, ...(albumArt && { albumArt }) };
             })
           );
           const items = enriched
@@ -145,7 +161,15 @@ export async function POST(request: NextRequest) {
           return Response.json({ type: "music", items });
         }
 
-        return Response.json({ type: "music", items: validated.items });
+        // No Spotify — still enrich with artwork
+        const enriched = await Promise.allSettled(
+          validated.items.map(async (item) => {
+            const albumArt = await fetchArtwork(item.title, item.artist);
+            return albumArt ? { ...item, albumArt } : item;
+          })
+        );
+        const items = enriched.map((r) => (r.status === "fulfilled" ? r.value : null)).filter(Boolean);
+        return Response.json({ type: "music", items });
       } catch {
         return Response.json({ text });
       }

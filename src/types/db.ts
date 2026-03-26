@@ -4,6 +4,7 @@ export interface DBUser {
   spotify_id: string | null;
   spotify_access_token: string | null;
   spotify_refresh_token: string | null;
+  spotify_token_expires_at: string | null;
   display_name: string | null;
   avatar_url: string | null;
   preferences: {

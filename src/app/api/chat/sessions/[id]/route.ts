@@ -42,7 +42,8 @@ export async function PATCH(
   const { error } = await admin
     .from("chat_sessions")
     .update({ messages: parsed.messages })
-    .eq("id", params.id);
+    .eq("id", params.id)
+    .eq("user_id", userId);
 
   if (error) {
     console.error("Failed to update session:", error);

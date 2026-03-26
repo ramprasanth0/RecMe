@@ -8,13 +8,17 @@ export default async function ChatPage() {
   let user = null;
 
   if (userId) {
-    const admin = createAdminClient();
-    const { data } = await admin
-      .from("users")
-      .select("display_name, avatar_url")
-      .eq("id", userId)
-      .single();
-    user = data;
+    try {
+      const admin = createAdminClient();
+      const { data } = await admin
+        .from("users")
+        .select("display_name, avatar_url")
+        .eq("id", userId)
+        .single();
+      user = data;
+    } catch {
+      // DB failure — render page with no user context rather than crashing
+    }
   }
 
   return (

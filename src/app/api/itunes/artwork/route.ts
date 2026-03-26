@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
     if (!art) {
       return Response.json({ url: null });
     }
-    return Response.json({ url: art.replace("100x100bb", "600x600bb") });
+    return Response.json(
+      { url: art.replace("100x100bb", "600x600bb") },
+      { headers: { "Cache-Control": "public, max-age=86400, stale-while-revalidate=3600" } }
+    );
   } catch {
     return Response.json({ url: null });
   }

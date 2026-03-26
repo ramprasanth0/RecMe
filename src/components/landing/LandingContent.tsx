@@ -8,6 +8,7 @@ import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { Sparkles, AlertCircle } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
+import { getGreeting } from "@/lib/utils";
 
 const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Blinding Lights", artist: "The Weeknd", reason: "Cinematic synths that match late-night energy" },
@@ -34,6 +35,11 @@ interface LandingContentProps {
 
 export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
+
+  function handleTabChange(tab: "music" | "movies") {
+    setActiveTab(tab);
+    if (tab === "movies" && isAuthenticated) movieRecs.triggerAutoFetch();
+  }
   const [greeting, setGreeting] = useState<string>("");
   useEffect(() => {
     setGreeting(getGreeting());
@@ -44,9 +50,10 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
     autoFetch: isAuthenticated,
     autoPrompt: "songs I probably haven't heard yet but would love — deep cuts and hidden gems from artists similar to my taste, no chart hits or songs already in my top tracks",
   });
+  // Movies auto-fetch only when the Movies tab is first opened, not on initial load
   const movieRecs = useRecommendations({
     type: "movie",
-    autoFetch: isAuthenticated,
+    autoFetch: false,
     autoPrompt: "movies that match my preferred genres — acclaimed and underrated films I might have missed",
   });
 
@@ -91,7 +98,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
 
         {/* Tab switcher */}
         <div className="flex justify-center mb-8">
-          <TabSwitcher defaultTab="music" onTabChange={setActiveTab} />
+          <TabSwitcher defaultTab="music" onTabChange={handleTabChange} />
         </div>
 
         {/* AI mood input */}
@@ -193,9 +200,3 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   );
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 17) return "Good afternoon";
-  return "Good evening";
-}

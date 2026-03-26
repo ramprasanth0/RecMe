@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
       .eq("spotify_id", profile.id)
       .single();
 
+    const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
     if (existingUser) {
       // Update existing user's tokens
       await admin
@@ -47,6 +49,7 @@ export async function GET(request: NextRequest) {
         .update({
           spotify_access_token: tokens.access_token,
           spotify_refresh_token: tokens.refresh_token,
+          spotify_token_expires_at: tokenExpiresAt,
           display_name: profile.display_name,
           avatar_url: profile.images?.[0]?.url ?? null,
         })
@@ -58,6 +61,7 @@ export async function GET(request: NextRequest) {
         spotify_id: profile.id,
         spotify_access_token: tokens.access_token,
         spotify_refresh_token: tokens.refresh_token,
+        spotify_token_expires_at: tokenExpiresAt,
         display_name: profile.display_name,
         avatar_url: profile.images?.[0]?.url ?? null,
         preferences: {},
