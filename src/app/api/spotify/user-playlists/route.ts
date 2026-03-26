@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
 import { getUserPlaylists } from "@/lib/spotify";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const user = await getUserWithFreshToken();
