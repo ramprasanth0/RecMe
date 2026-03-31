@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const options = {
       amount: 29900, // amount in paise (₹299.00)
       currency: "INR",
-      receipt: `receipt_${userId}_${Date.now()}`,
+      receipt: `rcpt_${userId.slice(0, 8)}_${Date.now()}`,
     };
 
     const order = await razorpay.orders.create(options);
