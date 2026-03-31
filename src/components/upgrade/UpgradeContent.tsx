@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Check, X, Sparkles, Crown } from "lucide-react";
+import { Check, X, Sparkles, Crown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProBadge } from "@/components/shared/ProBadge";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface UpgradeContentProps {
   isPro: boolean;
@@ -29,6 +31,101 @@ const PRO_FEATURES_LIST = [
 ];
 
 export function UpgradeContent({ isPro, isAuthenticated }: UpgradeContentProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const handlePayment = async () => {
+    try {
+      if (!isAuthenticated) {
+        window.location.href = "/signin";
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Dynamically load Razorpay SDK
+      const loadScript = () => {
+        return new Promise((resolve) => {
+          const script = document.createElement("script");
+          script.src = "https://checkout.razorpay.com/v1/checkout.js";
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const isScriptLoaded = await loadScript();
+      if (!isScriptLoaded) {
+        alert("Payment gateway failed to load. Please check your internet connection.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Hit our backend to create a razorpay order
+      const res = await fetch("/api/razorpay/create-order", { method: "POST" });
+      const data = await res.json();
+
+      if (!data.orderId || !data.key) {
+        alert("Failed to initialize order. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      // Initialize Checkout
+      const options = {
+        key: data.key, 
+        amount: "29900", // 299.00 in paise
+        currency: "INR",
+        name: "RecMe",
+        description: "RecMe Pro Tier Upgrade",
+        order_id: data.orderId,
+        handler: async function (response: any) {
+          try {
+            // Verify payment
+            const verifyRes = await fetch("/api/razorpay/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+            
+            const verifyData = await verifyRes.json();
+            
+            if (verifyData.success) {
+              router.push("/upgrade/success");
+            } else {
+              alert("Payment verification failed! Please contact support.");
+            }
+          } catch (err) {
+            console.error(err);
+            alert("Error verifying payment.");
+          }
+        },
+        theme: {
+          color: "#1db954", // Music accent color
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      
+      paymentObject.on("payment.failed", function (response: any) {
+        console.error(response.error);
+        alert("Payment failed: " + response.error.description);
+      });
+
+      paymentObject.open();
+
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong processing your request.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="min-h-screen pt-24 px-4 sm:px-6 pb-16">
       <div className="max-w-4xl mx-auto">
@@ -129,17 +226,24 @@ export function UpgradeContent({ isPro, isAuthenticated }: UpgradeContentProps) 
               </div>
             ) : (
               <button
-                disabled
-                className="w-full py-3 rounded-lg text-sm font-semibold bg-[var(--music-accent)] text-black hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                onClick={handlePayment}
+                disabled={isLoading}
+                className="w-full py-3 rounded-lg text-sm font-semibold bg-[var(--music-accent)] text-black hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2 hover:scale-[1.02] active:scale-[0.98]"
               >
-                <Sparkles className="w-4 h-4" />
-                Coming Soon
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4" />
+                    Upgrade Now
+                  </>
+                )}
               </button>
             )}
 
             {!isPro && (
               <p className="text-[10px] text-muted-foreground/50 text-center mt-2">
-                Payment via Razorpay — launching soon
+                Secured by Razorpay • One-time payment
               </p>
             )}
           </div>
