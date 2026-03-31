@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { createClient } from "@/lib/supabase/server";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST() {
   try {
-    const supabase = await createClient();
+    const supabase = createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {

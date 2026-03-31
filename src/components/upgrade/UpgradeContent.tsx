@@ -12,6 +12,27 @@ interface UpgradeContentProps {
   isAuthenticated: boolean;
 }
 
+interface RazorpaySuccessResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
+interface RazorpayErrorResponse {
+  error: {
+    code: string;
+    description: string;
+    source: string;
+    step: string;
+    reason: string;
+    metadata: {
+      order_id: string;
+      payment_id: string;
+    };
+  };
+}
+
+
 const STANDARD_FEATURES = [
   { label: "AI Music & Movie Recommendations", included: true },
   { label: "Trending Charts (US & India)", included: true },
@@ -79,7 +100,7 @@ export function UpgradeContent({ isPro, isAuthenticated }: UpgradeContentProps) 
         name: "RecMe",
         description: "RecMe Pro Tier Upgrade",
         order_id: data.orderId,
-        handler: async function (response: any) {
+        handler: async function (response: RazorpaySuccessResponse) {
           try {
             // Verify payment
             const verifyRes = await fetch("/api/razorpay/verify", {
@@ -109,9 +130,10 @@ export function UpgradeContent({ isPro, isAuthenticated }: UpgradeContentProps) 
         },
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const paymentObject = new (window as any).Razorpay(options);
       
-      paymentObject.on("payment.failed", function (response: any) {
+      paymentObject.on("payment.failed", function (response: RazorpayErrorResponse) {
         console.error(response.error);
         alert("Payment failed: " + response.error.description);
       });
