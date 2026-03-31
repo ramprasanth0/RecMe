@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
