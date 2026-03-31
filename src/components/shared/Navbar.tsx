@@ -114,28 +114,31 @@ export function Navbar({ user, isPro }: NavbarProps) {
                 )}
               </button>
 
-              {/* PRO badge — desktop only */}
-              {isPro && <ProBadge size="sm" />}
-
-              {/* Profile avatar — desktop only */}
+              {/* Profile avatar / PRO badge — desktop only */}
               <Link
                 href="/profile"
-                className={cn(
-                  "hidden sm:flex w-11 h-11 rounded-full items-center justify-center",
-                  "bg-surface-light border border-border hover:border-border transition-colors",
-                  pathname === "/profile" && "border-border"
-                )}
+                className="hidden sm:flex transition-transform hover:scale-105 active:scale-95"
               >
-                {user.avatar_url ? (
-                  <Image
-                    src={user.avatar_url}
-                    alt=""
-                    width={44}
-                    height={44}
-                    className="w-full h-full rounded-full object-cover"
-                  />
+                {isPro ? (
+                  <ProBadge size="md" avatarUrl={user.avatar_url} />
                 ) : (
-                  <User className="w-4 h-4 text-muted-foreground" />
+                  <div className={cn(
+                    "w-11 h-11 rounded-full flex items-center justify-center overflow-hidden",
+                    "bg-surface-light border border-border transition-colors",
+                    pathname === "/profile" && "border-white/20"
+                  )}>
+                    {user.avatar_url ? (
+                      <Image
+                        src={user.avatar_url}
+                        alt=""
+                        width={44}
+                        height={44}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User className="w-4 h-4 text-muted-foreground" />
+                    )}
+                  </div>
                 )}
               </Link>
               <form action="/api/auth/logout" method="POST" className="hidden sm:block">
@@ -193,15 +196,18 @@ export function Navbar({ user, isPro }: NavbarProps) {
                   onClick={() => setMobileOpen(false)}
                   className="flex items-center gap-3 py-2"
                 >
-                  <div className="w-8 h-8 rounded-full bg-surface-light border border-border flex items-center justify-center overflow-hidden">
-                    {user.avatar_url ? (
-                      <Image src={user.avatar_url} alt="" width={32} height={32} className="w-full h-full object-cover" />
-                    ) : (
-                      <User className="w-3.5 h-3.5 text-muted-foreground" />
-                    )}
-                  </div>
+                  {isPro ? (
+                    <ProBadge size="sm" avatarUrl={user.avatar_url} />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-surface-light border border-border flex items-center justify-center overflow-hidden">
+                      {user.avatar_url ? (
+                        <Image src={user.avatar_url} alt="" width={32} height={32} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-3.5 h-3.5 text-muted-foreground" />
+                      )}
+                    </div>
+                  )}
                   <span className="text-sm text-muted-foreground">{user.display_name ?? "Profile"}</span>
-                  {isPro && <ProBadge size="sm" className="ml-1" />}
                 </Link>
                 <form action="/api/auth/logout" method="POST">
                   <button

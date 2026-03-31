@@ -106,23 +106,26 @@ export function ProfileClient({ user, isPro }: { user: DBUser | null; isPro: boo
           <h2 className="text-base font-semibold">Account</h2>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-          {user.avatar_url ? (
-            <Image
-              src={user.avatar_url}
-              alt=""
-              width={48}
-              height={48}
-              className="rounded-full shrink-0"
-            />
+          {isPro ? (
+            <ProBadge size="lg" avatarUrl={user.avatar_url} className="shrink-0" />
           ) : (
-            <div className="w-12 h-12 rounded-full bg-surface-light flex items-center justify-center shrink-0">
-              <User className="w-5 h-5 text-muted-foreground" />
-            </div>
+            user.avatar_url ? (
+              <Image
+                src={user.avatar_url}
+                alt=""
+                width={48}
+                height={48}
+                className="rounded-full shrink-0 object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-surface-light flex items-center justify-center shrink-0">
+                <User className="w-5 h-5 text-muted-foreground" />
+              </div>
+            )
           )}
           <div className="min-w-0 flex-1">
             <p className="font-medium truncate flex items-center gap-2">
               {user.display_name || "User"}
-              {isPro && <ProBadge size="md" />}
             </p>
             <p className="text-sm text-muted-foreground truncate">{user.email}</p>
           </div>
