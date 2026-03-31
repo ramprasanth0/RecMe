@@ -1,15 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
     
-    const supabase = createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const userId = req.cookies.get("recme_user_id")?.value;
 
-    if (!user) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -35,10 +34,11 @@ export async function POST(req: Request) {
     }
 
     // Payment is verified. Update the user to Pro.
-    const { error: updateError } = await supabase
+    const admin = createAdminClient();
+    const { error: updateError } = await admin
       .from("users")
       .update({ is_pro: true })
-      .eq("id", user.id);
+      .eq("id", userId);
 
     if (updateError) {
       console.error("Error updating user to Pro:", updateError);

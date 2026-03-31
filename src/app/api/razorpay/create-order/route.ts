@@ -1,13 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import Razorpay from "razorpay";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const userId = req.cookies.get("recme_user_id")?.value;
 
-    if (!user) {
+    if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,7 +25,7 @@ export async function POST() {
     const options = {
       amount: 29900, // amount in paise (₹299.00)
       currency: "INR",
-      receipt: `receipt_${user.id}_${Date.now()}`,
+      receipt: `receipt_${userId}_${Date.now()}`,
     };
 
     const order = await razorpay.orders.create(options);
