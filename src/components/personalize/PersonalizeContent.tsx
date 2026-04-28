@@ -42,6 +42,10 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
   const [userPlaylists, setUserPlaylists] = useState<TrendingPlaylist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
 
+  const [tasteProfile, setTasteProfile] = useState<Record<string, number> | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [currentTrackFeatures, setCurrentTrackFeatures] = useState<any>(null);
+
   const { playTrack, playContext, currentTrack, currentContextUri, isPlaying } = useSpotifyPlayer();
 
   useEffect(() => {
@@ -66,7 +70,28 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
       setUserPlaylists(userPl.playlists ?? []);
       setPlaylistsLoading(false);
     });
+
+    fetch("/api/spotify/taste-profile")
+      .then((r) => r.json())
+      .then((data) => {
+        setTasteProfile(data.profile);
+        setProfileLoading(false);
+      })
+      .catch(() => setProfileLoading(false));
   }, [hasSpotify]);
+
+  useEffect(() => {
+    if (currentTrack?.id) {
+      fetch(`/api/spotify/audio-features?ids=${currentTrack.id}`)
+        .then((r) => r.json())
+        .then((data) => {
+          setCurrentTrackFeatures(data[0]);
+        })
+        .catch(() => setCurrentTrackFeatures(null));
+    } else {
+      setCurrentTrackFeatures(null);
+    }
+  }, [currentTrack?.id]);
 
   // Derive recent albums and artists from recentTracks
   const recentAlbums = Array.from(new Map(recentTracks.filter(t => t.album?.uri).map(t => [t.album.uri, t.album])).values()).slice(0, 5);
@@ -243,6 +268,96 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
               )}
             </div>
           )}
+        </div>
+
+        {/* YOUR VIBE / TASTE PROFILE */}
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold font-display tracking-tight border-b border-border pb-2">Your Vibe</h2>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Taste Profile Graph */}
+            <div className="lg:col-span-2 rounded-xl bg-surface border border-border p-6 space-y-6">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <h3 className="font-semibold">Taste Profile</h3>
+                  <p className="text-xs text-muted-foreground text-balance">Based on your top 50 tracks this month.</p>
+                </div>
+                <div className="px-3 py-1 rounded-full bg-surface-light border border-border text-[10px] font-bold uppercase tracking-wider text-muted-foreground">AI Analysis</div>
+              </div>
+
+              {profileLoading ? (
+                <div className="h-64 flex items-center justify-center animate-pulse bg-surface-light rounded-lg" />
+              ) : !tasteProfile ? (
+                <Empty text="Not enough data to generate your taste profile." />
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-8 pt-4">
+                  {Object.entries(tasteProfile).map(([key, value]) => (
+                    <div key={key} className="space-y-3">
+                      <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+                        <span>{key}</span>
+                        <span className="text-[var(--music-accent)]">{Math.round(value * 100)}%</span>
+                      </div>
+                      <div className="h-2 bg-surface-light rounded-full overflow-hidden border border-white/5">
+                        <motion.div 
+                          initial={{ width: 0 }}
+                          animate={{ width: `${value * 100}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="h-full bg-gradient-to-r from-[var(--music-accent)] to-emerald-400 shadow-[0_0_10px_rgba(29,185,84,0.4)]"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Current Track Vibe */}
+            <div className="rounded-xl bg-surface border border-border p-6 space-y-4 flex flex-col">
+              <div className="flex items-center gap-2">
+                <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
+                <h3 className="font-semibold">Now Playing Analysis</h3>
+              </div>
+              
+              {!currentTrack ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 border-2 border-dashed border-border rounded-lg p-4">
+                  <Play className="w-8 h-8 text-muted-foreground/20" />
+                  <p className="text-xs text-muted-foreground">Play a track to see its audio features.</p>
+                </div>
+              ) : !currentTrackFeatures ? (
+                <div className="flex-1 flex items-center justify-center animate-pulse bg-surface-light rounded-lg" />
+              ) : (
+                <div className="flex-1 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-12 h-12 rounded overflow-hidden">
+                      {currentTrack.album?.images?.[0]?.url && <Image src={currentTrack.album.images[0].url} alt="" fill className="object-cover" />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold truncate">{currentTrack.name}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">{currentTrack.artists[0]?.name}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3 pt-2">
+                    <VibeStat label="Energy" value={currentTrackFeatures.energy} />
+                    <VibeStat label="Mood" value={currentTrackFeatures.valence} sub="Sad" sub2="Happy" />
+                    <VibeStat label="Dance" value={currentTrackFeatures.danceability} />
+                    <VibeStat label="Acoustic" value={currentTrackFeatures.acousticness} />
+                  </div>
+
+                  <div className="mt-auto pt-4 flex gap-4">
+                    <div className="flex-1 text-center p-2 rounded-lg bg-surface-light border border-border">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Tempo</p>
+                      <p className="text-lg font-mono font-bold">{Math.round(currentTrackFeatures.tempo)} <span className="text-[10px] font-normal">BPM</span></p>
+                    </div>
+                    <div className="flex-1 text-center p-2 rounded-lg bg-surface-light border border-border">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Key</p>
+                      <p className="text-lg font-mono font-bold">{formatKey(currentTrackFeatures.key, currentTrackFeatures.mode)}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* STATS SECTION (Togglable) */}
@@ -464,4 +579,33 @@ function PlaylistsSkeleton() {
       ))}
     </div>
   );
+}
+
+function VibeStat({ label, value, sub, sub2 }: { label: string; value: number; sub?: string; sub2?: string }) {
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground">
+        <span>{label}</span>
+        <span>{Math.round(value * 100)}%</span>
+      </div>
+      <div className="h-1.5 bg-surface-light rounded-full overflow-hidden">
+        <motion.div 
+          initial={{ width: 0 }}
+          animate={{ width: `${value * 100}%` }}
+          className="h-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+        />
+      </div>
+      {(sub || sub2) && (
+        <div className="flex justify-between text-[8px] uppercase text-muted-foreground/60 font-medium">
+          <span>{sub}</span>
+          <span>{sub2}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function formatKey(key: number, mode: number) {
+  const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  return `${keys[key]} ${mode === 1 ? 'Maj' : 'Min'}`;
 }

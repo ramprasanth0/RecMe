@@ -28,6 +28,8 @@ interface PlayerContextType {
   seek: (ms: number) => Promise<void>;
   setVolume: (volume: number) => Promise<void>;
   dismiss: () => Promise<void>;
+  queue: any[];
+  refreshQueue: () => Promise<void>;
 }
 
 const SpotifyPlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -43,6 +45,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [token, setToken] = useState<string | null>(null);
+  const [queue, setQueue] = useState<any[]>([]);
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -104,6 +107,11 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       setIsPlaying(!state.paused);
       setPosition(state.position);
       setDuration(state.duration);
+      
+      // Update queue when track changes
+      if (state.track_window.next_tracks) {
+        setQueue(state.track_window.next_tracks);
+      }
     });
 
     spotifyPlayer.connect();
@@ -242,6 +250,19 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     setCurrentTrack(null);
   }, [player]);
 
+  const refreshQueue = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/spotify/queue");
+      if (res.ok) {
+        const data = await res.json();
+        setQueue(data.queue || []);
+      }
+    } catch (e) {
+      console.error("Failed to refresh queue", e);
+    }
+  }, [token]);
+
   const value = {
     player,
     deviceId,
@@ -261,6 +282,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     seek,
     setVolume,
     dismiss,
+    queue,
+    refreshQueue,
   };
 
   return (

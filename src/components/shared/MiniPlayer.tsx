@@ -3,7 +3,7 @@
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, ListMusic, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
 function formatTime(ms: number) {
@@ -14,24 +14,16 @@ function formatTime(ms: number) {
 }
 
 export function MiniPlayer() {
-  const {
-    isActive,
-    currentTrack,
-    isPlaying,
-    position,
-    duration,
-    togglePlay,
-    next,
-    prev,
-    seek,
-    setVolume,
     dismiss,
+    queue,
+    refreshQueue,
   } = useSpotifyPlayer();
 
   const [volumeLevel, setVolumeLevel] = useState(0.5);
   const [isMuted, setIsMuted] = useState(false);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubPosition, setScrubPosition] = useState(0);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   // Sync effect for <body> class
   useEffect(() => {
@@ -93,10 +85,16 @@ export function MiniPlayer() {
       >
         {/* Left: Track Info */}
         <div className="flex items-center gap-3 w-1/3 min-w-0">
-          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light">
+          <div 
+            className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light group/art cursor-pointer"
+            onClick={() => setIsExpanded(true)}
+          >
             {albumArt && (
-              <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
+              <Image src={albumArt} alt={currentTrack.name} fill className="object-cover group-hover/art:scale-110 transition-transform duration-500" />
             )}
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/art:opacity-100 flex items-center justify-center transition-opacity">
+              <ChevronUp className="w-5 h-5 text-white" />
+            </div>
           </div>
           <div className="min-w-0 flex flex-col justify-center">
             <p className="text-sm font-semibold text-white truncate">{currentTrack.name}</p>
@@ -208,6 +206,153 @@ export function MiniPlayer() {
           </div>
         </div>
       </motion.div>
+
+      {/* Expanded Player Overlay */}
+      <AnimatePresence>
+        {isExpanded && (
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+            className="fixed inset-0 z-[60] bg-background flex flex-col"
+          >
+            {/* Background Glow */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div 
+                className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px]" 
+                style={{ backgroundColor: 'var(--music-accent)' }}
+              />
+              <div 
+                className="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px]" 
+                style={{ backgroundColor: 'white' }}
+              />
+            </div>
+
+            {/* Header */}
+            <div className="relative z-10 flex items-center justify-between p-6">
+              <button 
+                onClick={() => setIsExpanded(false)}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <ChevronDown className="w-6 h-6" />
+              </button>
+              <div className="text-center">
+                <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Now Playing</p>
+                <p className="text-xs font-medium">{currentTrack.album.name}</p>
+              </div>
+              <button 
+                onClick={dismiss}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="relative z-10 flex-1 flex flex-col lg:flex-row items-center justify-center px-6 lg:px-12 gap-12 lg:gap-24 overflow-hidden py-8">
+              
+              {/* Left: Artwork Large */}
+              <motion.div 
+                layoutId="expanded-art"
+                className="relative w-full max-w-[320px] lg:max-w-[480px] aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/50"
+              >
+                {albumArt && (
+                  <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
+                )}
+              </motion.div>
+
+              {/* Right: Info, Controls & Queue */}
+              <div className="w-full max-w-md flex flex-col gap-8 h-full">
+                
+                {/* Track Info */}
+                <div className="space-y-2">
+                  <motion.h2 className="text-3xl lg:text-4xl font-bold tracking-tight">{currentTrack.name}</motion.h2>
+                  <p className="text-lg text-[var(--music-accent)] font-medium">
+                    {currentTrack.artists.map(a => a.name).join(", ")}
+                  </p>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-2">
+                  <div className="relative h-2 bg-white/10 rounded-full overflow-hidden group">
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={progressPercent}
+                      onMouseDown={() => setIsScrubbing(true)}
+                      onChange={handleSeek}
+                      onMouseUp={handleSeekEnd}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div
+                      className="h-full bg-white group-hover:bg-[var(--music-accent)] transition-colors"
+                      style={{ width: `${progressPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                    <span>{formatTime(displayPosition)}</span>
+                    <span>{formatTime(duration)}</span>
+                  </div>
+                </div>
+
+                {/* Main Controls */}
+                <div className="flex items-center justify-between px-4">
+                  <button onClick={prev} className="p-3 text-white/60 hover:text-white transition-colors">
+                    <SkipBack className="w-8 h-8 fill-current" />
+                  </button>
+                  <button 
+                    onClick={togglePlay}
+                    className="w-20 h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl shadow-white/10"
+                  >
+                    {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
+                  </button>
+                  <button onClick={next} className="p-3 text-white/60 hover:text-white transition-colors">
+                    <SkipForward className="w-8 h-8 fill-current" />
+                  </button>
+                </div>
+
+                {/* Queue Section */}
+                <div className="flex-1 min-h-0 flex flex-col gap-4 border-t border-white/10 pt-8 overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ListMusic className="w-4 h-4 text-muted-foreground" />
+                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Next Up</h3>
+                    </div>
+                    <button 
+                      onClick={refreshQueue}
+                      className="p-1.5 rounded-full hover:bg-white/5 text-muted-foreground transition-colors"
+                      title="Refresh Queue"
+                    >
+                      <RefreshCcw className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                    {queue.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic py-4">Queue is empty</p>
+                    ) : (
+                      queue.slice(0, 10).map((track, i) => (
+                        <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
+                          <div className="relative w-10 h-10 rounded overflow-hidden shrink-0 bg-white/5">
+                            {track.album?.images?.[0]?.url && <Image src={track.album.images[0].url} alt="" fill className="object-cover" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate group-hover:text-[var(--music-accent)] transition-colors">{track.name}</p>
+                            <p className="text-[10px] text-muted-foreground truncate">{track.artists[0]?.name}</p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </AnimatePresence>
   );
 }

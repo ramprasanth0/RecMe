@@ -267,3 +267,28 @@ export async function searchTrack(
   console.warn(`No Spotify match for: "${title}" by "${artist}"`);
   return null;
 }
+
+/** Get the current user's playback queue */
+export async function getQueue(accessToken: string) {
+  const res = await fetch(`${SPOTIFY_API}/me/player/queue`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    if (res.status === 403) return { queue: [], currently_playing: null };
+    throw new Error(`Spotify API error: ${res.status}`);
+  }
+  return await res.json();
+}
+
+/** Get audio features for several tracks */
+export async function getAudioFeatures(accessToken: string, trackIds: string[]) {
+  if (trackIds.length === 0) return [];
+  const res = await fetch(
+    `${SPOTIFY_API}/audio-features?ids=${trackIds.slice(0, 100).join(",")}`,
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.audio_features;
+}
