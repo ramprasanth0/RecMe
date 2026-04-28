@@ -226,7 +226,7 @@ export function MiniPlayer() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="fixed inset-0 z-[60] bg-background flex flex-col"
+            className="fixed inset-0 z-[60] bg-[#0A0A0A] text-white flex flex-col"
           >
             {/* Background Glow */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -299,11 +299,11 @@ export function MiniPlayer() {
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                     />
                     <div
-                      className="h-full bg-white group-hover:bg-[var(--music-accent)] transition-colors"
+                      className="h-full bg-[var(--music-accent)] group-hover:bg-white transition-colors"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                  <div className="flex justify-between text-xs font-mono text-white/40">
                     <span>{formatTime(displayPosition)}</span>
                     <span>{formatTime(duration)}</span>
                   </div>
@@ -314,9 +314,8 @@ export function MiniPlayer() {
                   <button onClick={prev} className="p-3 text-white/60 hover:text-white transition-colors">
                     <SkipBack className="w-8 h-8 fill-current" />
                   </button>
-                  <button 
-                    onClick={togglePlay}
-                    className="w-20 h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl shadow-white/10"
+                  <button onClick={togglePlay}
+                    className="w-20 h-20 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl shadow-[var(--music-accent)]/20"
                   >
                     {isPlaying ? <Pause className="w-8 h-8 fill-current" /> : <Play className="w-8 h-8 fill-current ml-1" />}
                   </button>

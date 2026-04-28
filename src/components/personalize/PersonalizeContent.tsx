@@ -620,11 +620,11 @@ function VibeStat({ label, value, sub, sub2 }: { label: string; value: number; s
         <span>{label}</span>
         <span>{Math.round(value * 100)}%</span>
       </div>
-      <div className="h-1.5 bg-surface-light rounded-full overflow-hidden">
+      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${value * 100}%` }}
-          className="h-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.2)]"
+          className="h-full bg-[var(--music-accent)] shadow-[0_0_8px_rgba(29,185,84,0.3)]"
         />
       </div>
       {(sub || sub2) && (

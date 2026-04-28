@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
 import { getTopTracks, getRecentlyPlayed } from "@/lib/spotify";
 import { getGeminiClient, AI_MODEL } from "@/lib/gemini";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET() {
@@ -9,6 +10,19 @@ export async function GET() {
 
   if (!user?.spotify_access_token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Check cache (1 day)
+  const prefs = (user.preferences as any) || {};
+  const cachedProfile = prefs.taste_profile;
+  const lastUpdated = prefs.taste_profile_updated_at;
+
+  if (cachedProfile && lastUpdated) {
+    const age = Date.now() - new Date(lastUpdated).getTime();
+    const oneDay = 24 * 60 * 60 * 1000;
+    if (age < oneDay) {
+      return NextResponse.json({ profile: cachedProfile, cached: true });
+    }
   }
 
   try {
@@ -51,6 +65,16 @@ export async function GET() {
 
     const text = result.text ?? "{}";
     const data = JSON.parse(text);
+
+    // Save to cache
+    const admin = createAdminClient();
+    await admin.from("users").update({
+      preferences: {
+        ...prefs,
+        taste_profile: data,
+        taste_profile_updated_at: new Date().toISOString()
+      }
+    }).eq("id", user.id);
 
     return NextResponse.json({ profile: data });
   } catch (err) {
