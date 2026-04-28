@@ -10,7 +10,7 @@ interface Props extends TrendingPlaylist {
   isPlaying?: boolean;
 }
 
-export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, trackCount, description, onPlay, isPlaying }: Props) {
+export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, description, onPlay, isPlaying }: Props) {
   return (
     <div className="group w-36 flex-shrink-0 space-y-2 relative">
       <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light cursor-pointer">
