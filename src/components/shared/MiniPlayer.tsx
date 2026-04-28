@@ -31,6 +31,7 @@ export function MiniPlayer() {
     dismiss,
     queue,
     refreshQueue,
+    geniusData,
   } = useSpotifyPlayer();
 
   const [volumeLevel, setVolumeLevel] = useState(0.5);
@@ -291,7 +292,7 @@ export function MiniPlayer() {
                 className="relative w-full max-w-[320px] lg:max-w-[540px] aspect-square lg:aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-black/50 bg-black"
               >
                 {(() => {
-                  const videoUrl = useSpotifyPlayer().geniusData?.media?.find(m => m.provider === 'youtube')?.url;
+                  const videoUrl = geniusData?.media?.find(m => m.provider === 'youtube')?.url;
                   const videoId = videoUrl ? getYoutubeId(videoUrl) : null;
 
                   if (mediaType === "video" && videoId) {
