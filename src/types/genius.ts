@@ -25,6 +25,11 @@ export interface GeniusSong {
     html: string;
   };
   release_date_for_display: string;
+  media: Array<{
+    provider: string;
+    url: string;
+    native_uri?: string;
+  }>;
 }
 
 export interface GeniusHit {

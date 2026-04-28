@@ -3,10 +3,11 @@
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, RefreshCcw } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, RefreshCcw, Music as MusicIcon, Video } from "lucide-react";
 import { useEffect, useState } from "react";
 import { GeniusDetails } from "./GeniusDetails";
 import { Sparkles } from "lucide-react";
+import { getYoutubeId } from "@/lib/utils";
 
 function formatTime(ms: number) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -38,6 +39,7 @@ export function MiniPlayer() {
   const [scrubPosition, setScrubPosition] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"queue" | "insights">("queue");
+  const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
 
   // Sync effect for <body> class
   useEffect(() => {
@@ -253,7 +255,24 @@ export function MiniPlayer() {
               </button>
               <div className="text-center">
                 <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Now Playing</p>
-                <p className="text-xs font-medium">{currentTrack.album.name}</p>
+                
+                {/* Audio/Video Toggle */}
+                <div className="mt-2 flex items-center bg-white/5 rounded-full p-1 border border-white/10">
+                  <button 
+                    onClick={() => setMediaType("audio")}
+                    className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${mediaType === "audio" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
+                  >
+                    <MusicIcon className="w-3 h-3" />
+                    Audio
+                  </button>
+                  <button 
+                    onClick={() => setMediaType("video")}
+                    className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${mediaType === "video" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
+                  >
+                    <Video className="w-3 h-3" />
+                    Video
+                  </button>
+                </div>
               </div>
               <button 
                 onClick={dismiss}
@@ -266,14 +285,54 @@ export function MiniPlayer() {
             {/* Content */}
             <div className="relative z-10 flex-1 flex flex-col lg:flex-row items-center justify-center px-6 lg:px-12 gap-12 lg:gap-24 overflow-hidden py-8">
               
-              {/* Left: Artwork Large */}
+              {/* Left: Artwork Large or Video */}
               <motion.div 
                 layoutId="expanded-art"
-                className="relative w-full max-w-[320px] lg:max-w-[480px] aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/50"
+                className="relative w-full max-w-[320px] lg:max-w-[540px] aspect-square lg:aspect-video rounded-2xl overflow-hidden shadow-2xl shadow-black/50 bg-black"
               >
-                {albumArt && (
-                  <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
-                )}
+                {(() => {
+                  const videoUrl = useSpotifyPlayer().geniusData?.media?.find(m => m.provider === 'youtube')?.url;
+                  const videoId = videoUrl ? getYoutubeId(videoUrl) : null;
+
+                  if (mediaType === "video" && videoId) {
+                    return (
+                      <iframe 
+                        className="w-full h-full border-0"
+                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0`}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    );
+                  }
+
+                  return (
+                    <>
+                      {albumArt && (
+                        <Image src={albumArt} alt={currentTrack.name} fill className="object-cover opacity-60 blur-sm scale-110" />
+                      )}
+                      <div className="absolute inset-0 flex items-center justify-center p-8">
+                        <div className="relative w-full h-full max-w-[400px] aspect-square rounded-xl shadow-2xl overflow-hidden">
+                           {albumArt && <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />}
+                        </div>
+                      </div>
+                      {mediaType === "video" && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                          <div className="text-center p-6">
+                            <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                            <p className="text-sm font-medium">Video not available</p>
+                            <p className="text-xs text-muted-foreground mt-1">We couldn&apos;t find a YouTube version for this track.</p>
+                            <button 
+                              onClick={() => setMediaType("audio")}
+                              className="mt-6 text-xs font-bold uppercase tracking-widest text-[var(--music-accent)]"
+                            >
+                              Back to Audio
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </motion.div>
 
               {/* Right: Info, Controls & Queue */}
