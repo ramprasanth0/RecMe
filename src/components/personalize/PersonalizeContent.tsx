@@ -93,10 +93,10 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
 
         {/* CURRENT SECTION */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold font-display tracking-tight border-b border-border pb-2">Current</h2>
+          <h2 className="text-2xl font-bold font-display tracking-tight border-b border-border pb-2">Recent Activity</h2>
 
           {/* Recently Played Overview */}
-          {hasSpotify && recentTracks.length > 0 && (
+          {hasSpotify && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
               {/* Recent Tracks */}
@@ -105,39 +105,41 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                   <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
                   <h3 className="text-sm font-semibold">Recently Played Tracks</h3>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {recentTracks.slice(0, 8).map((track, i) => {
-                    const isCurrent = currentTrack?.uri === track.uri;
-                    return (
-                      <div
-                        key={i}
-                        className={cn(
-                          "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light relative"
-                        )}
-                      >
-                        <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0 cursor-pointer" onClick={() => playTrack({ title: track.name, artist: track.artists[0]?.name ?? "", uri: track.uri })}>
-                          {track.album?.images?.[0]?.url ? (
-                            <Image src={track.album.images[0].url} alt={track.album.name} fill sizes="40px" className="object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4 text-muted-foreground/30" /></div>
+                {recentTracks.length === 0 ? <Empty text="No recent tracks found." /> : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {recentTracks.slice(0, 8).map((track, i) => {
+                      const isCurrent = currentTrack?.uri === track.uri;
+                      return (
+                        <div
+                          key={i}
+                          className={cn(
+                            "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light relative"
                           )}
-                          <div className={cn(
-                            "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
-                            isCurrent && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                          )}>
-                            <Play className="w-4 h-4 text-white fill-current ml-0.5" />
+                        >
+                          <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0 cursor-pointer" onClick={() => playTrack({ title: track.name, artist: track.artists[0]?.name ?? "", uri: track.uri })}>
+                            {track.album?.images?.[0]?.url ? (
+                              <Image src={track.album.images[0].url} alt={track.album.name} fill sizes="40px" className="object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4 text-muted-foreground/30" /></div>
+                            )}
+                            <div className={cn(
+                              "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
+                              isCurrent && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                            )}>
+                              <Play className="w-4 h-4 text-white fill-current ml-0.5" />
+                            </div>
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <a href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                              <p className={cn("text-sm font-medium truncate", isCurrent && isPlaying && "text-[var(--music-accent)]")}>{track.name}</p>
+                            </a>
+                            <p className="text-xs text-muted-foreground truncate">{track.artists.map((a) => a.name).join(", ")}</p>
                           </div>
                         </div>
-                        <div className="min-w-0 flex-1">
-                          <a href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                            <p className={cn("text-sm font-medium truncate", isCurrent && isPlaying && "text-[var(--music-accent)]")}>{track.name}</p>
-                          </a>
-                          <p className="text-xs text-muted-foreground truncate">{track.artists.map((a) => a.name).join(", ")}</p>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Recent Artists & Albums */}
@@ -147,29 +149,31 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                     <Mic2 className="w-4 h-4 text-[var(--music-accent)]" />
                     <h3 className="text-sm font-semibold">Recent Artists</h3>
                   </div>
-                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {recentArtists.map((artist, i) => {
-                      const isCurrentArtist = currentContextUri === artist.uri;
-                      return (
-                        <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
-                          <div className="relative aspect-square rounded-full overflow-hidden bg-surface-light cursor-pointer" onClick={() => artist.uri && playContext(artist.uri)}>
-                            <div className="w-full h-full flex items-center justify-center bg-surface-light">
-                              <Mic2 className="w-8 h-8 text-muted-foreground/30" />
+                  {recentArtists.length === 0 ? <Empty text="No recent artists found." /> : (
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                      {recentArtists.map((artist, i) => {
+                        const isCurrentArtist = currentContextUri === artist.uri;
+                        return (
+                          <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
+                            <div className="relative aspect-square rounded-full overflow-hidden bg-surface-light cursor-pointer" onClick={() => artist.uri && playContext(artist.uri)}>
+                              <div className="w-full h-full flex items-center justify-center bg-surface-light">
+                                <Mic2 className="w-8 h-8 text-muted-foreground/30" />
+                              </div>
+                              <div className={cn(
+                                "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40 rounded-full",
+                                isCurrentArtist && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              )}>
+                                <button className="w-10 h-10 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+                                  <Play className="w-5 h-5 ml-1 fill-current" />
+                                </button>
+                              </div>
                             </div>
-                            <div className={cn(
-                              "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40 rounded-full",
-                              isCurrentArtist && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )}>
-                              <button className="w-10 h-10 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
-                                <Play className="w-5 h-5 ml-1 fill-current" />
-                              </button>
-                            </div>
+                            <p className={cn("text-xs font-medium text-center truncate leading-tight", isCurrentArtist && isPlaying && "text-[var(--music-accent)]")}>{artist.name}</p>
                           </div>
-                          <p className={cn("text-xs font-medium text-center truncate leading-tight", isCurrentArtist && isPlaying && "text-[var(--music-accent)]")}>{artist.name}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
@@ -177,31 +181,33 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                     <Disc3 className="w-4 h-4 text-[var(--music-accent)]" />
                     <h3 className="text-sm font-semibold">Recent Albums</h3>
                   </div>
-                  <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-                    {recentAlbums.map((album, i) => {
-                      const isCurrentAlbum = currentContextUri === album.uri;
-                      return (
-                        <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
-                          <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light cursor-pointer" onClick={() => album.uri && playContext(album.uri)}>
-                            {album.images?.[0]?.url ? (
-                              <Image src={album.images[0].url} alt={album.name} fill sizes="96px" className="object-cover" />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center"><Disc3 className="w-8 h-8 text-muted-foreground/30" /></div>
-                            )}
-                            <div className={cn(
-                              "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40",
-                              isCurrentAlbum && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )}>
-                              <button className="w-10 h-10 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
-                                <Play className="w-5 h-5 ml-1 fill-current" />
-                              </button>
+                  {recentAlbums.length === 0 ? <Empty text="No recent albums found." /> : (
+                    <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
+                      {recentAlbums.map((album, i) => {
+                        const isCurrentAlbum = currentContextUri === album.uri;
+                        return (
+                          <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
+                            <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light cursor-pointer" onClick={() => album.uri && playContext(album.uri)}>
+                              {album.images?.[0]?.url ? (
+                                <Image src={album.images[0].url} alt={album.name} fill sizes="96px" className="object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center"><Disc3 className="w-8 h-8 text-muted-foreground/30" /></div>
+                              )}
+                              <div className={cn(
+                                "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40",
+                                isCurrentAlbum && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              )}>
+                                <button className="w-10 h-10 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform">
+                                  <Play className="w-5 h-5 ml-1 fill-current" />
+                                </button>
+                              </div>
                             </div>
+                            <p className={cn("text-xs font-medium text-center truncate leading-tight", isCurrentAlbum && isPlaying && "text-[var(--music-accent)]")}>{album.name}</p>
                           </div>
-                          <p className={cn("text-xs font-medium text-center truncate leading-tight", isCurrentAlbum && isPlaying && "text-[var(--music-accent)]")}>{album.name}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 

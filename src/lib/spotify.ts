@@ -187,7 +187,7 @@ export async function getUserPlaylists(
 ): Promise<TrendingPlaylist[]> {
   const res = await fetch(
     `${SPOTIFY_API}/me/playlists?limit=${limit}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
   );
   if (!res.ok) {
     console.error("[getUserPlaylists] Spotify API Error:", res.status, await res.text());
