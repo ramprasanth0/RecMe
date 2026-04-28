@@ -20,10 +20,16 @@ export async function GET() {
     }
     
     if (!topTracks || topTracks.length === 0) {
+      topTracks = await getRecentlyPlayed(user.spotify_access_token, 50);
+    }
+    
+    if (!topTracks || topTracks.length === 0) {
       return NextResponse.json({ profile: null });
     }
 
-    const trackIds = topTracks.map((t: any) => t.id);
+    const trackIds = topTracks.map((t: any) => t.id).filter(Boolean);
+    if (trackIds.length === 0) return NextResponse.json({ profile: null });
+
     const features = await getAudioFeatures(user.spotify_access_token, trackIds);
 
     const validFeatures = features.filter((f: any) => f !== null);

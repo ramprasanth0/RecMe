@@ -83,17 +83,23 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
   }, [hasSpotify]);
 
   useEffect(() => {
-    if (currentTrack?.id) {
-      fetch(`/api/spotify/audio-features?ids=${currentTrack.id}`)
+    const trackId = currentTrack?.id || (currentTrack?.uri?.startsWith('spotify:track:') ? currentTrack.uri.split(':').pop() : null);
+    
+    if (trackId) {
+      fetch(`/api/spotify/audio-features?ids=${trackId}`)
         .then((r) => r.json())
         .then((data) => {
-          setCurrentTrackFeatures(data[0]);
+          if (data && data.length > 0) {
+            setCurrentTrackFeatures(data[0]);
+          } else {
+            setCurrentTrackFeatures({ error: true });
+          }
         })
-        .catch(() => setCurrentTrackFeatures(null));
+        .catch(() => setCurrentTrackFeatures({ error: true }));
     } else {
       setCurrentTrackFeatures(null);
     }
-  }, [currentTrack?.id]);
+  }, [currentTrack?.id, currentTrack?.uri]);
 
   // Derive recent albums and artists from recentTracks
   const recentAlbums = Array.from(new Map(recentTracks.filter(t => t.album?.uri).map(t => [t.album.uri, t.album])).values()).slice(0, 5);
@@ -178,6 +184,11 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                   </div>
                 ) : !currentTrackFeatures ? (
                   <div className="h-24 flex items-center justify-center animate-pulse bg-surface-light rounded-lg" />
+                ) : (currentTrackFeatures as any).error ? (
+                  <div className="flex flex-col items-center justify-center text-center p-6 bg-surface-light rounded-lg gap-2">
+                    <AlertCircle className="w-5 h-5 text-muted-foreground" />
+                    <p className="text-xs text-muted-foreground">Audio features not available for this track.</p>
+                  </div>
                 ) : (
                   <div className="space-y-5">
                     <div className="flex items-center gap-3">
