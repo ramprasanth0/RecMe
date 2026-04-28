@@ -14,6 +14,17 @@ function formatTime(ms: number) {
 }
 
 export function MiniPlayer() {
+  const {
+    isActive,
+    currentTrack,
+    isPlaying,
+    position,
+    duration,
+    togglePlay,
+    next,
+    prev,
+    seek,
+    setVolume,
     dismiss,
     queue,
     refreshQueue,
