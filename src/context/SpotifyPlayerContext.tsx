@@ -34,6 +34,7 @@ interface PlayerContextType {
 
 const SpotifyPlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function SpotifyPlayerProvider({ children }: { children: React.ReactNode }) {
   const [player, setPlayer] = useState<Spotify.Player | null>(null);
   const [deviceId, setDeviceId] = useState<string | null>(null);

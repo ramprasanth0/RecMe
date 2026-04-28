@@ -11,6 +11,7 @@ import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { cn } from "@/lib/utils";
 import type { TrendingPlaylist } from "@/types/trending";
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
+import { motion } from "framer-motion";
 
 interface Artist {
   name: string;
@@ -33,6 +34,7 @@ interface PersonalizeContentProps {
   isPro: boolean;
 }
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProps) {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);

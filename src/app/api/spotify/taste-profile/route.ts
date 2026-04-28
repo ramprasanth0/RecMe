@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
 import { getTopTracks, getAudioFeatures } from "@/lib/spotify";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET() {
   const user = await getUserWithFreshToken();
 
