@@ -24,11 +24,9 @@ export async function GET() {
       return NextResponse.json({ profile: null });
     }
 
-    // Use Gemini to analyze the taste since Spotify's /audio-features is restricted
     const trackNames = topTracks.map((t: any) => `${t.name} by ${t.artists[0]?.name}`).join(", ");
     
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: AI_MODEL });
+    const client = getGeminiClient();
 
     const prompt = `Analyze the musical taste of a user based on these top tracks: ${trackNames}.
     Provide an aggregated preference percentage (0.0 to 1.0) for:
@@ -43,11 +41,16 @@ export async function GET() {
       "speechiness": 0.0
     }`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    const jsonStr = text.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(jsonStr);
+    const result = await client.models.generateContent({
+      model: AI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const text = result.text ?? "{}";
+    const data = JSON.parse(text);
 
     return NextResponse.json({ profile: data });
   } catch (err) {

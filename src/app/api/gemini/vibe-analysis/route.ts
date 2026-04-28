@@ -5,8 +5,7 @@ export async function POST(request: Request) {
   try {
     const { track, artist } = await request.json();
 
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: AI_MODEL });
+    const client = getGeminiClient();
 
     const prompt = `Analyze the musical vibe of the track "${track}" by "${artist}". 
     Provide estimated values (0.0 to 1.0) for musical features.
@@ -22,11 +21,16 @@ export async function POST(request: Request) {
       "mode": "Major"
     }`;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
-    const jsonStr = text.replace(/```json|```/g, "").trim();
-    const data = JSON.parse(jsonStr);
+    const result = await client.models.generateContent({
+      model: AI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: {
+        responseMimeType: "application/json",
+      }
+    });
+
+    const text = result.text ?? "{}";
+    const data = JSON.parse(text);
     
     return NextResponse.json(data);
   } catch (err) {
