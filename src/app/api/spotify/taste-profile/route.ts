@@ -11,7 +11,18 @@ export async function GET() {
   }
 
   try {
-    const topTracks = await getTopTracks(user.spotify_access_token, 50, "medium_term");
+    let topTracks = await getTopTracks(user.spotify_access_token, 50, "medium_term");
+    if (!topTracks || topTracks.length === 0) {
+      topTracks = await getTopTracks(user.spotify_access_token, 50, "long_term");
+    }
+    if (!topTracks || topTracks.length === 0) {
+      topTracks = await getTopTracks(user.spotify_access_token, 50, "short_term");
+    }
+    
+    if (!topTracks || topTracks.length === 0) {
+      return NextResponse.json({ profile: null });
+    }
+
     const trackIds = topTracks.map((t: any) => t.id);
     const features = await getAudioFeatures(user.spotify_access_token, trackIds);
 
