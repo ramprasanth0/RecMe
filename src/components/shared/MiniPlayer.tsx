@@ -42,6 +42,13 @@ export function MiniPlayer() {
   const [activeTab, setActiveTab] = useState<"queue" | "insights">("queue");
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
 
+  // Pause audio when switching to video
+  useEffect(() => {
+    if (mediaType === "video" && isPlaying) {
+      togglePlay();
+    }
+  }, [mediaType]);
+
   // Sync effect for <body> class
   useEffect(() => {
     if (isActive) {
@@ -295,29 +302,35 @@ export function MiniPlayer() {
                   const videoUrl = geniusData?.media?.find(m => m.provider === 'youtube')?.url;
                   const videoId = videoUrl ? getYoutubeId(videoUrl) : null;
 
-                  if (mediaType === "video" && videoId) {
-                    return (
-                      <iframe 
-                        className="w-full h-full border-0"
-                        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0`}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                      />
-                    );
-                  }
-
                   return (
                     <>
-                      {albumArt && (
-                        <Image src={albumArt} alt={currentTrack.name} fill className="object-cover opacity-60 blur-sm scale-110" />
+                      {/* Video Player (Persisted in DOM) */}
+                      {videoId && (
+                        <div className={`absolute inset-0 z-20 bg-black transition-opacity duration-500 ${mediaType === "video" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+                          <iframe 
+                            className="w-full h-full border-0"
+                            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=${mediaType === 'video' ? 1 : 0}`}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
                       )}
-                      <div className="absolute inset-0 flex items-center justify-center p-8">
-                        <div className="relative w-full h-full max-w-[400px] aspect-square rounded-xl shadow-2xl overflow-hidden">
-                           {albumArt && <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />}
+
+                      {/* Audio View (Artwork) */}
+                      <div className={`absolute inset-0 transition-opacity duration-500 ${mediaType === "audio" ? "opacity-100" : "opacity-0"}`}>
+                        {albumArt && (
+                          <Image src={albumArt} alt={currentTrack.name} fill className="object-cover opacity-60 blur-sm scale-110" />
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center p-8">
+                          <div className="relative w-full h-full max-w-[400px] aspect-square rounded-xl shadow-2xl overflow-hidden">
+                             {albumArt && <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />}
+                          </div>
                         </div>
                       </div>
-                      {mediaType === "video" && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+
+                      {/* Video Not Available State */}
+                      {mediaType === "video" && !videoId && (
+                        <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/60 backdrop-blur-sm">
                           <div className="text-center p-6">
                             <Video className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                             <p className="text-sm font-medium">Video not available</p>
