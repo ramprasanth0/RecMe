@@ -22,6 +22,7 @@ export async function GET() {
 
     // Attach full artist objects to recent tracks so images are available
     if (recentTracks.length > 0) {
+      /* eslint-disable @typescript-eslint/no-explicit-any */
       const recentArtistIds = Array.from(new Set(recentTracks.flatMap((t: any) => t.artists.map((a: any) => a.id)).filter(Boolean)));
       if (recentArtistIds.length > 0) {
         const fullArtists = await getArtists(user.spotify_access_token, recentArtistIds as string[]);
@@ -30,6 +31,7 @@ export async function GET() {
           track.artists = track.artists.map((a: any) => artistMap.get(a.id) || a);
         });
       }
+      /* eslint-enable @typescript-eslint/no-explicit-any */
     }
 
     return NextResponse.json({ artists, tracks, recentTracks });
