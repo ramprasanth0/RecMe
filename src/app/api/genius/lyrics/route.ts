@@ -40,8 +40,8 @@ export async function GET(request: Request) {
       .replace(/<div [^>]*class="[^"]*Annotation[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
 
     return NextResponse.json({ lyrics: cleanLyrics });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Lyrics scraping error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }

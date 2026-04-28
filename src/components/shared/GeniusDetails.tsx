@@ -2,7 +2,7 @@
 
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { motion } from "framer-motion";
-import { Info, User, Music, Calendar, ExternalLink, Loader2, Languages } from "lucide-react";
+import { User, Music, Calendar, ExternalLink, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -54,7 +54,7 @@ export function GeniusDetails() {
           <Music className="w-8 h-8 text-muted-foreground" />
         </div>
         <p className="text-sm font-medium text-white mb-1">No Genius data found</p>
-        <p className="text-xs text-muted-foreground">We couldn't find detailed insights for this track.</p>
+        <p className="text-xs text-muted-foreground">We couldn&apos;t find detailed insights for this track.</p>
       </div>
     );
   }

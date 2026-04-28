@@ -3,7 +3,7 @@
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, ListMusic, RefreshCcw } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { GeniusDetails } from "./GeniusDetails";
 import { Sparkles } from "lucide-react";

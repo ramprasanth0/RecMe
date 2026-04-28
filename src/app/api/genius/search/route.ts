@@ -15,8 +15,8 @@ export async function GET(request: Request) {
     // We usually want the first hit that matches best
     // Each hit has a 'result' object with 'id', 'title', 'primary_artist', etc.
     return NextResponse.json({ hits });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Genius search error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
 }

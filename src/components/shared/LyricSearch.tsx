@@ -5,10 +5,11 @@ import { Search, Music, Loader2, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import Image from "next/image";
+import type { GeniusHit } from "@/types/genius";
 
 export function LyricSearch() {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<GeniusHit[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { playTrack } = useSpotifyPlayer();
 
