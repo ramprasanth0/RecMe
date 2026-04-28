@@ -47,7 +47,7 @@ export function MiniPlayer() {
     if (mediaType === "video" && isPlaying) {
       togglePlay();
     }
-  }, [mediaType]);
+  }, [mediaType, isPlaying, togglePlay]);
 
   // Sync effect for <body> class
   useEffect(() => {

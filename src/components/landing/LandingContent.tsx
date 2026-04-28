@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
-import { LyricSearch } from "@/components/shared/LyricSearch";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
@@ -16,7 +15,8 @@ import type { TrendingMovie, TrendingSong } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import type { GeniusHit } from "@/types/genius";
-import { Music, Search, Loader2 } from "lucide-react";
+import { Music, Loader2 } from "lucide-react";
+import Image from "next/image";
 
 const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Blinding Lights", artist: "The Weeknd", reason: "Cinematic synths that match late-night energy" },
@@ -52,7 +52,7 @@ interface LandingContentProps {
 export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
   const [greeting, setGreeting] = useState<string>("");
-  const { playQueue } = useSpotifyPlayer();
+  const { playQueue, playTrack } = useSpotifyPlayer();
 
   // Trending state
   const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
@@ -217,7 +217,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
                 {lyricResults.slice(0, 6).map((hit) => (
                   <button
                     key={hit.result.id}
-                    onClick={() => useSpotifyPlayer().playTrack({ title: hit.result.title, artist: hit.result.primary_artist.name })}
+                    onClick={() => playTrack({ title: hit.result.title, artist: hit.result.primary_artist.name })}
                     className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-left group"
                   >
                     <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-surface-light shadow-lg">

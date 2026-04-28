@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { Send, Sparkles, Music, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 
 export type SearchMode = "mood" | "lyrics";
 
