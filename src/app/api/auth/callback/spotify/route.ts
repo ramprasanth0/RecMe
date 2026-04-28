@@ -34,29 +34,41 @@ export async function GET(request: NextRequest) {
 
     // Upsert user in Supabase using service role
     const admin = createAdminClient();
-    const { data: existingUser } = await admin
-      .from("users")
-      .select("id")
-      .eq("spotify_id", profile.id)
-      .single();
+    const currentUserId = cookies().get("recme_user_id")?.value;
+    let targetUserId = currentUserId;
+
+    if (!targetUserId) {
+      // Not logged in, try to find user by spotify_id or email
+      const { data: existingUser } = await admin
+        .from("users")
+        .select("id")
+        .or(`spotify_id.eq.${profile.id},email.eq.${profile.email}`)
+        .limit(1)
+        .single();
+      
+      if (existingUser) {
+        targetUserId = existingUser.id;
+      }
+    }
 
     const tokenExpiresAt = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-    if (existingUser) {
-      // Update existing user's tokens
+    if (targetUserId) {
+      // Update existing user
       await admin
         .from("users")
         .update({
+          spotify_id: profile.id, // Ensure spotify_id is linked
           spotify_access_token: tokens.access_token,
           spotify_refresh_token: tokens.refresh_token,
           spotify_token_expires_at: tokenExpiresAt,
           display_name: profile.display_name,
           avatar_url: profile.images?.[0]?.url ?? null,
         })
-        .eq("id", existingUser.id);
+        .eq("id", targetUserId);
     } else {
       // Create new user
-      await admin.from("users").insert({
+      const { data: newUser } = await admin.from("users").insert({
         email: profile.email,
         spotify_id: profile.id,
         spotify_access_token: tokens.access_token,
@@ -65,18 +77,15 @@ export async function GET(request: NextRequest) {
         display_name: profile.display_name,
         avatar_url: profile.images?.[0]?.url ?? null,
         preferences: {},
-      });
+      }).select("id").single();
+      
+      if (newUser) {
+        targetUserId = newUser.id;
+      }
     }
 
-    // Set session cookie to identify the user
-    const { data: user } = await admin
-      .from("users")
-      .select("id")
-      .eq("spotify_id", profile.id)
-      .single();
-
-    if (user) {
-      cookies().set("recme_user_id", user.id, {
+    if (targetUserId) {
+      cookies().set("recme_user_id", targetUserId, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
