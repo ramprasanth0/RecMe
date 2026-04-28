@@ -36,6 +36,17 @@ export async function getRecentlyPlayed(accessToken: string, limit = 20) {
   return data.items.map((item: { track: unknown }) => item.track);
 }
 
+export async function getArtists(accessToken: string, artistIds: string[]) {
+  if (artistIds.length === 0) return [];
+  const res = await fetch(
+    `${SPOTIFY_API}/artists?ids=${artistIds.slice(0, 50).join(",")}`,
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  const data = await res.json();
+  return data.artists;
+}
+
 export async function getSpotifyTopData(
   accessToken: string
 ): Promise<SpotifyTopData> {
