@@ -10,6 +10,8 @@ interface TrackToPlay {
   uri?: string;
 }
 
+import type { GeniusSong } from "@/types/genius";
+
 interface PlayerContextType {
   player: Spotify.Player | null;
   deviceId: string | null;
@@ -31,6 +33,8 @@ interface PlayerContextType {
   dismiss: () => Promise<void>;
   queue: any[];
   refreshQueue: () => Promise<void>;
+  geniusData: GeniusSong | null;
+  isFetchingGenius: boolean;
 }
 
 const SpotifyPlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -47,6 +51,9 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [duration, setDuration] = useState(0);
   const [token, setToken] = useState<string | null>(null);
   const [queue, setQueue] = useState<any[]>([]);
+  const [geniusData, setGeniusData] = useState<GeniusSong | null>(null);
+  const [isFetchingGenius, setIsFetchingGenius] = useState(false);
+  const lastFetchedGeniusTrack = useRef<string | null>(null);
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -264,6 +271,45 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     }
   }, [token]);
 
+  // Fetch Genius data when current track changes
+  useEffect(() => {
+    if (!currentTrack) {
+      setGeniusData(null);
+      return;
+    }
+
+    const trackId = currentTrack.id;
+    if (trackId === lastFetchedGeniusTrack.current) return;
+
+    const fetchGenius = async () => {
+      setIsFetchingGenius(true);
+      try {
+        // Search for the track
+        const searchRes = await fetch(`/api/genius/search?q=${encodeURIComponent(`${currentTrack.name} ${currentTrack.artists[0].name}`)}`);
+        if (!searchRes.ok) return;
+        
+        const { hits } = await searchRes.json();
+        if (hits && hits.length > 0) {
+          const geniusId = hits[0].result.id;
+          
+          // Get full details
+          const songRes = await fetch(`/api/genius/song/${geniusId}`);
+          if (songRes.ok) {
+            const { song } = await songRes.json();
+            setGeniusData(song);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch Genius data:", err);
+      } finally {
+        setIsFetchingGenius(false);
+        lastFetchedGeniusTrack.current = trackId;
+      }
+    };
+
+    fetchGenius();
+  }, [currentTrack]);
+
   const value = {
     player,
     deviceId,
@@ -285,6 +331,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     dismiss,
     queue,
     refreshQueue,
+    geniusData,
+    isFetchingGenius,
   };
 
   return (

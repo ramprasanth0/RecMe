@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink, ChevronUp, ChevronDown, ListMusic, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
+import { GeniusDetails } from "./GeniusDetails";
+import { Sparkles } from "lucide-react";
 
 function formatTime(ms: number) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -35,6 +37,7 @@ export function MiniPlayer() {
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [scrubPosition, setScrubPosition] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<"queue" | "insights">("queue");
 
   // Sync effect for <body> class
   useEffect(() => {
@@ -95,20 +98,20 @@ export function MiniPlayer() {
         className="fixed bottom-0 left-0 right-0 z-50 h-20 sm:h-24 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-between px-4 sm:px-6 gap-4"
       >
         {/* Left: Track Info */}
-        <div className="flex items-center gap-3 w-1/3 min-w-0">
-          <div 
-            className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light group/art cursor-pointer"
-            onClick={() => setIsExpanded(true)}
-          >
+        <div 
+          className="flex items-center gap-3 w-1/3 min-w-0 cursor-pointer group/info"
+          onClick={() => setIsExpanded(true)}
+        >
+          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light group-hover/info:scale-105 transition-transform duration-300">
             {albumArt && (
-              <Image src={albumArt} alt={currentTrack.name} fill className="object-cover group-hover/art:scale-110 transition-transform duration-500" />
+              <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
             )}
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/art:opacity-100 flex items-center justify-center transition-opacity">
+            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/info:opacity-100 flex items-center justify-center transition-opacity">
               <ChevronUp className="w-5 h-5 text-white" />
             </div>
           </div>
           <div className="min-w-0 flex flex-col justify-center">
-            <p className="text-sm font-semibold text-white truncate">{currentTrack.name}</p>
+            <p className="text-sm font-semibold text-white truncate group-hover/info:text-[var(--music-accent)] transition-colors">{currentTrack.name}</p>
             <p className="text-xs text-muted-foreground truncate">
               {currentTrack.artists.map((a) => a.name).join(", ")}
             </p>
@@ -325,38 +328,77 @@ export function MiniPlayer() {
                 </div>
 
                 {/* Queue Section */}
-                <div className="flex-1 min-h-0 flex flex-col gap-4 border-t border-white/10 pt-8 overflow-hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ListMusic className="w-4 h-4 text-muted-foreground" />
-                      <h3 className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Next Up</h3>
+                  <div className="flex items-center justify-between border-b border-white/10">
+                    <div className="flex gap-6">
+                      <button 
+                        onClick={() => setActiveTab("queue")}
+                        className={`pb-3 text-sm font-bold uppercase tracking-widest transition-colors relative ${activeTab === "queue" ? "text-white" : "text-muted-foreground hover:text-white"}`}
+                      >
+                        Queue
+                        {activeTab === "queue" && (
+                          <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--music-accent)]" />
+                        )}
+                      </button>
+                      <button 
+                        onClick={() => setActiveTab("insights")}
+                        className={`pb-3 text-sm font-bold uppercase tracking-widest transition-colors relative flex items-center gap-2 ${activeTab === "insights" ? "text-white" : "text-muted-foreground hover:text-white"}`}
+                      >
+                        Insights
+                        <Sparkles className="w-3 h-3" />
+                        {activeTab === "insights" && (
+                          <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--music-accent)]" />
+                        )}
+                      </button>
                     </div>
-                    <button 
-                      onClick={refreshQueue}
-                      className="p-1.5 rounded-full hover:bg-white/5 text-muted-foreground transition-colors"
-                      title="Refresh Queue"
-                    >
-                      <RefreshCcw className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                  <div className="flex-1 overflow-y-auto space-y-1 pr-2 scrollbar-thin scrollbar-thumb-white/10">
-                    {queue.length === 0 ? (
-                      <p className="text-xs text-muted-foreground italic py-4">Queue is empty</p>
-                    ) : (
-                      queue.slice(0, 10).map((track, i) => (
-                        <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
-                          <div className="relative w-10 h-10 rounded overflow-hidden shrink-0 bg-white/5">
-                            {track.album?.images?.[0]?.url && <Image src={track.album.images[0].url} alt="" fill className="object-cover" />}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate group-hover:text-[var(--music-accent)] transition-colors">{track.name}</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{track.artists[0]?.name}</p>
-                          </div>
-                        </div>
-                      ))
+                    {activeTab === "queue" && (
+                      <button 
+                        onClick={refreshQueue}
+                        className="pb-3 rounded-full text-muted-foreground hover:text-white transition-colors"
+                        title="Refresh Queue"
+                      >
+                        <RefreshCcw className="w-3.5 h-3.5" />
+                      </button>
                     )}
                   </div>
-                </div>
+
+                  <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                    <AnimatePresence mode="wait">
+                      {activeTab === "queue" ? (
+                        <motion.div
+                          key="queue"
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 10 }}
+                          className="space-y-1"
+                        >
+                          {queue.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic py-4">Queue is empty</p>
+                          ) : (
+                            queue.slice(0, 10).map((track, i) => (
+                              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
+                                <div className="relative w-10 h-10 rounded overflow-hidden shrink-0 bg-white/5">
+                                  {track.album?.images?.[0]?.url && <Image src={track.album.images[0].url} alt="" fill className="object-cover" />}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-sm font-medium truncate group-hover:text-[var(--music-accent)] transition-colors">{track.name}</p>
+                                  <p className="text-[10px] text-muted-foreground truncate">{track.artists[0]?.name}</p>
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </motion.div>
+                      ) : (
+                        <motion.div
+                          key="insights"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                        >
+                          <GeniusDetails />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
 
               </div>
             </div>

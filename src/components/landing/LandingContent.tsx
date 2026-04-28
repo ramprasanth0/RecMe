@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { TabSwitcher } from "@/components/shared/TabSwitcher";
 import { MoodInput } from "@/components/shared/MoodInput";
+import { LyricSearch } from "@/components/shared/LyricSearch";
 import { RecommendationCard } from "@/components/shared/RecommendationCard";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingMovieCard } from "@/components/shared/TrendingMovieCard";
@@ -164,6 +165,17 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
             isLoading={active.isLoading}
           />
         </div>
+
+        {/* Lyric Search (Music only) */}
+        {activeTab === "music" && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="max-w-2xl mx-auto mb-12 p-6 rounded-3xl bg-glass-gradient border border-white/5 shadow-2xl"
+          >
+            <LyricSearch />
+          </motion.div>
+        )}
 
         {/* Error */}
         {active.error && (
