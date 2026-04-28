@@ -22,7 +22,7 @@ interface Artist {
 
 interface Track {
   name: string;
-  artists: { name: string; uri?: string }[];
+  artists: { name: string; uri?: string; images?: { url: string }[] }[];
   album: { name: string; images: { url: string }[]; uri?: string };
   external_urls?: { spotify?: string };
   uri: string;
