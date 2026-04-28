@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
-import { getTopTracks, getAudioFeatures } from "@/lib/spotify";
+import { getTopTracks, getAudioFeatures, getRecentlyPlayed } from "@/lib/spotify";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET() {
