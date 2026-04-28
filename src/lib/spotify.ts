@@ -25,6 +25,17 @@ export async function getTopTracks(accessToken: string, limit = 50, timeRange: "
   return data.items;
 }
 
+export async function getRecentlyPlayed(accessToken: string, limit = 20) {
+  const res = await fetch(
+    `${SPOTIFY_API}/me/player/recently-played?limit=${limit}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+  const data = await res.json();
+  // Map the play history object structure to standard track structure
+  return data.items.map((item: { track: unknown }) => item.track);
+}
+
 export async function getSpotifyTopData(
   accessToken: string
 ): Promise<SpotifyTopData> {

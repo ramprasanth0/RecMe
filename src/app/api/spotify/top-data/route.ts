@@ -1,10 +1,8 @@
 import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
-import { getTopArtists, getTopTracks } from "@/lib/spotify";
+import { getTopArtists, getTopTracks, getRecentlyPlayed } from "@/lib/spotify";
 
-/** GET /api/spotify/top-data — returns top artists + top tracks in one request.
- *  Replaces separate /top-artists and /top-tracks calls to avoid two concurrent
- *  token refreshes for the same user session. */
+/** GET /api/spotify/top-data — returns top artists, top tracks, and recently played. */
 export async function GET() {
   const user = await getUserWithFreshToken();
 
@@ -16,11 +14,12 @@ export async function GET() {
   }
 
   try {
-    const [artists, tracks] = await Promise.all([
+    const [artists, tracks, recentTracks] = await Promise.all([
       getTopArtists(user.spotify_access_token),
       getTopTracks(user.spotify_access_token),
+      getRecentlyPlayed(user.spotify_access_token).catch(() => []), // fallback for un-granted scopes
     ]);
-    return NextResponse.json({ artists, tracks });
+    return NextResponse.json({ artists, tracks, recentTracks });
   } catch (err) {
     console.error("Failed to fetch Spotify top data:", err);
     return NextResponse.json(

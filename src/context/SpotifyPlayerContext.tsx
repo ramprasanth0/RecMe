@@ -15,11 +15,13 @@ interface PlayerContextType {
   isReady: boolean;
   isActive: boolean;
   currentTrack: Spotify.WebPlaybackTrack | null;
+  currentContextUri: string | null;
   isPlaying: boolean;
   position: number;
   duration: number;
   playTrack: (track: TrackToPlay) => Promise<void>;
   playQueue: (tracks: TrackToPlay[], startIndex?: number) => Promise<void>;
+  playContext: (contextUri: string) => Promise<void>;
   togglePlay: () => Promise<void>;
   next: () => Promise<void>;
   prev: () => Promise<void>;
@@ -36,6 +38,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [isReady, setIsReady] = useState(false);
   const [isActive, setIsActive] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<Spotify.WebPlaybackTrack | null>(null);
+  const [currentContextUri, setCurrentContextUri] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -86,6 +89,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
 
         setIsActive(true);
         setCurrentTrack(state.track_window.current_track);
+        setCurrentContextUri(state.context?.uri ?? null);
         setIsPlaying(!state.paused);
         setPosition(state.position);
         setDuration(state.duration);
@@ -139,12 +143,12 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     return null;
   }, []);
 
-  const executePlay = useCallback(async (uris: string[]) => {
+  const executePlay = useCallback(async (payload: { uris?: string[]; context_uri?: string; offset?: { position: number } }) => {
     if (!deviceId || !token) return;
 
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
       method: "PUT",
-      body: JSON.stringify({ uris }),
+      body: JSON.stringify(payload),
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -159,7 +163,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
         uri = await fetchUri(track.title, track.artist);
       }
       if (uri) {
-        await executePlay([uri]);
+        await executePlay({ uris: [uri] });
       }
     },
     [fetchUri, executePlay]
@@ -185,20 +189,20 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
         // Let's just pass all valid URIs.
         if (!deviceId || !token) return;
 
-        await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-          method: "PUT",
-          body: JSON.stringify({ 
-            uris: validUris,
-            offset: { position: Math.min(startIndex, validUris.length - 1) }
-          }),
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
+        await executePlay({
+          uris: validUris,
+          offset: { position: Math.min(startIndex, validUris.length - 1) },
         });
       }
     },
-    [deviceId, token, fetchUri]
+    [executePlay, fetchUri, deviceId, token]
+  );
+
+  const playContext = useCallback(
+    async (contextUri: string) => {
+      await executePlay({ context_uri: contextUri });
+    },
+    [executePlay]
   );
 
   const togglePlay = useCallback(async () => {
@@ -241,11 +245,13 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     isReady,
     isActive,
     currentTrack,
+    currentContextUri,
     isPlaying,
     position,
     duration,
     playTrack,
     playQueue,
+    playContext,
     togglePlay,
     next,
     prev,

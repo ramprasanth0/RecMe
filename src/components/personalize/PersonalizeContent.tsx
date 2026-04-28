@@ -2,19 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Music2, Mic2, AlertCircle, ExternalLink } from "lucide-react";
+import { Music2, Mic2, AlertCircle, Play } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { ProFeatureGate } from "@/components/shared/ProFeatureGate";
 import { CardCarousel } from "@/components/shared/CardCarousel";
 import { TrendingPlaylistCard } from "@/components/shared/TrendingPlaylistCard";
 import { cn } from "@/lib/utils";
 import type { TrendingPlaylist } from "@/types/trending";
+import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 
 interface Artist {
   name: string;
   images: { url: string }[];
   genres: string[];
   external_urls?: { spotify?: string };
+  uri: string;
 }
 
 interface Track {
@@ -22,6 +24,7 @@ interface Track {
   artists: { name: string }[];
   album: { name: string; images: { url: string }[] };
   external_urls?: { spotify?: string };
+  uri: string;
 }
 
 interface PersonalizeContentProps {
@@ -32,10 +35,13 @@ interface PersonalizeContentProps {
 export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProps) {
   const [artists, setArtists] = useState<Artist[]>([]);
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [recentTracks, setRecentTracks] = useState<Track[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [userPlaylists, setUserPlaylists] = useState<TrendingPlaylist[]>([]);
   const [playlistsLoading, setPlaylistsLoading] = useState(true);
+
+  const { playTrack, playContext, currentTrack, currentContextUri, isPlaying } = useSpotifyPlayer();
 
   useEffect(() => {
     if (!hasSpotify) {
@@ -48,6 +54,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
       .then((data) => {
         setArtists(data.artists?.slice(0, 12) ?? []);
         setTracks(data.tracks?.slice(0, 10) ?? []);
+        setRecentTracks(data.recentTracks?.slice(0, 10) ?? []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -93,38 +100,45 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
               <Empty text="No artist data yet — listen more on Spotify." />
             ) : (
               <div className="grid grid-cols-3 gap-3">
-                {artists.map((artist, i) => (
-                  <a
-                    key={i}
-                    href={artist.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(artist.name)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group space-y-1.5"
-                  >
-                    <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light">
-                      {artist.images?.[0]?.url ? (
-                        <Image
-                          src={artist.images[0].url}
-                          alt={artist.name}
-                          fill
-                          sizes="120px"
-                          className="object-cover transition-transform duration-300 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Mic2 className="w-6 h-6 text-muted-foreground/30" />
+                {artists.map((artist, i) => {
+                  const isCurrentArtist = currentContextUri === artist.uri;
+                  return (
+                    <div key={i} className="group space-y-1.5 relative">
+                      <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light">
+                        {artist.images?.[0]?.url ? (
+                          <Image
+                            src={artist.images[0].url}
+                            alt={artist.name}
+                            fill
+                            sizes="120px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Mic2 className="w-6 h-6 text-muted-foreground/30" />
+                          </div>
+                        )}
+                        <div className={cn(
+                          "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40",
+                          isCurrentArtist && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                        )}>
+                          <button
+                            onClick={() => playContext(artist.uri)}
+                            className="w-10 h-10 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+                          >
+                            <Play className="w-5 h-5 ml-1 fill-current" />
+                          </button>
                         </div>
-                      )}
-                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-end p-1.5">
-                        <ExternalLink className="w-3 h-3 text-white" />
                       </div>
+                      <a href={artist.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(artist.name)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        <p className={cn("text-xs font-medium truncate leading-tight", isCurrentArtist && isPlaying && "text-[var(--music-accent)]")}>{artist.name}</p>
+                      </a>
+                      {artist.genres?.[0] && (
+                        <p className="text-[10px] text-muted-foreground truncate">{artist.genres[0]}</p>
+                      )}
                     </div>
-                    <p className="text-xs font-medium truncate leading-tight">{artist.name}</p>
-                    {artist.genres?.[0] && (
-                      <p className="text-[10px] text-muted-foreground truncate">{artist.genres[0]}</p>
-                    )}
-                  </a>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -145,46 +159,105 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
             <Empty text="No track data yet — listen more on Spotify." />
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-              {tracks.map((track, i) => (
-                <a
-                  key={i}
-                  href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={cn(
-                    "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light",
-                  )}
-                >
-                  <span className="text-xs text-muted-foreground/40 w-5 text-right shrink-0 font-mono">
-                    {i + 1}
-                  </span>
-                  <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0">
-                    {track.album?.images?.[0]?.url ? (
-                      <Image
-                        src={track.album.images[0].url}
-                        alt={track.album.name}
-                        fill
-                        sizes="40px"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Music2 className="w-4 h-4 text-muted-foreground/30" />
-                      </div>
+              {tracks.map((track, i) => {
+                const isCurrent = currentTrack?.uri === track.uri;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light relative",
                     )}
+                  >
+                    <span className="text-xs text-muted-foreground/40 w-5 text-right shrink-0 font-mono">
+                      {i + 1}
+                    </span>
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0 cursor-pointer" onClick={() => playTrack({ title: track.name, artist: track.artists[0]?.name, uri: track.uri })}>
+                      {track.album?.images?.[0]?.url ? (
+                        <Image
+                          src={track.album.images[0].url}
+                          alt={track.album.name}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music2 className="w-4 h-4 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <div className={cn(
+                        "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
+                        isCurrent && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}>
+                        <Play className="w-4 h-4 text-white fill-current ml-0.5" />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <a href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        <p className={cn("text-sm font-medium truncate", isCurrent && isPlaying && "text-[var(--music-accent)]")}>{track.name}</p>
+                      </a>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {track.artists.map((a) => a.name).join(", ")}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{track.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {track.artists.map((a) => a.name).join(", ")}
-                    </p>
-                  </div>
-                  <ExternalLink className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                </a>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
+        {/* Recently Played */}
+        {hasSpotify && recentTracks.length > 0 && (
+          <div className="rounded-xl bg-surface border border-border p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
+              <h2 className="text-sm font-semibold">Recently Played</h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+              {recentTracks.map((track, i) => {
+                const isCurrent = currentTrack?.uri === track.uri;
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "group flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-surface-light relative",
+                    )}
+                  >
+                    <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0 cursor-pointer" onClick={() => playTrack({ title: track.name, artist: track.artists[0]?.name, uri: track.uri })}>
+                      {track.album?.images?.[0]?.url ? (
+                        <Image
+                          src={track.album.images[0].url}
+                          alt={track.album.name}
+                          fill
+                          sizes="40px"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music2 className="w-4 h-4 text-muted-foreground/30" />
+                        </div>
+                      )}
+                      <div className={cn(
+                        "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
+                        isCurrent && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                      )}>
+                        <Play className="w-4 h-4 text-white fill-current ml-0.5" />
+                      </div>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <a href={track.external_urls?.spotify ?? `https://open.spotify.com/search/${encodeURIComponent(track.name)}`} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        <p className={cn("text-sm font-medium truncate", isCurrent && isPlaying && "text-[var(--music-accent)]")}>{track.name}</p>
+                      </a>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {track.artists.map((a) => a.name).join(", ")}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* Your Playlists */}
         {hasSpotify && (
@@ -200,7 +273,12 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
             ) : (
               <CardCarousel>
                 {userPlaylists.map((pl) => (
-                  <TrendingPlaylistCard key={pl.id} {...pl} />
+                  <TrendingPlaylistCard
+                    key={pl.id}
+                    {...pl}
+                    onPlay={() => playContext(`spotify:playlist:${pl.id}`)}
+                    isPlaying={currentContextUri === `spotify:playlist:${pl.id}` && isPlaying}
+                  />
                 ))}
               </CardCarousel>
             )}

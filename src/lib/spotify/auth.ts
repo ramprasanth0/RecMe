@@ -15,6 +15,7 @@ const SCOPES = [
   "streaming",
   "user-read-playback-state",
   "user-modify-playback-state",
+  "user-read-recently-played",
 ].join(" ");
 
 export function getSpotifyAuthUrl(state: string, showDialog = false): string {

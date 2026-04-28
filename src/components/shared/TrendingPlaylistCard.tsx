@@ -1,18 +1,19 @@
 "use client";
 
 import Image from "next/image";
-import { ListMusic } from "lucide-react";
+import { ListMusic, Play } from "lucide-react";
 import type { TrendingPlaylist } from "@/types/trending";
+import { cn } from "@/lib/utils";
 
-export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, trackCount, description }: TrendingPlaylist) {
+interface Props extends TrendingPlaylist {
+  onPlay?: () => void;
+  isPlaying?: boolean;
+}
+
+export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, trackCount, description, onPlay, isPlaying }: Props) {
   return (
-    <a
-      href={spotifyUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group w-36 flex-shrink-0 space-y-2 cursor-pointer"
-    >
-      <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light">
+    <div className="group w-36 flex-shrink-0 space-y-2 relative">
+      <div className="relative aspect-square rounded-xl overflow-hidden bg-surface-light cursor-pointer">
         {imageUrl ? (
           <Image
             src={imageUrl}
@@ -26,14 +27,32 @@ export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, trackCount, d
             <ListMusic className="w-8 h-8 text-muted-foreground/30" />
           </div>
         )}
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity" />
+        <div className={cn(
+          "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40",
+          isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )}>
+          {onPlay && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onPlay();
+              }}
+              className="w-12 h-12 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
+              aria-label={`Play ${name}`}
+            >
+              <Play className="w-6 h-6 ml-1 fill-current" />
+            </button>
+          )}
+        </div>
       </div>
       <div className="space-y-0.5 px-0.5">
-        <p className="text-xs font-medium truncate leading-tight">{name}</p>
+        <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+          <p className={cn("text-xs font-medium truncate leading-tight", isPlaying && "text-[var(--music-accent)]")}>{name}</p>
+        </a>
         <p className="text-[11px] text-muted-foreground truncate">
           {description || `${trackCount} tracks`}
         </p>
       </div>
-    </a>
+    </div>
   );
 }
