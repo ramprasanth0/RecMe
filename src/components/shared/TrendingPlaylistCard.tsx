@@ -49,9 +49,11 @@ export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, trackCount, d
         <a href={spotifyUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
           <p className={cn("text-xs font-medium truncate leading-tight", isPlaying && "text-[var(--music-accent)]")}>{name}</p>
         </a>
-        <p className="text-[11px] text-muted-foreground truncate">
-          {description || `${trackCount} tracks`}
-        </p>
+        {description && (
+          <p className="text-[11px] text-muted-foreground truncate">
+            {description}
+          </p>
+        )}
       </div>
     </div>
   );

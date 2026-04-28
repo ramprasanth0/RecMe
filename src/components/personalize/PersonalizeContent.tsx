@@ -156,9 +156,13 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                         return (
                           <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
                             <div className="relative aspect-square rounded-full overflow-hidden bg-surface-light cursor-pointer" onClick={() => artist.uri && playContext(artist.uri)}>
-                              <div className="w-full h-full flex items-center justify-center bg-surface-light">
-                                <Mic2 className="w-8 h-8 text-muted-foreground/30" />
-                              </div>
+                              {artist.images?.[0]?.url ? (
+                                <Image src={artist.images[0].url} alt={artist.name} fill sizes="96px" className="object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-surface-light">
+                                  <Mic2 className="w-8 h-8 text-muted-foreground/30" />
+                                </div>
+                              )}
                               <div className={cn(
                                 "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40 rounded-full",
                                 isCurrentArtist && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
