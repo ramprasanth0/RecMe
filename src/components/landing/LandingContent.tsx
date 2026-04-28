@@ -13,6 +13,7 @@ import { Sparkles, AlertCircle, Info } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
 import type { TrendingMovie, TrendingSong } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
+import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 
 const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Blinding Lights", artist: "The Weeknd", reason: "Cinematic synths that match late-night energy" },
@@ -48,6 +49,7 @@ interface LandingContentProps {
 export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
   const [greeting, setGreeting] = useState<string>("");
+  const { playQueue } = useSpotifyPlayer();
 
   // Trending state
   const [trendingMovies, setTrendingMovies] = useState<TrendingMovie[]>([]);
@@ -303,6 +305,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
             <CardCarousel
               title="Top Songs — US"
               accentColor="var(--music-accent)"
+              onPlayAll={() => playQueue(globalSongs.map(s => ({ title: s.title, artist: s.artist, uri: s.spotifyUrl })))}
               titleExtra={
                 <span className="relative group/tip">
                   <Info className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />
@@ -323,6 +326,7 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
             <CardCarousel
               title="Top Songs — India"
               accentColor="var(--music-accent)"
+              onPlayAll={() => playQueue(indiaSongs.map(s => ({ title: s.title, artist: s.artist, uri: s.spotifyUrl })))}
               titleExtra={
                 <span className="relative group/tip">
                   <Info className="w-3.5 h-3.5 text-muted-foreground/50 cursor-help" />

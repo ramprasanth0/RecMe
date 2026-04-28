@@ -67,7 +67,11 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-[padding] duration-300;
+  }
+
+  body.has-player {
+    padding-bottom: 6rem; /* 24 in Tailwind */
   }
 }
 

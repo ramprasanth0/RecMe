@@ -12,6 +12,9 @@ const SCOPES = [
   "playlist-modify-private",
   "playlist-read-private",
   "playlist-read-collaborative",
+  "streaming",
+  "user-read-playback-state",
+  "user-modify-playback-state",
 ].join(" ");
 
 export function getSpotifyAuthUrl(state: string, showDialog = false): string {

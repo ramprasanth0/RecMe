@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { SpotifyPlayerProvider } from "@/context/SpotifyPlayerContext";
+import { MiniPlayer } from "@/components/shared/MiniPlayer";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -52,7 +54,10 @@ export default function RootLayout({
           "font-sans antialiased film-grain"
         )}
       >
-        {children}
+        <SpotifyPlayerProvider>
+          {children}
+          <MiniPlayer />
+        </SpotifyPlayerProvider>
       </body>
     </html>
   );

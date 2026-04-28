@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CardCarouselProps {
@@ -10,9 +10,10 @@ interface CardCarouselProps {
   accentColor?: string;
   children: React.ReactNode;
   className?: string;
+  onPlayAll?: () => void;
 }
 
-export function CardCarousel({ title, titleExtra, accentColor, children, className }: CardCarouselProps) {
+export function CardCarousel({ title, titleExtra, accentColor, children, className, onPlayAll }: CardCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -46,11 +47,24 @@ export function CardCarousel({ title, titleExtra, accentColor, children, classNa
 
   return (
     <div className={cn("space-y-3", className)}>
-      {title && (
-        <h3 className="text-sm font-semibold flex items-center gap-1.5" style={accentColor ? { color: accentColor } : undefined}>
-          {title}
-          {titleExtra}
-        </h3>
+      {(title || onPlayAll) && (
+        <div className="flex items-center gap-4">
+          {title && (
+            <h3 className="text-sm font-semibold flex items-center gap-1.5" style={accentColor ? { color: accentColor } : undefined}>
+              {title}
+              {titleExtra}
+            </h3>
+          )}
+          {onPlayAll && (
+            <button
+              onClick={onPlayAll}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+            >
+              <Play className="w-3 h-3" style={accentColor ? { color: accentColor, fill: accentColor } : { fill: "currentColor" }} />
+              Play All
+            </button>
+          )}
+        </div>
       )}
       <div className="group relative">
         {/* Left arrow */}

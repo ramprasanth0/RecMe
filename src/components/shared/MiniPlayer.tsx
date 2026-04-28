@@ -1,0 +1,213 @@
+"use client";
+
+import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X, ExternalLink } from "lucide-react";
+import { useEffect, useState } from "react";
+
+function formatTime(ms: number) {
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+}
+
+export function MiniPlayer() {
+  const {
+    isActive,
+    currentTrack,
+    isPlaying,
+    position,
+    duration,
+    togglePlay,
+    next,
+    prev,
+    seek,
+    setVolume,
+    dismiss,
+  } = useSpotifyPlayer();
+
+  const [volumeLevel, setVolumeLevel] = useState(0.5);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false);
+  const [scrubPosition, setScrubPosition] = useState(0);
+
+  // Sync effect for <body> class
+  useEffect(() => {
+    if (isActive) {
+      document.body.classList.add("has-player");
+    } else {
+      document.body.classList.remove("has-player");
+    }
+    return () => document.body.classList.remove("has-player");
+  }, [isActive]);
+
+  if (!isActive || !currentTrack) return null;
+
+  const albumArt = currentTrack.album.images[0]?.url;
+  const displayPosition = isScrubbing ? scrubPosition : position;
+  const progressPercent = duration > 0 ? (displayPosition / duration) * 100 : 0;
+
+  const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setVolumeLevel(val);
+    setVolume(val);
+    if (val > 0) setIsMuted(false);
+  };
+
+  const toggleMute = () => {
+    if (isMuted) {
+      setVolume(volumeLevel);
+      setIsMuted(false);
+    } else {
+      setVolume(0);
+      setIsMuted(true);
+    }
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    const newPos = (val / 100) * duration;
+    setScrubPosition(newPos);
+  };
+
+  const handleSeekEnd = async (e: React.MouseEvent<HTMLInputElement> | React.TouchEvent<HTMLInputElement>) => {
+    setIsScrubbing(false);
+    const target = e.target as HTMLInputElement;
+    const val = parseFloat(target.value);
+    const newPos = (val / 100) * duration;
+    await seek(newPos);
+  };
+
+  const spotifyUrl = `https://open.spotify.com/track/${currentTrack.id}`;
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="fixed bottom-0 left-0 right-0 z-50 h-20 sm:h-24 bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 flex items-center justify-between px-4 sm:px-6 gap-4"
+      >
+        {/* Left: Track Info */}
+        <div className="flex items-center gap-3 w-1/3 min-w-0">
+          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light">
+            {albumArt && (
+              <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
+            )}
+          </div>
+          <div className="min-w-0 flex flex-col justify-center">
+            <p className="text-sm font-semibold text-white truncate">{currentTrack.name}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {currentTrack.artists.map((a) => a.name).join(", ")}
+            </p>
+          </div>
+        </div>
+
+        {/* Center: Controls & Progress */}
+        <div className="flex flex-col items-center justify-center flex-1 max-w-xl px-4">
+          <div className="flex items-center gap-4 sm:gap-6 mb-1.5">
+            <button
+              onClick={prev}
+              className="text-muted-foreground hover:text-white transition-colors"
+            >
+              <SkipBack className="w-5 h-5 fill-current" />
+            </button>
+            <button
+              onClick={togglePlay}
+              className="w-10 h-10 rounded-full bg-[var(--music-accent)] flex items-center justify-center text-black hover:scale-105 transition-transform shadow-[0_0_15px_rgba(29,185,84,0.3)]"
+            >
+              {isPlaying ? (
+                <Pause className="w-5 h-5 fill-current" />
+              ) : (
+                <Play className="w-5 h-5 fill-current ml-1" />
+              )}
+            </button>
+            <button
+              onClick={next}
+              className="text-muted-foreground hover:text-white transition-colors"
+            >
+              <SkipForward className="w-5 h-5 fill-current" />
+            </button>
+          </div>
+          <div className="w-full flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs font-mono text-muted-foreground">
+            <span className="w-10 text-right">{formatTime(displayPosition)}</span>
+            <div className="relative flex-1 h-1.5 group flex items-center">
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={progressPercent}
+                onMouseDown={() => setIsScrubbing(true)}
+                onTouchStart={() => setIsScrubbing(true)}
+                onChange={handleSeek}
+                onMouseUp={handleSeekEnd}
+                onTouchEnd={handleSeekEnd}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="absolute inset-0 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white group-hover:bg-[var(--music-accent)] transition-colors"
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </div>
+            </div>
+            <span className="w-10 text-left">{formatTime(duration)}</span>
+          </div>
+        </div>
+
+        {/* Right: Volume & Actions */}
+        <div className="flex items-center justify-end gap-4 w-1/3 min-w-0">
+          <div className="hidden sm:flex items-center gap-2 w-32 group">
+            <button onClick={toggleMute} className="text-muted-foreground hover:text-white transition-colors">
+              {isMuted || volumeLevel === 0 ? (
+                <VolumeX className="w-4 h-4" />
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+            </button>
+            <div className="relative flex-1 h-1.5 flex items-center">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={isMuted ? 0 : volumeLevel}
+                onChange={handleVolumeChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+              <div className="absolute inset-0 bg-white/10 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-white group-hover:bg-[var(--music-accent)] transition-colors"
+                  style={{ width: `${(isMuted ? 0 : volumeLevel) * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 border-l border-white/10 pl-4">
+            <a
+              href={spotifyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-[var(--music-accent)] transition-colors"
+              title="Open in Spotify"
+            >
+              <ExternalLink className="w-4 h-4" />
+            </a>
+            <button
+              onClick={dismiss}
+              className="text-muted-foreground hover:text-white transition-colors"
+              title="Close player"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
