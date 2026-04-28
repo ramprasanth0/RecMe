@@ -637,7 +637,3 @@ function VibeStat({ label, value, sub, sub2 }: { label: string; value: number; s
   );
 }
 
-function formatKey(key: number, mode: number) {
-  const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  return `${keys[key]} ${mode === 1 ? 'Maj' : 'Min'}`;
-}
