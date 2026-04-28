@@ -105,7 +105,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                   <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
                   <h3 className="text-sm font-semibold">Recently Played Tracks</h3>
                 </div>
-                {recentTracks.length === 0 ? <Empty text="No recent tracks found." /> : (
+                {recentTracks.length === 0 ? <Empty text="No recent tracks found. If you recently connected, try playing some music or reconnect your account from your Profile to grant history permissions." /> : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {recentTracks.slice(0, 8).map((track, i) => {
                       const isCurrent = currentTrack?.uri === track.uri;
@@ -149,7 +149,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                     <Mic2 className="w-4 h-4 text-[var(--music-accent)]" />
                     <h3 className="text-sm font-semibold">Recent Artists</h3>
                   </div>
-                  {recentArtists.length === 0 ? <Empty text="No recent artists found." /> : (
+                  {recentArtists.length === 0 ? <Empty text="No recent artists found. Try reconnecting your Spotify profile." /> : (
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {recentArtists.map((artist, i) => {
                         const isCurrentArtist = currentContextUri === artist.uri;
@@ -181,7 +181,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                     <Disc3 className="w-4 h-4 text-[var(--music-accent)]" />
                     <h3 className="text-sm font-semibold">Recent Albums</h3>
                   </div>
-                  {recentAlbums.length === 0 ? <Empty text="No recent albums found." /> : (
+                  {recentAlbums.length === 0 ? <Empty text="No recent albums found. Try reconnecting your Spotify profile." /> : (
                     <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
                       {recentAlbums.map((album, i) => {
                         const isCurrentAlbum = currentContextUri === album.uri;

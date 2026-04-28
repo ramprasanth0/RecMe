@@ -8,7 +8,7 @@ export const INDIA_TOP_50_ID = "37i9dQZEVXbLZ52XmnySIA";
 export async function getTopArtists(accessToken: string, limit = 20) {
   const res = await fetch(
     `${SPOTIFY_API}/me/top/artists?time_range=long_term&limit=${limit}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
   );
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
   const data = await res.json();
@@ -18,7 +18,7 @@ export async function getTopArtists(accessToken: string, limit = 20) {
 export async function getTopTracks(accessToken: string, limit = 50, timeRange: "short_term" | "medium_term" | "long_term" = "long_term") {
   const res = await fetch(
     `${SPOTIFY_API}/me/top/tracks?time_range=${timeRange}&limit=${limit}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
   );
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
   const data = await res.json();
@@ -28,7 +28,7 @@ export async function getTopTracks(accessToken: string, limit = 50, timeRange: "
 export async function getRecentlyPlayed(accessToken: string, limit = 20) {
   const res = await fetch(
     `${SPOTIFY_API}/me/player/recently-played?limit=${limit}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" }
   );
   if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
   const data = await res.json();
