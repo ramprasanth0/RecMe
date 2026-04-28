@@ -83,14 +83,29 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
   }, [hasSpotify]);
 
   useEffect(() => {
-    const trackId = currentTrack?.id || (currentTrack?.uri?.startsWith('spotify:track:') ? currentTrack.uri.split(':').pop() : null);
-    
-    if (trackId) {
-      fetch(`/api/spotify/audio-features?ids=${trackId}`)
+    if (currentTrack?.name && currentTrack?.artists?.[0]?.name) {
+      fetch("/api/gemini/vibe-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          track: currentTrack.name, 
+          artist: currentTrack.artists[0].name 
+        }),
+      })
         .then((r) => r.json())
         .then((data) => {
-          if (data && data.length > 0) {
-            setCurrentTrackFeatures(data[0]);
+          if (data && !data.error) {
+            // Adapt keys for the VibeStat components
+            setCurrentTrackFeatures({
+              energy: data.energy,
+              danceability: data.danceability,
+              valence: data.valence,
+              acousticness: data.acousticness,
+              instrumentalness: data.instrumentalness,
+              tempo: data.tempo,
+              keyName: data.key,
+              modeName: data.mode
+            });
           } else {
             setCurrentTrackFeatures({ error: true });
           }
@@ -99,7 +114,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
     } else {
       setCurrentTrackFeatures(null);
     }
-  }, [currentTrack?.id, currentTrack?.uri]);
+  }, [currentTrack?.name, currentTrack?.artists]);
 
   // Derive recent albums and artists from recentTracks
   const recentAlbums = Array.from(new Map(recentTracks.filter(t => t.album?.uri).map(t => [t.album.uri, t.album])).values()).slice(0, 5);
@@ -212,7 +227,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                         </div>
                         <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-widest text-muted-foreground mt-2">
                           <span>Key</span>
-                          <span className="text-white font-mono">{formatKey(currentTrackFeatures.key, currentTrackFeatures.mode)}</span>
+                          <span className="text-white font-mono">{(currentTrackFeatures as any).keyName} {(currentTrackFeatures as any).modeName}</span>
                         </div>
                       </div>
                     </div>

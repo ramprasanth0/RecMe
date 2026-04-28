@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUserWithFreshToken } from "@/lib/auth/session";
-import { getTopTracks, getAudioFeatures, getRecentlyPlayed } from "@/lib/spotify";
+import { getTopTracks, getRecentlyPlayed } from "@/lib/spotify";
+import { getGeminiClient, AI_MODEL } from "@/lib/gemini";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function GET() {
@@ -16,10 +17,6 @@ export async function GET() {
       topTracks = await getTopTracks(user.spotify_access_token, 50, "long_term");
     }
     if (!topTracks || topTracks.length === 0) {
-      topTracks = await getTopTracks(user.spotify_access_token, 50, "short_term");
-    }
-    
-    if (!topTracks || topTracks.length === 0) {
       topTracks = await getRecentlyPlayed(user.spotify_access_token, 50);
     }
     
@@ -27,40 +24,34 @@ export async function GET() {
       return NextResponse.json({ profile: null });
     }
 
-    const trackIds = topTracks.map((t: any) => t.id).filter(Boolean);
-    if (trackIds.length === 0) return NextResponse.json({ profile: null });
+    // Use Gemini to analyze the taste since Spotify's /audio-features is restricted
+    const trackNames = topTracks.map((t: any) => `${t.name} by ${t.artists[0]?.name}`).join(", ");
+    
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: AI_MODEL });
 
-    const features = await getAudioFeatures(user.spotify_access_token, trackIds);
+    const prompt = `Analyze the musical taste of a user based on these top tracks: ${trackNames}.
+    Provide an aggregated preference percentage (0.0 to 1.0) for:
+    danceability, energy, valence, acousticness, instrumentalness, and speechiness.
+    Return only JSON in this format:
+    {
+      "danceability": 0.0,
+      "energy": 0.0,
+      "valence": 0.0,
+      "acousticness": 0.0,
+      "instrumentalness": 0.0,
+      "speechiness": 0.0
+    }`;
 
-    const validFeatures = features.filter((f: any) => f !== null);
-    const count = validFeatures.length;
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+    const jsonStr = text.replace(/```json|```/g, "").trim();
+    const data = JSON.parse(jsonStr);
 
-    if (count === 0) return NextResponse.json({ profile: null });
-
-    const averages = validFeatures.reduce((acc: any, f: any) => ({
-      danceability: acc.danceability + f.danceability,
-      energy: acc.energy + f.energy,
-      valence: acc.valence + f.valence,
-      instrumentalness: acc.instrumentalness + f.instrumentalness,
-      acousticness: acc.acousticness + f.acousticness,
-      speechiness: acc.speechiness + f.speechiness,
-    }), {
-      danceability: 0,
-      energy: 0,
-      valence: 0,
-      instrumentalness: 0,
-      acousticness: 0,
-      speechiness: 0,
-    });
-
-    const result: Record<string, number> = {};
-    Object.keys(averages).forEach(key => {
-      result[key] = averages[key as keyof typeof averages] / count;
-    });
-
-    return NextResponse.json({ profile: result });
+    return NextResponse.json({ profile: data });
   } catch (err) {
-    console.error("Failed to fetch taste profile:", err);
+    console.error("Failed to fetch taste profile with AI:", err);
     return NextResponse.json({ error: "Failed to fetch taste profile" }, { status: 500 });
   }
 }
