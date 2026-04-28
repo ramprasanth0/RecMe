@@ -46,6 +46,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [sdkReady, setSdkReady] = useState(false);
+
   // Fetch token once on mount
   useEffect(() => {
     fetch("/api/spotify/player-token")
@@ -57,59 +59,60 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       .catch((err) => console.log("Player token not available (user may not be logged in)", err));
   }, []);
 
+  // Handle SDK load event globally
+  useEffect(() => {
+    if (window.Spotify && window.Spotify.Player) {
+      setSdkReady(true);
+    } else {
+      window.onSpotifyWebPlaybackSDKReady = () => {
+        setSdkReady(true);
+      };
+    }
+  }, []);
+
   // Initialize Player when SDK is loaded and we have a token
   useEffect(() => {
-    if (!token) return;
+    if (!token || !sdkReady) return;
 
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      const spotifyPlayer = new window.Spotify.Player({
-        name: "RecMe Web Player",
-        getOAuthToken: (cb) => {
-          cb(token);
-        },
-        volume: 0.5,
-      });
+    const spotifyPlayer = new window.Spotify.Player({
+      name: "RecMe Web Player",
+      getOAuthToken: (cb) => {
+        cb(token);
+      },
+      volume: 0.5,
+    });
 
-      spotifyPlayer.addListener("ready", ({ device_id }) => {
-        console.log("Ready with Device ID", device_id);
-        setDeviceId(device_id);
-        setIsReady(true);
-      });
+    spotifyPlayer.addListener("ready", ({ device_id }) => {
+      console.log("Ready with Device ID", device_id);
+      setDeviceId(device_id);
+      setIsReady(true);
+    });
 
-      spotifyPlayer.addListener("not_ready", ({ device_id }) => {
-        console.log("Device ID has gone offline", device_id);
-        setIsReady(false);
-      });
+    spotifyPlayer.addListener("not_ready", ({ device_id }) => {
+      console.log("Device ID has gone offline", device_id);
+      setIsReady(false);
+    });
 
-      spotifyPlayer.addListener("player_state_changed", (state) => {
-        if (!state) {
-          setIsActive(false);
-          return;
-        }
+    spotifyPlayer.addListener("player_state_changed", (state) => {
+      if (!state) {
+        setIsActive(false);
+        return;
+      }
+      setIsActive(true);
+      setCurrentTrack(state.track_window.current_track);
+      setCurrentContextUri(state.context?.uri ?? null);
+      setIsPlaying(!state.paused);
+      setPosition(state.position);
+      setDuration(state.duration);
+    });
 
-        setIsActive(true);
-        setCurrentTrack(state.track_window.current_track);
-        setCurrentContextUri(state.context?.uri ?? null);
-        setIsPlaying(!state.paused);
-        setPosition(state.position);
-        setDuration(state.duration);
-      });
-
-      spotifyPlayer.connect();
-      setPlayer(spotifyPlayer);
-    };
-
-    // If script is already loaded
-    if (window.Spotify && window.Spotify.Player) {
-      window.onSpotifyWebPlaybackSDKReady();
-    }
+    spotifyPlayer.connect();
+    setPlayer(spotifyPlayer);
 
     return () => {
-      if (player) {
-        player.disconnect();
-      }
+      spotifyPlayer.disconnect();
     };
-  }, [token]);
+  }, [token, sdkReady]);
 
   // Sync position periodically while playing
   useEffect(() => {
