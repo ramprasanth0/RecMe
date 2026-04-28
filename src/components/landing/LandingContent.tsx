@@ -15,6 +15,8 @@ import type { MusicItem, MovieItem } from "@/types/recommendations";
 import type { TrendingMovie, TrendingSong } from "@/types/trending";
 import { getGreeting } from "@/lib/utils";
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
+import type { GeniusHit } from "@/types/genius";
+import { Music, Search, Loader2 } from "lucide-react";
 
 const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Blinding Lights", artist: "The Weeknd", reason: "Cinematic synths that match late-night energy" },
@@ -58,6 +60,11 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   const [globalSongs, setGlobalSongs] = useState<TrendingSong[]>([]);
   const [indiaSongs, setIndiaSongs] = useState<TrendingSong[]>([]);
   const [musicTrendingLoaded, setMusicTrendingLoaded] = useState(false);
+  
+  // Lyric Search state
+  const [lyricResults, setLyricResults] = useState<GeniusHit[]>([]);
+  const [isSearchingLyrics, setIsSearchingLyrics] = useState(false);
+  const [lastLyricQuery, setLastLyricQuery] = useState("");
 
   useEffect(() => {
     setGreeting(getGreeting());
@@ -100,7 +107,30 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
   function handleTabChange(tab: "music" | "movies") {
     setActiveTab(tab);
     if (tab === "movies" && isAuthenticated) movieRecs.triggerAutoFetch();
+    // Clear lyric results when switching tabs
+    setLyricResults([]);
   }
+
+  const handleSearch = async (query: string, mode: "mood" | "lyrics") => {
+    if (mode === "mood") {
+      active.fetchRecs(query);
+      setLyricResults([]); // Clear lyrics if searching mood
+    } else {
+      setIsSearchingLyrics(true);
+      setLastLyricQuery(query);
+      try {
+        const res = await fetch(`/api/genius/search?q=${encodeURIComponent(query)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLyricResults(data.hits || []);
+        }
+      } catch (err) {
+        console.error("Lyrics search failed", err);
+      } finally {
+        setIsSearchingLyrics(false);
+      }
+    }
+  };
 
   const musicRecs = useRecommendations({
     type: "music",
@@ -161,20 +191,59 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
         <div className="max-w-2xl mx-auto mb-10">
           <MoodInput
             activeTab={activeTab}
-            onSubmit={active.fetchRecs}
-            isLoading={active.isLoading}
+            onSubmit={handleSearch}
+            isLoading={active.isLoading || isSearchingLyrics}
           />
         </div>
 
-        {/* Lyric Search (Music only) */}
-        {activeTab === "music" && (
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="max-w-2xl mx-auto mb-12 p-6 rounded-3xl bg-glass-gradient border border-white/5 shadow-2xl"
-          >
-            <LyricSearch />
-          </motion.div>
+        {/* Lyric Search Results */}
+        {activeTab === "music" && (lyricResults.length > 0 || isSearchingLyrics) && (
+          <div className="mb-12 p-6 rounded-3xl bg-glass-gradient border border-white/5 shadow-2xl">
+            <div className="flex items-center gap-2 mb-6">
+              <div className="p-2 rounded-lg bg-[#ffff64]/10">
+                <Music className="w-4 h-4 text-[#ffff64]" />
+              </div>
+              <h2 className="text-lg font-semibold">
+                {isSearchingLyrics ? "Searching lyrics..." : `Results for "${lastLyricQuery}"`}
+              </h2>
+            </div>
+
+            {isSearchingLyrics ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-[#ffff64] animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {lyricResults.slice(0, 6).map((hit) => (
+                  <button
+                    key={hit.result.id}
+                    onClick={() => useSpotifyPlayer().playTrack({ title: hit.result.title, artist: hit.result.primary_artist.name })}
+                    className="flex items-center gap-4 p-4 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 hover:border-white/10 transition-all text-left group"
+                  >
+                    <div className="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-surface-light shadow-lg">
+                      <Image 
+                        src={hit.result.song_art_image_thumbnail_url} 
+                        alt={hit.result.title} 
+                        fill 
+                        className="object-cover group-hover:scale-110 transition-transform duration-500" 
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold truncate group-hover:text-[#ffff64] transition-colors">
+                        {hit.result.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate font-medium">
+                        {hit.result.primary_artist.name}
+                      </p>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                      <Music className="w-4 h-4 text-[#ffff64]" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Error */}

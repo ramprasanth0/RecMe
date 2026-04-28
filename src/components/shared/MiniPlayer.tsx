@@ -309,7 +309,7 @@ export function MiniPlayer() {
                         <div className={`absolute inset-0 z-20 bg-black transition-opacity duration-500 ${mediaType === "video" ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
                           <iframe 
                             className="w-full h-full border-0"
-                            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=${mediaType === 'video' ? 1 : 0}`}
+                            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
                             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                             allowFullScreen
                           />
