@@ -3,6 +3,7 @@ import { GET as getQueueRoute } from "@/app/api/spotify/queue/route";
 import { POST as addToQueueRoute } from "@/app/api/spotify/add-to-queue/route";
 import * as session from "@/lib/auth/session";
 import * as spotifyLib from "@/lib/spotify";
+import type { DBUser } from "@/types/db";
 
 vi.mock("@/lib/auth/session");
 vi.mock("@/lib/spotify");
@@ -32,7 +33,7 @@ describe("Spotify Queue API Integration", () => {
       const mockUser = { spotify_access_token: "fake-token" };
       const mockQueue = { currently_playing: { name: "Song 1" }, queue: [{ name: "Song 2" }] };
       
-      vi.mocked(session.getUserWithFreshToken).mockResolvedValue(mockUser as any);
+      vi.mocked(session.getUserWithFreshToken).mockResolvedValue(mockUser as unknown as DBUser);
       vi.mocked(spotifyLib.getQueue).mockResolvedValue(mockQueue);
 
       const res = await getQueueRoute();
@@ -46,7 +47,7 @@ describe("Spotify Queue API Integration", () => {
 
   describe("POST /api/spotify/add-to-queue", () => {
     it("returns 400 if URI is missing", async () => {
-      vi.mocked(session.getUserWithFreshToken).mockResolvedValue({ spotify_access_token: "token" } as any);
+      vi.mocked(session.getUserWithFreshToken).mockResolvedValue({ spotify_access_token: "token" } as unknown as DBUser);
       
       const req = new Request("http://localhost/api/spotify/add-to-queue", {
         method: "POST",
@@ -58,7 +59,7 @@ describe("Spotify Queue API Integration", () => {
     });
 
     it("successfully adds to queue and returns success", async () => {
-      vi.mocked(session.getUserWithFreshToken).mockResolvedValue({ spotify_access_token: "token" } as any);
+      vi.mocked(session.getUserWithFreshToken).mockResolvedValue({ spotify_access_token: "token" } as unknown as DBUser);
       
       // Mock the global fetch for the Spotify API call inside the route
       global.fetch = vi.fn().mockResolvedValue({
@@ -80,7 +81,7 @@ describe("Spotify Queue API Integration", () => {
       const [url, init] = vi.mocked(global.fetch).mock.calls[0];
       expect(url).toContain("spotify%3Atrack%3A123");
       expect(init?.method).toBe("POST");
-      expect((init?.headers as any)["Authorization"]).toBe("Bearer token");
+      expect((init?.headers as Record<string, string>)["Authorization"]).toBe("Bearer token");
     });
   });
 });

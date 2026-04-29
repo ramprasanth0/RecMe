@@ -31,6 +31,7 @@ export function MiniPlayer() {
     dismiss,
     queue,
     refreshQueue,
+    playTrack,
     geniusData,
   } = useSpotifyPlayer();
 

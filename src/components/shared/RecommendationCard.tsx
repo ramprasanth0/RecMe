@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Bookmark, BookmarkCheck, Plus, ExternalLink, Play, ListMusic, Music2 } from "lucide-react";
+import { Bookmark, BookmarkCheck, ExternalLink, Play, ListMusic, Music2 } from "lucide-react";
 import type { MusicItem, MovieItem } from "@/types/recommendations";
 import { cn } from "@/lib/utils";
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
@@ -40,7 +40,6 @@ export function RecommendationCard(props: RecCardProps) {
 
 function MusicCard({
   item,
-  onAddToPlaylist,
 }: {
   item: MusicItem;
   onAddToPlaylist?: (item: MusicItem) => void;
@@ -374,14 +373,6 @@ function MovieCard({ item }: { item: MovieItem }) {
         />
       )}
     </div>
-  );
-}
-
-function MusicIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
-    </svg>
   );
 }
 
