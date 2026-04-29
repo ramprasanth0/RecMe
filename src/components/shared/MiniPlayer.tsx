@@ -42,6 +42,13 @@ export function MiniPlayer() {
   const [activeTab, setActiveTab] = useState<"queue" | "insights">("queue");
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
 
+  // Refresh queue when expanded
+  useEffect(() => {
+    if (isExpanded) {
+      refreshQueue();
+    }
+  }, [isExpanded, refreshQueue]);
+
   // Pause audio when switching to video
   useEffect(() => {
     if (mediaType === "video" && isPlaying) {
@@ -447,8 +454,12 @@ export function MiniPlayer() {
                           {queue.length === 0 ? (
                             <p className="text-xs text-muted-foreground italic py-4">Queue is empty</p>
                           ) : (
-                            queue.slice(0, 10).map((track, i) => (
-                              <div key={i} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group">
+                            queue.slice(0, 50).map((track, i) => (
+                              <div 
+                                key={i} 
+                                onClick={() => playTrack({ title: track.name, artist: track.artists[0]?.name, uri: track.uri })}
+                                className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors group cursor-pointer"
+                              >
                                 <div className="relative w-10 h-10 rounded overflow-hidden shrink-0 bg-white/5">
                                   {track.album?.images?.[0]?.url && <Image src={track.album.images[0].url} alt="" fill className="object-cover" />}
                                 </div>

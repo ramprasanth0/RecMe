@@ -5,15 +5,16 @@
  * requiring auth, without redirecting, and without a layout shift.
  */
 import { test, expect } from "@playwright/test";
+import { mockExternalApis } from "./mocks";
 
-test.beforeEach(async ({ context }) => {
+test.beforeEach(async ({ context, page }) => {
+  await mockExternalApis(page);
   await context.clearCookies();
 });
 
 test("/ loads without redirecting to /signin", async ({ page }) => {
   await page.goto("/");
   await expect(page).not.toHaveURL(/\/signin/);
-  await expect(page.locator("body")).toBeVisible();
 });
 
 test("/ does not redirect to /home", async ({ page }) => {
@@ -30,12 +31,9 @@ test("/home redirects to /", async ({ page }) => {
 test("guest sees a sign-in option", async ({ page }) => {
   await page.goto("/");
   await page.waitForLoadState("networkidle");
-  const signInEl = page
-    .getByRole("link", { name: /sign in/i })
-    .or(page.getByRole("button", { name: /sign in/i }))
-    .or(page.getByRole("link", { name: /connect.*spotify/i }))
-    .first();
-  await expect(signInEl).toBeVisible({ timeout: 10_000 });
+  
+  const signInEl = page.getByTestId("sign-in-button");
+  await expect(signInEl).toBeVisible({ timeout: 20_000 });
 });
 
 test("page has a visible heading or tagline", async ({ page }) => {

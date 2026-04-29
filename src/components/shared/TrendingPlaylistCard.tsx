@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ListMusic, Play } from "lucide-react";
+import { ListMusic, Play, ExternalLink } from "lucide-react";
 import type { TrendingPlaylist } from "@/types/trending";
 import { cn } from "@/lib/utils";
 
@@ -28,21 +28,35 @@ export function TrendingPlaylistCard({ name, imageUrl, spotifyUrl, description, 
           </div>
         )}
         <div className={cn(
-          "absolute inset-0 transition-opacity flex items-center justify-center bg-black/40",
+          "absolute inset-0 transition-opacity bg-black/40 backdrop-blur-[2px]",
           isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         )}>
-          {onPlay && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                onPlay();
-              }}
-              className="w-12 h-12 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-105 transition-transform"
-              aria-label={`Play ${name}`}
-            >
-              <Play className="w-6 h-6 ml-1 fill-current" />
-            </button>
-          )}
+          {/* Center: Play Button */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            {onPlay && (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onPlay();
+                }}
+                className="w-12 h-12 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center shadow-xl hover:scale-110 transition-transform"
+                aria-label={`Play ${name}`}
+              >
+                <Play className="w-6 h-6 ml-1 fill-current" />
+              </button>
+            )}
+          </div>
+
+          {/* Top Right: External Link */}
+          <a 
+            href={spotifyUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/15 backdrop-blur-md flex items-center justify-center hover:bg-[var(--music-accent)] hover:text-black transition-all text-white shadow-lg"
+          >
+            <ExternalLink className="w-3.5 h-3.5" />
+          </a>
         </div>
       </div>
       <div className="space-y-0.5 px-0.5">

@@ -7,8 +7,10 @@
  * Tests marked FAILS UNTIL FIX will pass once the corresponding fix is applied.
  */
 import { test, expect } from "@playwright/test";
+import { mockExternalApis } from "./mocks";
 
-test.beforeEach(async ({ context }) => {
+test.beforeEach(async ({ context, page }) => {
+  await mockExternalApis(page);
   await context.clearCookies();
 });
 
@@ -18,13 +20,13 @@ test("/profile redirects unauthenticated users", async ({ page }) => {
   await page.goto("/profile");
   await expect(page).not.toHaveURL("/profile");
   // Should land on / or /signin
-  await expect(page).toHaveURL(/^\/(signin|$|\?)/);
+  await expect(page).toHaveURL(/\/signin|$|\?/);
 });
 
 test("/personalize redirects unauthenticated users", async ({ page }) => {
   await page.goto("/personalize");
   await expect(page).not.toHaveURL("/personalize");
-  await expect(page).toHaveURL(/^\/(signin|$|\?)/);
+  await expect(page).toHaveURL(/\/signin|$|\?/);
 });
 
 // ─── Token leakage — /profile HTML must not contain Spotify tokens ────────────

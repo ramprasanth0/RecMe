@@ -33,6 +33,7 @@ interface PlayerContextType {
   dismiss: () => Promise<void>;
   queue: any[];
   refreshQueue: () => Promise<void>;
+  addToQueue: (uri: string) => Promise<void>;
   geniusData: GeniusSong | null;
   isFetchingGenius: boolean;
 }
@@ -264,12 +265,30 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       const res = await fetch("/api/spotify/queue");
       if (res.ok) {
         const data = await res.json();
+        // The API returns { currently_playing: ..., queue: [...] }
         setQueue(data.queue || []);
       }
     } catch (e) {
       console.error("Failed to refresh queue", e);
     }
   }, [token]);
+
+  const addToQueue = useCallback(async (uri: string) => {
+    if (!token) return;
+    try {
+      const res = await fetch("/api/spotify/add-to-queue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ uri }),
+      });
+      if (res.ok) {
+        // Refresh queue after adding
+        await refreshQueue();
+      }
+    } catch (e) {
+      console.error("Failed to add to queue", e);
+    }
+  }, [token, refreshQueue]);
 
   // Fetch Genius data when current track changes
   useEffect(() => {
@@ -331,6 +350,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     dismiss,
     queue,
     refreshQueue,
+    addToQueue,
     geniusData,
     isFetchingGenius,
   };
