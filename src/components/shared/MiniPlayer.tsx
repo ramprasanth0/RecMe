@@ -50,24 +50,19 @@ export function MiniPlayer() {
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics" | "insights">("queue");
   const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
 
-  // Lyrics state (owned here, not in GeniusDetails)
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [isFetchingLyrics, setIsFetchingLyrics] = useState(false);
 
-  // Refs
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const prevMediaTypeRef = useRef<"audio" | "video">("audio");
 
-  // Resolve YouTube video ID from Genius data
   const videoUrl = geniusData?.media?.find((m: { provider: string }) => m.provider === "youtube")?.url;
   const videoId = videoUrl ? getYoutubeId(videoUrl) : null;
 
-  // Refresh queue when expanded
   useEffect(() => {
     if (isExpanded) refreshQueue();
   }, [isExpanded, refreshQueue]);
 
-  // Fetch lyrics when Lyrics tab is opened
   useEffect(() => {
     if (activeTab === "lyrics" && geniusData?.url && !lyrics) {
       setIsFetchingLyrics(true);
@@ -79,12 +74,11 @@ export function MiniPlayer() {
     }
   }, [activeTab, geniusData, lyrics]);
 
-  // Reset lyrics when track changes
   useEffect(() => {
     setLyrics(null);
   }, [currentTrack?.id]);
 
-  // Pause audio when switching TO video mode (only on the transition)
+  // Pause audio when switching TO video
   useEffect(() => {
     if (mediaType === "video" && prevMediaTypeRef.current === "audio" && isPlaying) {
       togglePlay();
@@ -103,7 +97,6 @@ export function MiniPlayer() {
     }
   }, [isPlaying, mediaType]);
 
-  // Sync <body> class for bottom padding
   useEffect(() => {
     if (isActive) {
       document.body.classList.add("has-player");
@@ -143,6 +136,17 @@ export function MiniPlayer() {
   const progressPercent = duration > 0 ? (displayPosition / duration) * 100 : 0;
   const spotifyUrl = `https://open.spotify.com/track/${currentTrack.id}`;
 
+  const tabProps = {
+    activeTab,
+    setActiveTab,
+    queue,
+    refreshQueue,
+    playTrack,
+    geniusData,
+    lyrics,
+    isFetchingLyrics,
+  };
+
   return (
     <AnimatePresence>
       {/* ── Queue Toast ── */}
@@ -161,25 +165,6 @@ export function MiniPlayer() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* ── Persistent YouTube iframe (never unmounts while player is active) ── */}
-      {videoId && (
-        <div
-          className={`fixed inset-0 z-[59] bg-black transition-opacity duration-500 ${
-            isExpanded && mediaType === "video"
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          }`}
-        >
-          <iframe
-            ref={iframeRef}
-            className="w-full h-full border-0"
-            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-      )}
 
       {/* ── Mini Bar ── */}
       <motion.div
@@ -282,11 +267,13 @@ export function MiniPlayer() {
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
             className="fixed inset-0 z-[60] bg-[#0A0A0A] text-white flex flex-col overflow-hidden"
           >
-            {/* Background glow */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px]" style={{ backgroundColor: "var(--music-accent)" }} />
-              <div className="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px]" style={{ backgroundColor: "white" }} />
-            </div>
+            {/* Background glow (audio only) */}
+            {mediaType === "audio" && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full opacity-20 blur-[120px]" style={{ backgroundColor: "var(--music-accent)" }} />
+                <div className="absolute top-[40%] -right-[10%] w-[50%] h-[50%] rounded-full opacity-10 blur-[100px]" style={{ backgroundColor: "white" }} />
+              </div>
+            )}
 
             {/* Header */}
             <div className="relative z-10 flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
@@ -296,7 +283,6 @@ export function MiniPlayer() {
 
               <div className="text-center">
                 <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Now Playing</p>
-                {/* Audio / Video toggle */}
                 <div className="mt-2 flex items-center bg-white/5 rounded-full p-1 border border-white/10">
                   <button
                     onClick={() => setMediaType("audio")}
@@ -318,126 +304,115 @@ export function MiniPlayer() {
               </button>
             </div>
 
-            {/* ── AUDIO MODE: 2-column layout ── */}
-            {mediaType === "audio" && (
-              <div className="relative z-10 flex-1 flex flex-row items-stretch gap-0 overflow-hidden min-h-0">
-                {/* Left: Square Artwork */}
-                <div className="flex items-center justify-center p-6 lg:p-10 shrink-0" style={{ width: "45%" }}>
-                  <div className="relative w-full max-w-[340px] aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
-                    {albumArt ? (
-                      <>
-                        <Image src={albumArt} alt={currentTrack.name} fill className="object-cover opacity-60 blur-sm scale-110" />
-                        <div className="absolute inset-0 flex items-center justify-center p-6">
-                          <div className="relative w-full h-full rounded-xl overflow-hidden shadow-2xl">
-                            <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
-                          </div>
+            {/*
+              Both sections always exist in the DOM — only toggled with `hidden`.
+              This keeps the iframe mounted across audio↔video switches so YouTube
+              state is preserved and the postMessage pause effect still has a ref.
+            */}
+
+            {/* ── AUDIO MODE: stacks vertically on mobile, side-by-side on md+ ── */}
+            <div className={`relative z-10 flex-1 flex flex-col md:flex-row items-stretch overflow-hidden min-h-0 ${mediaType !== "audio" ? "hidden" : ""}`}>
+              {/* Artwork */}
+              <div className="flex items-center justify-center pt-4 pb-2 px-8 md:p-10 shrink-0 md:w-[45%]">
+                <div className="relative w-44 h-44 sm:w-52 sm:h-52 md:w-full md:h-auto md:max-w-[340px] md:aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
+                  {albumArt ? (
+                    <>
+                      <Image src={albumArt} alt={currentTrack.name} fill className="object-cover opacity-60 blur-sm scale-110" />
+                      <div className="absolute inset-0 flex items-center justify-center p-4 md:p-6">
+                        <div className="relative w-full h-full rounded-xl overflow-hidden shadow-2xl">
+                          <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
                         </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full bg-surface-light flex items-center justify-center">
-                        <MusicIcon className="w-20 h-20 text-muted-foreground/30" />
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Right: Controls + Tabs */}
-                <div className="flex-1 flex flex-col gap-5 py-6 pr-6 lg:pr-10 min-w-0 overflow-hidden">
-                  {/* Track info */}
-                  <div className="space-y-1">
-                    <h2 className="text-2xl lg:text-3xl font-bold tracking-tight truncate">{currentTrack.name}</h2>
-                    <p className="text-base text-[var(--music-accent)] font-medium truncate">
-                      {currentTrack.artists.map((a) => a.name).join(", ")}
-                    </p>
-                  </div>
-
-                  {/* Progress */}
-                  <div className="space-y-1.5">
-                    <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden group">
-                      <input
-                        type="range" min="0" max="100" step="0.1" value={progressPercent}
-                        onMouseDown={() => setIsScrubbing(true)}
-                        onChange={handleSeek}
-                        onMouseUp={handleSeekEnd}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <div className="h-full bg-[var(--music-accent)] group-hover:bg-white transition-colors" style={{ width: `${progressPercent}%` }} />
-                    </div>
-                    <div className="flex justify-between text-[10px] font-mono text-white/40">
-                      <span>{formatTime(displayPosition)}</span>
-                      <span>{formatTime(duration)}</span>
-                    </div>
-                  </div>
-
-                  {/* Controls */}
-                  <div className="flex items-center justify-between px-2">
-                    <button onClick={prev} className="p-2 text-white/60 hover:text-white transition-colors">
-                      <SkipBack className="w-7 h-7 fill-current" />
-                    </button>
-                    <button
-                      onClick={togglePlay}
-                      className="w-16 h-16 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl shadow-[var(--music-accent)]/20"
-                    >
-                      {isPlaying ? <Pause className="w-7 h-7 fill-current" /> : <Play className="w-7 h-7 fill-current ml-1" />}
-                    </button>
-                    <button onClick={next} className="p-2 text-white/60 hover:text-white transition-colors">
-                      <SkipForward className="w-7 h-7 fill-current" />
-                    </button>
-                  </div>
-
-                  {/* Tabs */}
-                  <ExpandedTabs
-                    activeTab={activeTab}
-                    setActiveTab={setActiveTab}
-                    queue={queue}
-                    refreshQueue={refreshQueue}
-                    playTrack={playTrack}
-                    geniusData={geniusData}
-                    lyrics={lyrics}
-                    isFetchingLyrics={isFetchingLyrics}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* ── VIDEO MODE: stacked layout ── */}
-            {mediaType === "video" && (
-              <div className="relative z-10 flex-1 flex flex-col gap-4 overflow-hidden min-h-0 px-6 pb-6">
-                {/* Video placeholder — actual iframe is behind at z-[59] */}
-                <div className="w-full rounded-2xl overflow-hidden bg-black/40 border border-white/10 shrink-0" style={{ aspectRatio: "16/9" }}>
-                  {!videoId && (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
-                      <Video className="w-10 h-10 text-muted-foreground" />
-                      <p className="text-sm font-medium">Video not available</p>
-                      <p className="text-xs text-muted-foreground">No YouTube video found for this track.</p>
-                      <button onClick={() => setMediaType("audio")} className="mt-2 text-xs font-bold uppercase tracking-widest text-[var(--music-accent)]">
-                        Back to Audio
-                      </button>
+                    </>
+                  ) : (
+                    <div className="w-full h-full bg-surface-light flex items-center justify-center">
+                      <MusicIcon className="w-16 h-16 text-muted-foreground/30" />
                     </div>
                   )}
                 </div>
+              </div>
 
-                {/* Track info (compact) */}
-                <div className="flex items-center gap-3 shrink-0">
-                  <div>
-                    <p className="text-base font-bold truncate">{currentTrack.name}</p>
-                    <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+              {/* Controls + Tabs */}
+              <div className="flex-1 flex flex-col gap-4 px-6 pb-6 md:py-6 md:pr-10 min-w-0 overflow-hidden">
+                {/* Track info */}
+                <div className="space-y-0.5">
+                  <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight truncate">{currentTrack.name}</h2>
+                  <p className="text-sm md:text-base text-[var(--music-accent)] font-medium truncate">
+                    {currentTrack.artists.map((a) => a.name).join(", ")}
+                  </p>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-1.5">
+                  <div className="relative h-1.5 bg-white/10 rounded-full overflow-hidden group">
+                    <input
+                      type="range" min="0" max="100" step="0.1" value={progressPercent}
+                      onMouseDown={() => setIsScrubbing(true)}
+                      onChange={handleSeek}
+                      onMouseUp={handleSeekEnd}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                    />
+                    <div className="h-full bg-[var(--music-accent)] group-hover:bg-white transition-colors" style={{ width: `${progressPercent}%` }} />
+                  </div>
+                  <div className="flex justify-between text-[10px] font-mono text-white/40">
+                    <span>{formatTime(displayPosition)}</span>
+                    <span>{formatTime(duration)}</span>
                   </div>
                 </div>
 
+                {/* Controls */}
+                <div className="flex items-center justify-between px-4 md:px-2">
+                  <button onClick={prev} className="p-2 text-white/60 hover:text-white transition-colors">
+                    <SkipBack className="w-6 h-6 md:w-7 md:h-7 fill-current" />
+                  </button>
+                  <button
+                    onClick={togglePlay}
+                    className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center hover:scale-105 transition-transform shadow-xl shadow-[var(--music-accent)]/20"
+                  >
+                    {isPlaying ? <Pause className="w-6 h-6 md:w-7 md:h-7 fill-current" /> : <Play className="w-6 h-6 md:w-7 md:h-7 fill-current ml-0.5" />}
+                  </button>
+                  <button onClick={next} className="p-2 text-white/60 hover:text-white transition-colors">
+                    <SkipForward className="w-6 h-6 md:w-7 md:h-7 fill-current" />
+                  </button>
+                </div>
+
                 {/* Tabs */}
-                <ExpandedTabs
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  queue={queue}
-                  refreshQueue={refreshQueue}
-                  playTrack={playTrack}
-                  geniusData={geniusData}
-                  lyrics={lyrics}
-                  isFetchingLyrics={isFetchingLyrics}
-                />
+                <ExpandedTabs {...tabProps} layoutIdSuffix="-audio" />
               </div>
-            )}
+            </div>
+
+            {/* ── VIDEO MODE: iframe lives here so it's inside the overlay ── */}
+            <div className={`relative z-10 flex-1 flex flex-col gap-4 overflow-hidden min-h-0 px-6 pb-6 ${mediaType !== "video" ? "hidden" : ""}`}>
+              <div className="w-full rounded-2xl overflow-hidden shrink-0 bg-black" style={{ aspectRatio: "16/9" }}>
+                {videoId ? (
+                  <iframe
+                    ref={iframeRef}
+                    className="w-full h-full border-0"
+                    src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1`}
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center bg-black/40 border border-white/10 rounded-2xl">
+                    <Video className="w-10 h-10 text-muted-foreground" />
+                    <p className="text-sm font-medium">Video not available</p>
+                    <p className="text-xs text-muted-foreground">No YouTube video found for this track.</p>
+                    <button onClick={() => setMediaType("audio")} className="mt-2 text-xs font-bold uppercase tracking-widest text-[var(--music-accent)]">
+                      Back to Audio
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Track info (compact) */}
+              <div className="shrink-0">
+                <p className="text-base font-bold truncate">{currentTrack.name}</p>
+                <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+              </div>
+
+              {/* Tabs */}
+              <ExpandedTabs {...tabProps} layoutIdSuffix="-video" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -455,9 +430,10 @@ interface TabsProps {
   geniusData: GeniusSong | null;
   lyrics: string | null;
   isFetchingLyrics: boolean;
+  layoutIdSuffix?: string;
 }
 
-function ExpandedTabs({ activeTab, setActiveTab, queue, refreshQueue, playTrack, geniusData, lyrics, isFetchingLyrics }: TabsProps) {
+function ExpandedTabs({ activeTab, setActiveTab, queue, refreshQueue, playTrack, geniusData, lyrics, isFetchingLyrics, layoutIdSuffix = "" }: TabsProps) {
   return (
     <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
       {/* Tab bar */}
@@ -474,7 +450,7 @@ function ExpandedTabs({ activeTab, setActiveTab, queue, refreshQueue, playTrack,
               {tab === "insights" && <Sparkles className="w-3 h-3" />}
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
               {activeTab === tab && (
-                <motion.div layoutId="expandedActiveTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--music-accent)]" />
+                <motion.div layoutId={`expandedActiveTab${layoutIdSuffix}`} className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--music-accent)]" />
               )}
             </button>
           ))}
