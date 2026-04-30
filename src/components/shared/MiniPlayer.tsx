@@ -361,7 +361,7 @@ export function MiniPlayer() {
                 </div>
 
                 {/* Controls */}
-                <div className="flex items-center justify-between px-4 md:px-2">
+                <div className="flex items-center justify-center gap-8 md:gap-10">
                   <button onClick={prev} className="p-2 text-white/60 hover:text-white transition-colors">
                     <SkipBack className="w-6 h-6 md:w-7 md:h-7 fill-current" />
                   </button>
@@ -382,8 +382,16 @@ export function MiniPlayer() {
             </div>
 
             {/* ── VIDEO MODE: iframe lives here so it's inside the overlay ── */}
-            <div className={`relative z-10 flex-1 flex flex-col gap-4 overflow-hidden min-h-0 px-6 pb-6 ${mediaType !== "video" ? "hidden" : ""}`}>
-              <div className="w-full rounded-2xl overflow-hidden shrink-0 bg-black" style={{ aspectRatio: "16/9" }}>
+            <div className={`relative z-10 flex-1 flex flex-col overflow-hidden min-h-0 px-6 pb-6 ${mediaType !== "video" ? "hidden" : ""}`}>
+              {/*
+                Video container: shrink-0 so it stays at its natural 16:9 size on mobile,
+                but maxHeight: "52%" prevents it from consuming the full screen on wide displays.
+                The remaining flex space goes to track info + tabs.
+              */}
+              <div
+                className="w-full rounded-2xl overflow-hidden shrink-0 bg-black mt-1"
+                style={{ aspectRatio: "16/9", maxHeight: "52%" }}
+              >
                 {videoId ? (
                   <iframe
                     ref={iframeRef}
@@ -393,7 +401,7 @@ export function MiniPlayer() {
                     allowFullScreen
                   />
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center bg-black/40 border border-white/10 rounded-2xl">
+                  <div className="w-full h-full flex flex-col items-center justify-center gap-3 p-6 text-center">
                     <Video className="w-10 h-10 text-muted-foreground" />
                     <p className="text-sm font-medium">Video not available</p>
                     <p className="text-xs text-muted-foreground">No YouTube video found for this track.</p>
@@ -404,14 +412,14 @@ export function MiniPlayer() {
                 )}
               </div>
 
-              {/* Track info (compact) */}
-              <div className="shrink-0">
-                <p className="text-base font-bold truncate">{currentTrack.name}</p>
-                <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+              {/* Track info + tabs: flex-1 takes all remaining height after the video */}
+              <div className="flex-1 flex flex-col min-h-0 pt-3 gap-3">
+                <div className="shrink-0">
+                  <p className="text-base font-bold truncate">{currentTrack.name}</p>
+                  <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+                </div>
+                <ExpandedTabs {...tabProps} layoutIdSuffix="-video" />
               </div>
-
-              {/* Tabs */}
-              <ExpandedTabs {...tabProps} layoutIdSuffix="-video" />
             </div>
           </motion.div>
         )}
