@@ -11,7 +11,6 @@
 | `/signin` | No | Spotify OAuth + email magic link |
 | `/personalize` | Yes (middleware) | AI playlist generator + Spotify top artists/tracks |
 | `/profile` | Yes (middleware) | Genre preferences + saved recommendations |
-| `/chat` | No (page-level gating) | Full streaming chat with session history |
 | `/not-found` (404) | No | Custom 404 page |
 
 ---
@@ -36,7 +35,6 @@
 | Route | Method | Description |
 |---|---|---|
 | `/api/gemini/recommend` | POST | Non-streaming recommendation endpoint. Body: `{ type: "music"\|"movie", mood: string }`. Returns `{ type, items }`. Server-side TMDB enrichment for movies, Spotify URI resolution for music. `maxDuration: 30`. |
-| `/api/gemini/route` (chat) | POST | Streaming SSE chat endpoint. Reads user session for Spotify context. Returns `text/event-stream`. `maxDuration: 60`. |
 
 **Gemini model:** `gemini-2.0-flash`
 **Key settings on recommend:** `temperature: 0.3`, `topP: 0.8`, `maxOutputTokens: 8192`, `thinkingBudget: 0`, `responseMimeType: "application/json"`
@@ -68,17 +66,6 @@
 | Route | Method | Description |
 |---|---|---|
 | `/api/itunes/artwork` | GET | Server-side iTunes Search API proxy. Query params: `title`, `artist`. Returns `{ artworkUrl }`. 24h server cache. Exists to work around CORS restriction on browser-side iTunes calls. |
-
----
-
-### Chat sessions (Supabase CRUD)
-
-| Route | Method | Description |
-|---|---|---|
-| `/api/chat/sessions` | GET | List all chat sessions for authenticated user |
-| `/api/chat/sessions` | POST | Create new chat session. Body: `{ type: "music"\|"movie" }` |
-| `/api/chat/sessions/[id]` | GET | Get single session with messages |
-| `/api/chat/sessions/[id]` | DELETE | Delete session |
 
 ---
 

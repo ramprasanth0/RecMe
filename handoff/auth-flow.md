@@ -64,7 +64,6 @@ Email users have no `spotify_access_token`. They can:
 - Get movie recommendations (Gemini, no Spotify context)
 - Browse trending content
 - Save recommendations
-- Use chat
 
 They **cannot**:
 - Get personalised music recommendations (no Spotify listening data)
@@ -87,7 +86,7 @@ POST /api/auth/logout
 
 `src/middleware.ts` protects `/personalize` and `/profile` only.
 
-`/home` and `/chat` are NOT middleware-protected — they handle auth state at the page level (Server Component checks the cookie and renders different content).
+`/home` is NOT middleware-protected — it handles auth state at the page level (Server Component checks the cookie and renders different content).
 
 ---
 

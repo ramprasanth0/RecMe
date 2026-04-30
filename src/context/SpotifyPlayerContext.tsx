@@ -36,6 +36,16 @@ interface PlayerContextType {
   addToQueue: (uri: string) => Promise<void>;
   geniusData: GeniusSong | null;
   isFetchingGenius: boolean;
+  showQueueToast: boolean;
+}
+
+function dedupeByUri(tracks: any[]): any[] {
+  const seen = new Set<string>();
+  return tracks.filter((t) => {
+    if (!t?.uri || seen.has(t.uri)) return false;
+    seen.add(t.uri);
+    return true;
+  });
 }
 
 const SpotifyPlayerContext = createContext<PlayerContextType | undefined>(undefined);
@@ -54,7 +64,10 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [queue, setQueue] = useState<any[]>([]);
   const [geniusData, setGeniusData] = useState<GeniusSong | null>(null);
   const [isFetchingGenius, setIsFetchingGenius] = useState(false);
+  const [showQueueToast, setShowQueueToast] = useState(false);
   const lastFetchedGeniusTrack = useRef<string | null>(null);
+  const lastTrackId = useRef<string | null>(null);
+  const queueToastTimer = useRef<NodeJS.Timeout | null>(null);
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -116,10 +129,25 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       setIsPlaying(!state.paused);
       setPosition(state.position);
       setDuration(state.duration);
-      
-      // Update queue when track changes
-      if (state.track_window.next_tracks) {
-        setQueue(state.track_window.next_tracks);
+
+      // When track changes, refresh the full queue from the API (deduped)
+      const newTrackId = state.track_window.current_track?.id ?? null;
+      if (newTrackId !== lastTrackId.current) {
+        lastTrackId.current = newTrackId;
+        // Seed with SDK's next_tracks only if queue is empty
+        setQueue((prev) => {
+          if (prev.length === 0 && state.track_window.next_tracks?.length) {
+            return dedupeByUri(state.track_window.next_tracks);
+          }
+          return prev;
+        });
+        // Fetch the authoritative full queue from the API
+        fetch("/api/spotify/queue")
+          .then((r) => r.ok ? r.json() : null)
+          .then((data) => {
+            if (data?.queue) setQueue(dedupeByUri(data.queue));
+          })
+          .catch(() => {});
       }
     });
 
@@ -265,8 +293,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       const res = await fetch("/api/spotify/queue");
       if (res.ok) {
         const data = await res.json();
-        // The API returns { currently_playing: ..., queue: [...] }
-        setQueue(data.queue || []);
+        setQueue(dedupeByUri(data.queue || []));
       }
     } catch (e) {
       console.error("Failed to refresh queue", e);
@@ -282,8 +309,11 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
         body: JSON.stringify({ uri }),
       });
       if (res.ok) {
-        // Refresh queue after adding
         await refreshQueue();
+        // Show toast notification
+        if (queueToastTimer.current) clearTimeout(queueToastTimer.current);
+        setShowQueueToast(true);
+        queueToastTimer.current = setTimeout(() => setShowQueueToast(false), 2500);
       }
     } catch (e) {
       console.error("Failed to add to queue", e);
@@ -353,6 +383,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     addToQueue,
     geniusData,
     isFetchingGenius,
+    showQueueToast,
   };
 
   return (

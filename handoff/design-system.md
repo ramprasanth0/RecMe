@@ -74,7 +74,7 @@ Fonts are loaded via `next/font/google` in `src/app/layout.tsx` and exposed as C
 
 ### `<AiThinkingLoader />` (`src/components/shared/AiThinkingLoader.tsx`)
 - Animated loader shown while Gemini is processing
-- Used in recommendation card grids and chat
+- Used in recommendation card grids
 
 ---
 

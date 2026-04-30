@@ -11,7 +11,6 @@ These are firm decisions already made. Do not propose alternatives unless there 
 - Was originally Claude (Anthropic). Migrated in v0.5.
 - `ANTHROPIC_API_KEY` and `@anthropic-ai/sdk` do NOT exist in this project.
 - For recommendations: use `generateContent` (non-streaming) with `responseMimeType: "application/json"` and `thinkingBudget: 0`
-- For chat: use `generateContentStream` (SSE) — `responseMimeType` is invalid on streaming calls
 - Temperature: `0.3`, topP: `0.8` for recommendations (keeps results on-query)
 - `maxOutputTokens: 8192` — never lower this; Gemini thinking eats hidden tokens
 
@@ -69,9 +68,8 @@ These are firm decisions already made. Do not propose alternatives unless there 
 
 ## Navigation (3 sections)
 
-**Decision:** Home / Personalize / Profile. Chat is accessible from Home.
+**Decision:** Home / Personalize / Profile.
 
-- Removed the Chat section from the nav — `/chat` is still a full page but not a primary nav item
 - Personalize holds: AI playlist generator + user's Spotify top artists/tracks
 - Profile holds: genre preferences + saved recommendations + connected accounts
 

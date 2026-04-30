@@ -30,28 +30,24 @@ src/
 │   ├── home/page.tsx             # Universal landing (guest + logged-in, SSR)
 │   ├── personalize/page.tsx      # AI playlist + top artists/tracks (auth required)
 │   ├── profile/page.tsx          # Preferences + saved recs (auth required)
-│   ├── chat/page.tsx             # Full chat interface (auth required)
 │   ├── signin/page.tsx           # Spotify + email sign-in options
 │   ├── not-found.tsx             # Custom 404
 │   └── api/                      # Route handlers (see routes-and-api.md)
 │
 ├── components/
 │   ├── landing/LandingContent.tsx      # Client component — home page body
-│   ├── dashboard/                      # DashboardContent, MusicTab, MoviesTab
 │   ├── personalize/PersonalizeContent.tsx
 │   ├── profile/ProfileClient.tsx
-│   ├── chat/                           # ChatPageClient, ChatSidebar, StreamingChat
 │   └── shared/                         # Navbar, RecommendationCard, MoodInput,
 │                                       # TabSwitcher, PlaylistCreator, PlaylistGenerator,
 │                                       # AiThinkingLoader
 │
 ├── hooks/
-│   ├── useRecommendations.ts     # Gemini rec fetch + module-level autoRecCache
-│   └── useChat.ts                # Chat session management
+│   └── useRecommendations.ts     # Gemini rec fetch + module-level autoRecCache
 │
 ├── lib/
 │   ├── gemini.ts                 # Gemini client wrapper
-│   ├── gemini/prompt.ts          # buildSystemPrompt(), buildChatSystemPrompt()
+│   ├── gemini/prompt.ts          # buildSystemPrompt()
 │   ├── spotify.ts                # All Spotify API helpers (auth, top data, playlists, search)
 │   ├── tmdb.ts                   # TMDB search, trending, poster fetch
 │   ├── env.ts                    # Typed lazy env accessor (throws on missing keys)
@@ -86,15 +82,6 @@ create table users (
   display_name text,
   avatar_url text,
   preferences jsonb default '{}',   -- { music_genres: string[], movie_genres: string[] }
-  created_at timestamptz default now()
-);
-
--- Chat sessions
-create table chat_sessions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references users(id),
-  type text check (type in ('music', 'movie')),
-  messages jsonb default '[]',       -- [{ role, content, timestamp }]
   created_at timestamptz default now()
 );
 

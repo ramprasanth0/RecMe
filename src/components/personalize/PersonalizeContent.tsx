@@ -1,9 +1,9 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { Music2, Mic2, AlertCircle, Play, ChevronDown, ChevronUp, Disc3 } from "lucide-react";
+import { Music2, Mic2, AlertCircle, Play, ChevronDown, ChevronUp, Disc3, Loader2 } from "lucide-react";
 import { PlaylistGenerator } from "@/components/shared/PlaylistGenerator";
 import { ProFeatureGate } from "@/components/shared/ProFeatureGate";
 import { CardCarousel } from "@/components/shared/CardCarousel";
@@ -48,6 +48,11 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
   const [profileLoading, setProfileLoading] = useState(true);
   const [currentTrackFeatures, setCurrentTrackFeatures] = useState<any>(null);
 
+  const [similarSongsOpen, setSimilarSongsOpen] = useState(false);
+  const [similarSongs, setSimilarSongs] = useState<Array<{ id: string; title: string; artist: string; albumArt: string | null; uri: string }>>([]);
+  const [isFetchingSimilar, setIsFetchingSimilar] = useState(false);
+  const lastSimilarTrackId = useRef<string | null>(null);
+
   const { playTrack, playContext, currentTrack, currentContextUri, isPlaying } = useSpotifyPlayer();
 
   useEffect(() => {
@@ -61,7 +66,13 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
       .then((data) => {
         setArtists(data.artists?.slice(0, 10) ?? []);
         setTracks(data.tracks?.slice(0, 10) ?? []);
-        setRecentTracks(data.recentTracks?.slice(0, 20) ?? []);
+        const seen = new Set<string>();
+        const dedupedRecent = (data.recentTracks ?? []).filter((t: Track) => {
+          if (!t.uri || seen.has(t.uri)) return false;
+          seen.add(t.uri);
+          return true;
+        });
+        setRecentTracks(dedupedRecent.slice(0, 20));
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -116,9 +127,29 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
     }
   }, [currentTrack?.name, currentTrack?.artists]);
 
+  // Reset similar songs panel when track changes
+  useEffect(() => {
+    setSimilarSongsOpen(false);
+    setSimilarSongs([]);
+    lastSimilarTrackId.current = null;
+  }, [currentTrack?.id]);
+
+  // Fetch similar songs when panel opens
+  useEffect(() => {
+    if (!similarSongsOpen || !currentTrack?.id) return;
+    if (lastSimilarTrackId.current === currentTrack.id) return;
+    lastSimilarTrackId.current = currentTrack.id;
+    setIsFetchingSimilar(true);
+    fetch(`/api/spotify/similar-songs?track_id=${currentTrack.id}&limit=5`)
+      .then((r) => r.json())
+      .then((data) => setSimilarSongs(data.songs ?? []))
+      .catch(() => {})
+      .finally(() => setIsFetchingSimilar(false));
+  }, [similarSongsOpen, currentTrack?.id]);
+
   // Derive recent albums and artists from recentTracks
   const recentAlbums = Array.from(new Map(recentTracks.filter(t => t.album?.uri).map(t => [t.album.uri, t.album])).values()).slice(0, 5);
-  const recentArtists = Array.from(new Map(recentTracks.flatMap(t => t.artists).filter(a => a.uri).map(a => [a.uri, a])).values()).slice(0, 5);
+  const recentArtists = Array.from(new Map(recentTracks.flatMap(t => t.artists).filter(a => a.uri && a.images?.[0]?.url).map(a => [a.uri!, a])).values()).slice(0, 8);
 
   return (
     <main className="min-h-screen bg-background pt-20 pb-16">
@@ -231,6 +262,69 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                         </div>
                       </div>
                     </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Similar Songs */}
+              <div className={cn("rounded-xl bg-surface border border-border overflow-hidden transition-opacity", !currentTrack && "opacity-40 pointer-events-none")}>
+                <button
+                  onClick={() => setSimilarSongsOpen((o) => !o)}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-surface-light transition-colors group"
+                  disabled={!currentTrack}
+                >
+                  <div className="flex items-center gap-2">
+                    <Music2 className="w-4 h-4 text-[var(--music-accent)]" />
+                    <span className="text-sm font-semibold">Similar Songs</span>
+                    {!currentTrack && <span className="text-[10px] text-muted-foreground ml-2">Play a track first</span>}
+                  </div>
+                  <div className="w-7 h-7 rounded-full bg-surface-light flex items-center justify-center group-hover:bg-[var(--music-accent)] group-hover:text-black transition-colors">
+                    {similarSongsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                </button>
+
+                {similarSongsOpen && (
+                  <div className="px-4 pb-4 space-y-1 border-t border-white/5">
+                    {isFetchingSimilar ? (
+                      <div className="flex items-center justify-center py-8 gap-3 text-muted-foreground">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-xs">Finding similar tracks...</span>
+                      </div>
+                    ) : similarSongs.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-6 text-center">No similar songs found.</p>
+                    ) : (
+                      similarSongs.map((song) => {
+                        const isCurrent = currentTrack?.uri === song.uri;
+                        return (
+                          <div
+                            key={song.id}
+                            className="group flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-surface-light transition-colors cursor-pointer"
+                            onClick={() => playTrack({ title: song.title, artist: song.artist, uri: song.uri })}
+                          >
+                            <div className="relative w-10 h-10 rounded-lg overflow-hidden bg-surface-light shrink-0">
+                              {song.albumArt ? (
+                                <Image src={song.albumArt} alt={song.title} fill sizes="40px" className="object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center"><Music2 className="w-4 h-4 text-muted-foreground/30" /></div>
+                              )}
+                              <div className={cn("absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity", isCurrent && isPlaying ? "opacity-100" : "opacity-0 group-hover:opacity-100")}>
+                                <Play className="w-4 h-4 text-white fill-current ml-0.5" />
+                              </div>
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className={cn("text-sm font-medium truncate", isCurrent && isPlaying && "text-[var(--music-accent)]")}>{song.title}</p>
+                              <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); playTrack({ title: song.title, artist: song.artist, uri: song.uri }); }}
+                              className="w-8 h-8 rounded-full bg-[var(--music-accent)] text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0 hover:scale-105"
+                            >
+                              <Play className="w-3.5 h-3.5 ml-0.5 fill-current" />
+                            </button>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 )}
               </div>
