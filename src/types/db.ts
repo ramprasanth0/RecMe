@@ -12,6 +12,7 @@ export interface DBUser {
     music_genres?: string[];
     movie_genres?: string[];
     mood?: string;
+    default_landing?: "music" | "movies";
   };
   created_at: string;
 }

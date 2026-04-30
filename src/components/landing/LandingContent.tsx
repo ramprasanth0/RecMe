@@ -17,6 +17,7 @@ import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import type { GeniusHit } from "@/types/genius";
 import { Music, Loader2 } from "lucide-react";
 import Image from "next/image";
+import type { DBUser } from "@/types/db";
 
 const SAMPLE_MUSIC: MusicItem[] = [
   { title: "Blinding Lights", artist: "The Weeknd", reason: "Cinematic synths that match late-night energy" },
@@ -47,10 +48,12 @@ const SAMPLE_MOVIES: MovieItem[] = [
 interface LandingContentProps {
   isAuthenticated: boolean;
   userName?: string | null;
+  initialPreferences?: DBUser["preferences"];
 }
 
-export function LandingContent({ isAuthenticated, userName }: LandingContentProps) {
+export function LandingContent({ isAuthenticated, userName, initialPreferences }: LandingContentProps) {
   const [activeTab, setActiveTab] = useState<"music" | "movies">("music");
+  const [isPreferenceLoaded, setIsPreferenceLoaded] = useState(false);
   const [greeting, setGreeting] = useState<string>("");
   const { playQueue, playTrack } = useSpotifyPlayer();
 
@@ -68,7 +71,19 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
 
   useEffect(() => {
     setGreeting(getGreeting());
-  }, []);
+    
+    // Load preference from database or localStorage
+    const dbPreference = initialPreferences?.default_landing;
+    const localPreference = localStorage.getItem("recme_landing_preference") as "music" | "movies" | null;
+    
+    if (dbPreference) {
+      setActiveTab(dbPreference);
+    } else if (localPreference === "music" || localPreference === "movies") {
+      setActiveTab(localPreference);
+    }
+    
+    setIsPreferenceLoaded(true);
+  }, [initialPreferences]);
 
   // Fetch music trending data from iTunes RSS (no auth required)
   useEffect(() => {
@@ -104,8 +119,10 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
       .catch(() => {});
   }, [activeTab, trendingMoviesLoaded]);
 
-  function handleTabChange(tab: "music" | "movies") {
+  async function handleTabChange(tab: "music" | "movies") {
     setActiveTab(tab);
+    localStorage.setItem("recme_landing_preference", tab);
+    
     if (tab === "movies" && isAuthenticated) movieRecs.triggerAutoFetch();
     // Clear lyric results when switching tabs
     setLyricResults([]);
@@ -184,7 +201,11 @@ export function LandingContent({ isAuthenticated, userName }: LandingContentProp
 
         {/* Tab switcher */}
         <div className="flex justify-center mb-8">
-          <TabSwitcher defaultTab="music" onTabChange={handleTabChange} />
+          <TabSwitcher 
+            defaultTab={activeTab} 
+            onTabChange={handleTabChange} 
+            key={isPreferenceLoaded ? 'loaded' : 'loading'}
+          />
         </div>
 
         {/* AI mood input */}

@@ -6,6 +6,7 @@ const UpdateSchema = z.object({
   music_genres: z.array(z.string()).optional(),
   movie_genres: z.array(z.string()).optional(),
   mood: z.string().max(500).optional(),
+  default_landing: z.enum(["music", "movies"]).optional(),
 });
 
 /** PATCH /api/profile/preferences — update user genre preferences */
@@ -33,6 +34,7 @@ export async function PATCH(request: NextRequest) {
     ...(parsed.music_genres !== undefined && { music_genres: parsed.music_genres }),
     ...(parsed.movie_genres !== undefined && { movie_genres: parsed.movie_genres }),
     ...(parsed.mood !== undefined && { mood: parsed.mood }),
+    ...(parsed.default_landing !== undefined && { default_landing: parsed.default_landing }),
   };
 
   const { error } = await admin

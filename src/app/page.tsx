@@ -13,7 +13,7 @@ export default async function RootPage() {
       const admin = createAdminClient();
       const { data } = await admin
         .from("users")
-        .select("display_name, avatar_url, is_pro")
+        .select("id, display_name, avatar_url, is_pro, preferences")
         .eq("id", userId)
         .single();
       user = data;
@@ -28,6 +28,7 @@ export default async function RootPage() {
       <LandingContent
         isAuthenticated={!!user}
         userName={user?.display_name}
+        initialPreferences={user?.preferences}
       />
     </>
   );

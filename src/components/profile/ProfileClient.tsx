@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { User, Music, Film, Bookmark, Check, Trash2 } from "lucide-react";
+import { User, Music, Film, Bookmark, Check, Trash2, Home } from "lucide-react";
 import type { DBUser } from "@/types/db";
 import { cn } from "@/lib/utils";
 import { ProBadge } from "@/components/shared/ProBadge";
@@ -30,6 +30,9 @@ export function ProfileClient({ user, isPro }: { user: DBUser | null; isPro: boo
   );
   const [movieGenres, setMovieGenres] = useState<string[]>(
     user?.preferences?.movie_genres ?? []
+  );
+  const [defaultLanding, setDefaultLanding] = useState<"music" | "movies">(
+    user?.preferences?.default_landing ?? "music"
   );
   const [savedRecs, setSavedRecs] = useState<SavedRec[]>([]);
   const [saving, setSaving] = useState(false);
@@ -67,6 +70,7 @@ export function ProfileClient({ user, isPro }: { user: DBUser | null; isPro: boo
         body: JSON.stringify({
           music_genres: musicGenres,
           movie_genres: movieGenres,
+          default_landing: defaultLanding,
         }),
       });
       if (!res.ok) throw new Error("Failed to save");
@@ -214,6 +218,79 @@ export function ProfileClient({ user, isPro }: { user: DBUser | null; isPro: boo
           {prefsError && (
             <p className="text-xs text-red-500">{prefsError}</p>
           )}
+        </div>
+      </section>
+
+      {/* Default Landing Preference */}
+      <section className="rounded-xl bg-surface border border-border p-6 space-y-6">
+        <div className="flex items-center gap-2">
+          <Home className="w-5 h-5 text-muted-foreground" />
+          <h2 className="text-base font-semibold">Default Landing</h2>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Choose which experience you want to see first when you open RecMe.
+        </p>
+        <div className="flex gap-4">
+          <button
+            onClick={() => setDefaultLanding("music")}
+            className={cn(
+              "flex-1 flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all text-center",
+              defaultLanding === "music"
+                ? "bg-[var(--music-accent)]/5 border-[var(--music-accent)]/50 ring-1 ring-[var(--music-accent)]/50"
+                : "bg-surface-light border-border hover:border-foreground/10"
+            )}
+          >
+            <div className={cn(
+              "p-3 rounded-xl bg-background border border-border",
+              defaultLanding === "music" && "border-[var(--music-accent)]/30"
+            )}>
+              <Music className={cn("w-6 h-6", defaultLanding === "music" ? "text-[var(--music-accent)]" : "text-muted-foreground")} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Music</p>
+              <p className="text-xs text-muted-foreground mt-1">Discover beats and vibes</p>
+            </div>
+            {defaultLanding === "music" && (
+              <div className="mt-auto pt-4">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--music-accent)] px-2 py-1 rounded bg-[var(--music-accent)]/10">Default</span>
+              </div>
+            )}
+          </button>
+
+          <button
+            onClick={() => setDefaultLanding("movies")}
+            className={cn(
+              "flex-1 flex flex-col items-center gap-3 p-6 rounded-2xl border transition-all text-center",
+              defaultLanding === "movies"
+                ? "bg-[var(--movie-accent)]/5 border-[var(--movie-accent)]/50 ring-1 ring-[var(--movie-accent)]/50"
+                : "bg-surface-light border-border hover:border-foreground/10"
+            )}
+          >
+            <div className={cn(
+              "p-3 rounded-xl bg-background border border-border",
+              defaultLanding === "movies" && "border-[var(--movie-accent)]/30"
+            )}>
+              <Film className={cn("w-6 h-6", defaultLanding === "movies" ? "text-[var(--movie-accent)]" : "text-muted-foreground")} />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Movies</p>
+              <p className="text-xs text-muted-foreground mt-1">Explore cinematic gems</p>
+            </div>
+            {defaultLanding === "movies" && (
+              <div className="mt-auto pt-4">
+                <span className="text-[10px] uppercase tracking-wider font-bold text-[var(--movie-accent)] px-2 py-1 rounded bg-[var(--movie-accent)]/10">Default</span>
+              </div>
+            )}
+          </button>
+        </div>
+        <div className="pt-2">
+          <button
+            onClick={savePreferences}
+            disabled={saving}
+            className="text-sm px-5 py-2.5 rounded-lg bg-foreground text-background font-medium hover:opacity-90 transition-all disabled:opacity-50"
+          >
+            {saving ? "Saving..." : prefsSaved ? "Saved!" : "Save Landing Preference"}
+          </button>
         </div>
       </section>
 
