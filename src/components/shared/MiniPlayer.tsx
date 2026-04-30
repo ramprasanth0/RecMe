@@ -11,6 +11,9 @@ import {
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GeniusDetails } from "./GeniusDetails";
 import { getYoutubeId } from "@/lib/utils";
+import { SpotifyTrack } from "@/types/spotify";
+import { GeniusSong } from "@/types/genius";
+
 
 function formatTime(ms: number) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -446,10 +449,10 @@ export function MiniPlayer() {
 interface TabsProps {
   activeTab: "queue" | "lyrics" | "insights";
   setActiveTab: (t: "queue" | "lyrics" | "insights") => void;
-  queue: any[];
+  queue: SpotifyTrack[];
   refreshQueue: () => void;
   playTrack: (t: { title: string; artist: string; uri?: string }) => void;
-  geniusData: any;
+  geniusData: GeniusSong | null;
   lyrics: string | null;
   isFetchingLyrics: boolean;
 }

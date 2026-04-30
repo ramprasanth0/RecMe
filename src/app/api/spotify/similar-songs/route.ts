@@ -29,7 +29,14 @@ export async function GET(request: NextRequest) {
     }
 
     const data = await res.json();
-    const songs = (data.tracks ?? []).map((t: any) => ({
+    const songs = (data.tracks ?? []).map((t: { 
+      id: string; 
+      name: string; 
+      artists: { name: string }[]; 
+      album: { images: { url: string }[] }; 
+      external_urls: { spotify: string };
+      uri: string;
+    }) => ({
       id: t.id,
       title: t.name,
       artist: t.artists?.[0]?.name ?? "",
