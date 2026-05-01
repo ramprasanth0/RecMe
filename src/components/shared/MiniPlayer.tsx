@@ -207,25 +207,39 @@ export function MiniPlayer() {
         >
           {/* Left: Track Info */}
           <div
-            className="flex items-center gap-3 w-1/3 min-w-0 cursor-pointer group/info"
+            className="flex items-center gap-3 w-1/3 min-w-0 cursor-pointer group/info relative h-full"
             onClick={() => setIsExpanded(true)}
           >
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light group-hover/info:scale-105 transition-transform duration-300">
-              {mediaType === "video" && videoId ? (
-                <div ref={miniVideoRef} className="w-full h-full bg-black" />
-              ) : (
-                albumArt && <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />
-              )}
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/info:opacity-100 flex items-center justify-center transition-opacity">
-                <ChevronUp className="w-5 h-5 text-white" />
-              </div>
-            </div>
-            <div className="min-w-0 flex flex-col justify-center">
-              <p className="text-sm font-semibold text-white truncate group-hover/info:text-[var(--music-accent)] transition-colors">{currentTrack.name}</p>
-              <p className="text-xs text-muted-foreground truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
-            </div>
-          </div>
+            {mediaType === "video" && videoId ? (
+              <>
+                {/* Floating PiP Video */}
+                <div className="absolute bottom-full left-0 mb-4 w-[200px] sm:w-[260px] aspect-video rounded-xl bg-black shadow-[0_10px_50px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10 group-hover/info:border-white/30 z-[60] transition-colors duration-300">
+                  <div ref={miniVideoRef} className="w-full h-full" />
+                </div>
 
+                <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
+                  <ChevronUp className="w-6 h-6 text-white/50 group-hover/info:text-white transition-colors" />
+                </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <p className="text-sm font-semibold text-white truncate group-hover/info:text-[var(--music-accent)] transition-colors">{currentTrack.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 bg-surface-light group-hover/info:scale-105 transition-transform duration-300">
+                  {albumArt && <Image src={albumArt} alt={currentTrack.name} fill className="object-cover" />}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/info:opacity-100 flex items-center justify-center transition-opacity">
+                    <ChevronUp className="w-5 h-5 text-white" />
+                  </div>
+                </div>
+                <div className="min-w-0 flex flex-col justify-center">
+                  <p className="text-sm font-semibold text-white truncate group-hover/info:text-[var(--music-accent)] transition-colors">{currentTrack.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+                </div>
+              </>
+            )}
+          </div>
           {/* Center: Controls & Progress */}
           <div className="flex flex-col items-center justify-center flex-1 max-w-xl px-4">
             <div className="flex items-center gap-4 sm:gap-6 mb-1.5">

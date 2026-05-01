@@ -45,7 +45,7 @@ RecMe is a minimalistic, editorial-grade web application that provides AI-powere
     *   Team-wide architecture or workflow rules go to `GEMINI.md`.
     *   Machine-local or private notes go to the private project memory.
 *   **Github Standards:**
-    * Always run test and analyze with lint and local build before commit.
+    * Always run tests and analyze with lint and perform local build before committing.
     * Never commit the .env.local file.
     * Commit message should be in the format: "feat: add new feature" or "fix: fix bug".
 
