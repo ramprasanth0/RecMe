@@ -276,7 +276,7 @@ export function MiniPlayer() {
             )}
 
             {/* Header */}
-            <div className="relative z-10 flex items-center justify-between px-6 pt-5 pb-3 shrink-0">
+            <div className="relative z-10 flex items-center justify-between px-6 pt-5 pb-3 shrink-0 w-full max-w-5xl mx-auto">
               <button onClick={() => setIsExpanded(false)} className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors">
                 <ChevronDown className="w-6 h-6" />
               </button>
@@ -311,7 +311,7 @@ export function MiniPlayer() {
             */}
 
             {/* ── AUDIO MODE: stacks vertically on mobile, side-by-side on md+ ── */}
-            <div className={`relative z-10 flex-1 flex flex-col md:flex-row items-stretch overflow-hidden min-h-0 ${mediaType !== "audio" ? "hidden" : ""}`}>
+            <div className={`relative z-10 flex-1 flex flex-col md:flex-row items-stretch overflow-hidden min-h-0 w-full max-w-5xl mx-auto ${mediaType !== "audio" ? "hidden" : ""}`}>
               {/* Artwork */}
               <div className="flex items-center justify-center pt-4 pb-2 px-8 md:p-10 shrink-0 md:w-[45%]">
                 <div className="relative w-44 h-44 sm:w-52 sm:h-52 md:w-full md:h-auto md:max-w-[340px] md:aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60">
@@ -382,7 +382,7 @@ export function MiniPlayer() {
             </div>
 
             {/* ── VIDEO MODE: iframe lives here so it's inside the overlay ── */}
-            <div className={`relative z-10 flex-1 flex flex-col overflow-hidden min-h-0 px-6 pb-6 ${mediaType !== "video" ? "hidden" : ""}`}>
+            <div className={`relative z-10 flex-1 flex flex-col overflow-hidden min-h-0 px-6 pb-6 w-full max-w-5xl mx-auto ${mediaType !== "video" ? "hidden" : ""}`}>
               {/*
                 Video container: shrink-0 so it stays at its natural 16:9 size on mobile,
                 but maxHeight: "52%" prevents it from consuming the full screen on wide displays.
