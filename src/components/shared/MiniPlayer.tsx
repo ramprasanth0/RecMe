@@ -110,22 +110,38 @@ export function MiniPlayer() {
 
   // Pause audio when switching TO video
   useEffect(() => {
-    if (mediaType === "video" && prevMediaTypeRef.current === "audio" && isPlaying) {
+    if (mediaType === "video" && isPlaying) {
       togglePlay();
     }
-    prevMediaTypeRef.current = mediaType;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mediaType]);
 
-  // Pause YouTube iframe when audio resumes
+  // Fallback to audio if video is not available
   useEffect(() => {
-    if (isPlaying && mediaType === "audio" && iframeRef.current?.contentWindow) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
-        "*"
-      );
+    if (mediaType === "video" && !videoId && currentTrack) {
+      setMediaType("audio");
     }
-  }, [isPlaying, mediaType]);
+  }, [videoId, mediaType, currentTrack]);
+
+  // Synchronize playback states
+  useEffect(() => {
+    if (!isActive || !currentTrack) return;
+
+    if (mediaType === "video") {
+      // If in video mode and Spotify starts playing, pause Spotify
+      if (isPlaying) {
+        togglePlay();
+      }
+      // Note: YouTube will autoplay due to the iframe src
+    } else {
+      // If in audio mode, ensure YouTube is paused
+      if (iframeRef.current?.contentWindow) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
+          "*"
+        );
+      }
+    }
+  }, [currentTrack?.id, mediaType, isPlaying, isActive]); // Added isPlaying to catch starts
 
   useEffect(() => {
     if (isActive) {
@@ -471,7 +487,7 @@ export function MiniPlayer() {
           <iframe
             ref={iframeRef}
             className="w-full h-full border-0"
-            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1&autoplay=1`}
+            src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1${mediaType === "video" ? "&autoplay=1" : ""}`}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />

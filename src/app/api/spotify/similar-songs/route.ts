@@ -3,11 +3,16 @@ import { getUserWithFreshToken } from "@/lib/auth/session";
 
 /** GET /api/spotify/similar-songs?track_id=<id>&limit=5 */
 export async function GET(request: NextRequest) {
-  const trackId = request.nextUrl.searchParams.get("track_id");
+  let trackId = request.nextUrl.searchParams.get("track_id");
   const limit = Math.min(parseInt(request.nextUrl.searchParams.get("limit") ?? "5", 10), 10);
 
   if (!trackId) {
     return NextResponse.json({ error: "track_id is required" }, { status: 400 });
+  }
+
+  // Ensure trackId is just the ID, not a full URI
+  if (trackId.includes(":")) {
+    trackId = trackId.split(":").pop()!;
   }
 
   const user = await getUserWithFreshToken();
@@ -17,7 +22,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const res = await fetch(
-      `https://api.spotify.com/v1/recommendations?seed_tracks=${encodeURIComponent(trackId)}&limit=${limit}&market=from_token`,
+      `https://api.spotify.com/v1/recommendations?seed_tracks=${encodeURIComponent(trackId)}&limit=${limit}`,
       {
         headers: { Authorization: `Bearer ${user.spotify_access_token}` },
         cache: "no-store",
@@ -25,6 +30,8 @@ export async function GET(request: NextRequest) {
     );
 
     if (!res.ok) {
+      const errorText = await res.text();
+      console.error(`Spotify recommendations API failed: ${res.status} ${errorText}`);
       return NextResponse.json({ songs: [] });
     }
 
