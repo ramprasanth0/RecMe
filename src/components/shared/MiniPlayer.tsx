@@ -339,9 +339,9 @@ export function MiniPlayer() {
                       setVideoScale(newScale);
                     }}
                     onClick={(e) => e.stopPropagation()}
-                    className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-black/80 border border-white/20 flex items-center justify-center cursor-nesw-resize opacity-0 group-hover/info:opacity-100 hover:bg-white/10 transition-opacity z-[70]"
+                    className="absolute top-1 right-1 w-8 h-8 flex items-center justify-center cursor-nesw-resize opacity-0 group-hover/info:opacity-100 transition-opacity z-[70]"
                   >
-                    <Maximize2 className="w-3.5 h-3.5 text-white rotate-45" />
+                    <Maximize2 className="w-4 h-4 text-white drop-shadow-md rotate-45" />
                   </motion.div>
                 </motion.div>
 
