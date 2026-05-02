@@ -80,12 +80,13 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     try {
       const saved = localStorage.getItem("recme_playback_state");
       if (saved) {
-        const { track, contextUri, pos, dur } = JSON.parse(saved);
+        const { track, contextUri, pos, dur, queue: savedQueue } = JSON.parse(saved);
         if (track) {
           setCurrentTrack(track);
           setCurrentContextUri(contextUri || null);
           setPosition(pos || 0);
           setDuration(dur || 0);
+          if (savedQueue) setQueue(savedQueue);
           setIsActive(true);
           setIsPlaying(false);
         }
@@ -210,6 +211,20 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       if (syncIntervalRef.current) clearInterval(syncIntervalRef.current);
     };
   }, [isPlaying, player]);
+
+  // Sync queue to local storage when it updates
+  useEffect(() => {
+    if (!isActive && !currentTrack) return;
+    try {
+      const existing = JSON.parse(localStorage.getItem("recme_playback_state") || "{}");
+      localStorage.setItem("recme_playback_state", JSON.stringify({
+        ...existing,
+        queue
+      }));
+    } catch {
+      // ignore
+    }
+  }, [queue, isActive, currentTrack]);
 
   const fetchUri = useCallback(async (title: string, artist: string) => {
     try {

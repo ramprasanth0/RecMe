@@ -575,6 +575,7 @@ export function MiniPlayer() {
           className="rounded-lg overflow-hidden bg-black shadow-2xl group/yt relative"
         >
           <iframe
+            key={videoId}
             ref={iframeRef}
             className="w-full h-full border-0"
             src={`https://www.youtube.com/embed/${videoId}?enablejsapi=1${mediaType === "video" ? "&autoplay=1" : ""}`}
