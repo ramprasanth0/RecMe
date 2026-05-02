@@ -175,7 +175,7 @@ export function MiniPlayer() {
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };
-  }, [isExpanded, mediaType, isActive, videoId]);
+  }, [isExpanded, mediaType, isActive, videoId, videoScale]);
 
   useEffect(() => {
     if (isExpanded) refreshQueue();
@@ -311,7 +311,7 @@ export function MiniPlayer() {
           >
             {mediaType === "video" && videoId ? (
               <>
-                {/* Floating PiP Video */}
+                {/* Floating PiP Video (Placeholder) */}
                 <motion.div 
                   className="absolute bottom-full left-0 mb-4 aspect-video rounded-xl bg-black shadow-[0_10px_50px_rgba(0,0,0,0.5)] border border-white/10 z-[60] transition-colors duration-300 group-hover/info:border-white/30"
                   style={{
@@ -320,29 +320,6 @@ export function MiniPlayer() {
                   }}
                 >
                   <div ref={miniVideoRef} className="w-full h-full rounded-xl overflow-hidden pointer-events-none" />
-                  
-                  {/* Resize Handle (Top Right) */}
-                  <motion.div
-                    drag="x"
-                    dragConstraints={{ left: 0, right: 0 }}
-                    dragElastic={0}
-                    dragMomentum={false}
-                    onDrag={(e, info) => {
-                      // Prevent expanding player
-                      e.stopPropagation();
-                      e.preventDefault();
-                      
-                      // Calculate new scale based on drag
-                      const baseWidth = 260; // Desktop base width assumption for scaling logic
-                      const newWidth = baseWidth * videoScale + info.delta.x;
-                      const newScale = Math.min(Math.max(newWidth / baseWidth, 1), 2);
-                      setVideoScale(newScale);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="absolute top-1 right-1 w-8 h-8 flex items-center justify-center cursor-nesw-resize opacity-0 group-hover/info:opacity-100 transition-opacity z-[70]"
-                  >
-                    <Maximize2 className="w-4 h-4 text-white drop-shadow-md rotate-45" />
-                  </motion.div>
                 </motion.div>
 
                 <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
@@ -595,7 +572,7 @@ export function MiniPlayer() {
             opacity: mediaType === "video" && videoRect ? 1 : 0,
             transition: "opacity 0.3s ease, z-index 0s",
           }}
-          className="rounded-lg overflow-hidden bg-black shadow-2xl"
+          className="rounded-lg overflow-hidden bg-black shadow-2xl group/yt relative"
         >
           <iframe
             ref={iframeRef}
@@ -604,6 +581,24 @@ export function MiniPlayer() {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
+          
+          {/* Resize Handle for PiP */}
+          {!isExpanded && mediaType === "video" && (
+            <motion.div
+              onPan={(e, info) => {
+                e.stopPropagation();
+                setVideoScale((prev) => {
+                  const baseWidth = 260; // Desktop base width assumption
+                  const newScale = prev + info.delta.x / baseWidth;
+                  return Math.min(Math.max(newScale, 1), 2);
+                });
+              }}
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-1 right-1 w-8 h-8 flex items-center justify-center cursor-nesw-resize opacity-0 hover:opacity-100 group-hover/yt:opacity-60 transition-opacity z-[70]"
+            >
+              <Maximize2 className="w-4 h-4 text-white drop-shadow-md rotate-45" />
+            </motion.div>
+          )}
         </div>
       )}
     </>
