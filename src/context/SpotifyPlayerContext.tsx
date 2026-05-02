@@ -390,12 +390,23 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       const res = await fetch("/api/spotify/queue");
       if (res.ok) {
         const data = await res.json();
-        setQueue(dedupeByUri(data.queue || []));
+        const fetchedQueue = dedupeByUri(data.queue || []);
+        
+        if (fetchedQueue.length > 0) {
+          setQueue(fetchedQueue);
+        } else if (player) {
+          // If the fetched queue is empty, only trust it if we are actively playing.
+          // Otherwise, Spotify API might be returning empty due to inactivity.
+          const state = await player.getCurrentState();
+          if (state && !state.paused) {
+            setQueue([]);
+          }
+        }
       }
     } catch (e) {
       console.error("Failed to refresh queue", e);
     }
-  }, [token]);
+  }, [token, player]);
 
   const addToQueue = useCallback(async (uri: string) => {
     if (!token) return;
