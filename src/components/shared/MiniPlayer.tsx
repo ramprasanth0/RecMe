@@ -585,6 +585,9 @@ export function MiniPlayer() {
           {/* Resize Handle for PiP */}
           {!isExpanded && mediaType === "video" && (
             <motion.div
+              onPanStart={() => {
+                document.body.style.userSelect = "none";
+              }}
               onPan={(e, info) => {
                 e.stopPropagation();
                 setVideoScale((prev) => {
@@ -593,10 +596,13 @@ export function MiniPlayer() {
                   return Math.min(Math.max(newScale, 1), 2);
                 });
               }}
+              onPanEnd={() => {
+                document.body.style.userSelect = "";
+              }}
               onClick={(e) => e.stopPropagation()}
               className="absolute top-1 right-1 w-8 h-8 flex items-center justify-center cursor-nesw-resize opacity-0 hover:opacity-100 group-hover/yt:opacity-60 transition-opacity z-[70]"
             >
-              <Maximize2 className="w-4 h-4 text-white drop-shadow-md rotate-45" />
+              <Maximize2 className="w-4 h-4 text-white drop-shadow-md" />
             </motion.div>
           )}
         </div>
