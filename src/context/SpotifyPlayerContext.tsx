@@ -154,7 +154,9 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       setDuration(state.duration);
 
       try {
+        const existing = JSON.parse(localStorage.getItem("recme_playback_state") || "{}");
         localStorage.setItem("recme_playback_state", JSON.stringify({
+          ...existing,
           track: state.track_window.current_track,
           contextUri: state.context?.uri ?? null,
           pos: state.position,
@@ -168,6 +170,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       const newTrackId = state.track_window.current_track?.id ?? null;
       if (newTrackId !== lastTrackId.current) {
         lastTrackId.current = newTrackId;
+        
         // Seed with SDK's next_tracks only if queue is empty
         setQueue((prev) => {
           if (prev.length === 0 && state.track_window.next_tracks?.length) {
@@ -175,13 +178,19 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
           }
           return prev;
         });
-        // Fetch the authoritative full queue from the API
-        fetch("/api/spotify/queue")
-          .then((r) => r.ok ? r.json() : null)
-          .then((data) => {
-            if (data?.queue) setQueue(dedupeByUri(data.queue));
-          })
-          .catch(() => {});
+
+        // Only fetch authoritative queue from API if we are actively playing
+        // (Spotify API often returns an empty queue if the device is paused/inactive, which would wipe our restored queue)
+        if (!state.paused) {
+          fetch("/api/spotify/queue")
+            .then((r) => r.ok ? r.json() : null)
+            .then((data) => {
+              if (data?.queue && data.queue.length > 0) {
+                setQueue(dedupeByUri(data.queue));
+              }
+            })
+            .catch(() => {});
+        }
       }
     });
 
