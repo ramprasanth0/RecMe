@@ -75,6 +75,26 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
 
   const [sdkReady, setSdkReady] = useState(false);
 
+  // Load initial state from local storage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("recme_playback_state");
+      if (saved) {
+        const { track, contextUri, pos, dur } = JSON.parse(saved);
+        if (track) {
+          setCurrentTrack(track);
+          setCurrentContextUri(contextUri || null);
+          setPosition(pos || 0);
+          setDuration(dur || 0);
+          setIsActive(true);
+          setIsPlaying(false);
+        }
+      }
+    } catch {
+      // ignore parsing errors
+    }
+  }, []);
+
   // Fetch token once on mount
   useEffect(() => {
     fetch("/api/spotify/player-token")
@@ -122,7 +142,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
 
     spotifyPlayer.addListener("player_state_changed", (state) => {
       if (!state) {
-        setIsActive(false);
+        setIsPlaying(false);
         return;
       }
       setIsActive(true);
@@ -131,6 +151,17 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       setIsPlaying(!state.paused);
       setPosition(state.position);
       setDuration(state.duration);
+
+      try {
+        localStorage.setItem("recme_playback_state", JSON.stringify({
+          track: state.track_window.current_track,
+          contextUri: state.context?.uri ?? null,
+          pos: state.position,
+          dur: state.duration
+        }));
+      } catch {
+        // ignore
+      }
 
       // When track changes, refresh the full queue from the API (deduped)
       const newTrackId = state.track_window.current_track?.id ?? null;
@@ -193,7 +224,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     return null;
   }, []);
 
-  const executePlay = useCallback(async (payload: { uris?: string[]; context_uri?: string; offset?: { position: number } }) => {
+  const executePlay = useCallback(async (payload: { uris?: string[]; context_uri?: string; offset?: { position: number } | { uri: string }; position_ms?: number }) => {
     if (!deviceId || !token) return;
 
     await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
@@ -255,17 +286,44 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     [executePlay]
   );
 
+  const startPersistedPlayback = useCallback(async () => {
+    if (currentContextUri) {
+      await executePlay({
+        context_uri: currentContextUri,
+        offset: currentTrack?.uri ? { uri: currentTrack.uri } : undefined,
+        position_ms: position
+      });
+    } else if (currentTrack?.uri) {
+      await executePlay({
+        uris: [currentTrack.uri],
+        position_ms: position
+      });
+    }
+  }, [currentContextUri, currentTrack, position, executePlay]);
+
   const togglePlay = useCallback(async () => {
-    if (player) await player.togglePlay();
-  }, [player]);
+    if (!player) return;
+    const state = await player.getCurrentState();
+    if (!state) {
+      await startPersistedPlayback();
+    } else {
+      await player.togglePlay();
+    }
+  }, [player, startPersistedPlayback]);
 
   const pause = useCallback(async () => {
     if (player) await player.pause();
   }, [player]);
 
   const resume = useCallback(async () => {
-    if (player) await player.resume();
-  }, [player]);
+    if (!player) return;
+    const state = await player.getCurrentState();
+    if (!state) {
+      await startPersistedPlayback();
+    } else {
+      await player.resume();
+    }
+  }, [player, startPersistedPlayback]);
 
   const next = useCallback(async () => {
     if (player) await player.nextTrack();
@@ -295,6 +353,11 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     }
     setIsActive(false);
     setCurrentTrack(null);
+    try {
+      localStorage.removeItem("recme_playback_state");
+    } catch {
+      // ignore
+    }
   }, [player]);
 
   const refreshQueue = useCallback(async () => {
