@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X,
   ExternalLink, ChevronUp, ChevronDown, RefreshCcw, Music as MusicIcon,
-  Video, Sparkles, Check, Loader2,
+  Video, Sparkles, Check, Loader2, Maximize2
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GeniusDetails } from "./GeniusDetails";
@@ -53,6 +53,33 @@ export function MiniPlayer() {
   
   // Persistence: Track what the user EXPLICITLY selected
   const [userPreferredType, setUserPreferredType] = useState<"audio" | "video">("audio");
+  
+  // PiP Video Scaling
+  const [videoScale, setVideoScale] = useState(1);
+
+  // Load preferences from local storage on mount
+  useEffect(() => {
+    try {
+      const savedScale = localStorage.getItem("recme_video_scale");
+      if (savedScale) {
+        const parsed = parseFloat(savedScale);
+        if (!isNaN(parsed) && parsed >= 1 && parsed <= 2) {
+          setVideoScale(parsed);
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Save scale to local storage when changed
+  useEffect(() => {
+    try {
+      localStorage.setItem("recme_video_scale", videoScale.toString());
+    } catch {
+      // ignore
+    }
+  }, [videoScale]);
 
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [isFetchingLyrics, setIsFetchingLyrics] = useState(false);
@@ -76,18 +103,26 @@ export function MiniPlayer() {
   useEffect(() => { userPreferredTypeRef.current = userPreferredType; }, [userPreferredType]);
 
   // Initialize YouTube API
+  const [isYTReady, setIsYTReady] = useState(false);
+
   useEffect(() => {
-    if (!(window as any).YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    if ((window as any).YT && (window as any).YT.Player) {
+      setIsYTReady(true);
+      return;
     }
+
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.head.appendChild(tag);
+
+    (window as any).onYouTubeIframeAPIReady = () => {
+      setIsYTReady(true);
+    };
   }, []);
 
   // Initialize YouTube Player
   useEffect(() => {
-    if (!videoId || !iframeRef.current || !(window as any).YT || !(window as any).YT.Player) return;
+    if (!isYTReady || !videoId || !iframeRef.current) return;
 
     if (ytPlayerRef.current) return;
 
@@ -104,9 +139,16 @@ export function MiniPlayer() {
     });
 
     return () => {
+      if (ytPlayerRef.current && typeof ytPlayerRef.current.destroy === 'function') {
+        try {
+          ytPlayerRef.current.destroy();
+        } catch {
+          // ignore if already destroyed or iframe gone
+        }
+      }
       ytPlayerRef.current = null;
     };
-  }, [videoId]);
+  }, [videoId, isYTReady]);
 
   // Track the active video placeholder and update videoRect
   useEffect(() => {
@@ -270,13 +312,43 @@ export function MiniPlayer() {
             {mediaType === "video" && videoId ? (
               <>
                 {/* Floating PiP Video */}
-                <div className="absolute bottom-full left-0 mb-4 w-[200px] sm:w-[260px] aspect-video rounded-xl bg-black shadow-[0_10px_50px_rgba(0,0,0,0.5)] overflow-hidden border border-white/10 group-hover/info:border-white/30 z-[60] transition-colors duration-300">
-                  <div ref={miniVideoRef} className="w-full h-full" />
-                </div>
+                <motion.div 
+                  className="absolute bottom-full left-0 mb-4 aspect-video rounded-xl bg-black shadow-[0_10px_50px_rgba(0,0,0,0.5)] border border-white/10 z-[60] transition-colors duration-300 group-hover/info:border-white/30"
+                  style={{
+                    width: `calc(min(100vw - 32px, max(200px, ${260 * videoScale}px)))`,
+                    maxWidth: "calc(100vw - 32px)",
+                  }}
+                >
+                  <div ref={miniVideoRef} className="w-full h-full rounded-xl overflow-hidden pointer-events-none" />
+                  
+                  {/* Resize Handle (Top Right) */}
+                  <motion.div
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0}
+                    dragMomentum={false}
+                    onDrag={(e, info) => {
+                      // Prevent expanding player
+                      e.stopPropagation();
+                      e.preventDefault();
+                      
+                      // Calculate new scale based on drag
+                      const baseWidth = 260; // Desktop base width assumption for scaling logic
+                      const newWidth = baseWidth * videoScale + info.delta.x;
+                      const newScale = Math.min(Math.max(newWidth / baseWidth, 1), 2);
+                      setVideoScale(newScale);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-black/80 border border-white/20 flex items-center justify-center cursor-nesw-resize opacity-0 group-hover/info:opacity-100 hover:bg-white/10 transition-opacity z-[70]"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5 text-white rotate-45" />
+                  </motion.div>
+                </motion.div>
 
                 <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center shrink-0">
                   <ChevronUp className="w-6 h-6 text-white/50 group-hover/info:text-white transition-colors" />
                 </div>
+
                 <div className="min-w-0 flex flex-col justify-center">
                   <p className="text-sm font-semibold text-white truncate group-hover/info:text-[var(--music-accent)] transition-colors">{currentTrack.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>

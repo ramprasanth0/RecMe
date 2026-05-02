@@ -149,7 +149,7 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
 
   // Derive recent albums and artists from recentTracks
   const recentAlbums = Array.from(new Map(recentTracks.filter(t => t.album?.uri).map(t => [t.album.uri, t.album])).values()).slice(0, 5);
-  const recentArtists = Array.from(new Map(recentTracks.flatMap(t => t.artists).filter(a => a.uri && a.images?.[0]?.url).map(a => [a.uri!, a])).values()).slice(0, 8);
+  const recentArtists = Array.from(new Map(recentTracks.flatMap(t => t.artists).filter(a => a.uri).map(a => [a.uri!, a])).values()).slice(0, 8);
 
   return (
     <main className="min-h-screen bg-background pt-20 pb-16">
@@ -397,10 +397,10 @@ export function PersonalizeContent({ hasSpotify, isPro }: PersonalizeContentProp
                         return (
                           <div key={i} className="group w-24 flex-shrink-0 space-y-1.5 relative">
                             <div className="relative aspect-square rounded-full overflow-hidden bg-surface-light cursor-pointer" onClick={() => artist.uri && playContext(artist.uri)}>
-                              {artist.images?.[0]?.url ? (
+                              {artist.images && artist.images.length > 0 && artist.images[0].url ? (
                                 <Image src={artist.images[0].url} alt={artist.name} fill sizes="96px" className="object-cover" />
                               ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-surface-light">
+                                <div className="absolute inset-0 flex items-center justify-center bg-surface-light">
                                   <Mic2 className="w-8 h-8 text-muted-foreground/30" />
                                 </div>
                               )}
