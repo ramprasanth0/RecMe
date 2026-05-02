@@ -26,6 +26,8 @@ interface PlayerContextType {
   playQueue: (tracks: TrackToPlay[], startIndex?: number) => Promise<void>;
   playContext: (contextUri: string) => Promise<void>;
   togglePlay: () => Promise<void>;
+  pause: () => Promise<void>;
+  resume: () => Promise<void>;
   next: () => Promise<void>;
   prev: () => Promise<void>;
   seek: (ms: number) => Promise<void>;
@@ -257,6 +259,14 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     if (player) await player.togglePlay();
   }, [player]);
 
+  const pause = useCallback(async () => {
+    if (player) await player.pause();
+  }, [player]);
+
+  const resume = useCallback(async () => {
+    if (player) await player.resume();
+  }, [player]);
+
   const next = useCallback(async () => {
     if (player) await player.nextTrack();
   }, [player]);
@@ -373,6 +383,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     playQueue,
     playContext,
     togglePlay,
+    pause,
+    resume,
     next,
     prev,
     seek,

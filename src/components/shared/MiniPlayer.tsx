@@ -1,5 +1,6 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
@@ -30,6 +31,7 @@ export function MiniPlayer() {
     position,
     duration,
     togglePlay,
+    pause,
     next,
     prev,
     seek,
@@ -48,19 +50,63 @@ export function MiniPlayer() {
   const [scrubPosition, setScrubPosition] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<"queue" | "lyrics" | "insights">("queue");
-  const [mediaType, setMediaType] = useState<"audio" | "video">("audio");
+  
+  // Persistence: Track what the user EXPLICITLY selected
+  const [userPreferredType, setUserPreferredType] = useState<"audio" | "video">("audio");
 
   const [lyrics, setLyrics] = useState<string | null>(null);
   const [isFetchingLyrics, setIsFetchingLyrics] = useState(false);
 
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const ytPlayerRef = useRef<any>(null);
   const miniVideoRef = useRef<HTMLDivElement>(null);
   const expandedVideoRef = useRef<HTMLDivElement>(null);
   const [videoRect, setVideoRect] = useState<DOMRect | null>(null);
-  const prevMediaTypeRef = useRef<"audio" | "video">("audio");
 
   const videoUrl = geniusData?.media?.find((m: { provider: string }) => m.provider === "youtube")?.url;
   const videoId = videoUrl ? getYoutubeId(videoUrl) : null;
+
+  // Effective media type: user preference, but fallback to audio if no video available
+  const mediaType = (userPreferredType === "video" && videoId) ? "video" : "audio";
+
+  // Use refs for callbacks to avoid re-initializing YT.Player too often
+  const nextRef = useRef(next);
+  const userPreferredTypeRef = useRef(userPreferredType);
+  useEffect(() => { nextRef.current = next; }, [next]);
+  useEffect(() => { userPreferredTypeRef.current = userPreferredType; }, [userPreferredType]);
+
+  // Initialize YouTube API
+  useEffect(() => {
+    if (!(window as any).YT) {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+  }, []);
+
+  // Initialize YouTube Player
+  useEffect(() => {
+    if (!videoId || !iframeRef.current || !(window as any).YT || !(window as any).YT.Player) return;
+
+    if (ytPlayerRef.current) return;
+
+    ytPlayerRef.current = new (window as any).YT.Player(iframeRef.current, {
+      events: {
+        onStateChange: (event: any) => {
+          if (event.data === (window as any).YT.PlayerState.ENDED) {
+            if (userPreferredTypeRef.current === "video") {
+              nextRef.current();
+            }
+          }
+        },
+      },
+    });
+
+    return () => {
+      ytPlayerRef.current = null;
+    };
+  }, [videoId]);
 
   // Track the active video placeholder and update videoRect
   useEffect(() => {
@@ -111,37 +157,32 @@ export function MiniPlayer() {
   // Pause audio when switching TO video
   useEffect(() => {
     if (mediaType === "video" && isPlaying) {
-      togglePlay();
+      pause();
     }
-  }, [mediaType]);
+  }, [mediaType, isPlaying, pause]);
 
-  // Fallback to audio if video is not available
-  useEffect(() => {
-    if (mediaType === "video" && !videoId && currentTrack) {
-      setMediaType("audio");
-    }
-  }, [videoId, mediaType, currentTrack]);
-
-  // Synchronize playback states
+  // Synchronize playback states to prevent dual playback
   useEffect(() => {
     if (!isActive || !currentTrack) return;
 
     if (mediaType === "video") {
       // If in video mode and Spotify starts playing, pause Spotify
       if (isPlaying) {
-        togglePlay();
+        pause();
       }
-      // Note: YouTube will autoplay due to the iframe src
     } else {
       // If in audio mode, ensure YouTube is paused
-      if (iframeRef.current?.contentWindow) {
+      if (ytPlayerRef.current?.pauseVideo) {
+        ytPlayerRef.current.pauseVideo();
+      } else if (iframeRef.current?.contentWindow) {
+        // Fallback to postMessage if player not ready
         iframeRef.current.contentWindow.postMessage(
           JSON.stringify({ event: "command", func: "pauseVideo", args: [] }),
           "*"
         );
       }
     }
-  }, [currentTrack?.id, mediaType, isPlaying, isActive]); // Added isPlaying to catch starts
+  }, [currentTrack?.id, mediaType, isPlaying, isActive, pause, currentTrack]);
 
   useEffect(() => {
     if (isActive) {
@@ -350,14 +391,14 @@ export function MiniPlayer() {
                   <p className="text-[10px] uppercase font-bold tracking-widest text-muted-foreground">Now Playing</p>
                   <div className="mt-2 flex items-center bg-white/5 rounded-full p-1 border border-white/10">
                     <button
-                      onClick={() => setMediaType("audio")}
-                      className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${mediaType === "audio" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
+                      onClick={() => setUserPreferredType("audio")}
+                      className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${userPreferredType === "audio" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
                     >
                       <MusicIcon className="w-3 h-3" /> Audio
                     </button>
                     <button
-                      onClick={() => setMediaType("video")}
-                      className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${mediaType === "video" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
+                      onClick={() => setUserPreferredType("video")}
+                      className={`flex items-center gap-1.5 px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all ${userPreferredType === "video" ? "bg-white text-black shadow-lg" : "text-muted-foreground hover:text-white"}`}
                     >
                       <Video className="w-3 h-3" /> Video
                     </button>
@@ -448,7 +489,7 @@ export function MiniPlayer() {
                       <Video className="w-10 h-10 text-muted-foreground" />
                       <p className="text-sm font-medium">Video not available</p>
                       <p className="text-xs text-muted-foreground">No YouTube video found for this track.</p>
-                      <button onClick={() => setMediaType("audio")} className="mt-2 text-xs font-bold uppercase tracking-widest text-[var(--music-accent)]">
+                      <button onClick={() => setUserPreferredType("audio")} className="mt-2 text-xs font-bold uppercase tracking-widest text-[var(--music-accent)]">
                         Back to Audio
                       </button>
                     </div>
