@@ -40,7 +40,7 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
     
     const expiryDate = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
-    await admin
+    const { error: updateError } = await admin
       .from("users")
       .update({
         spotify_access_token: tokens.access_token,
@@ -50,6 +50,10 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
         }),
       })
       .eq("id", user.id);
+
+    if (updateError) {
+      console.error("Failed to update user token in database:", updateError);
+    }
 
     return {
       ...user,
