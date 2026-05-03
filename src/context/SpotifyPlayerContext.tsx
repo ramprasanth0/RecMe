@@ -39,6 +39,7 @@ interface PlayerContextType {
   geniusData: GeniusSong | null;
   isFetchingGenius: boolean;
   showQueueToast: boolean;
+  showLikedToast: boolean;
   isSaved: boolean | null;
   toggleSaveTrack: () => Promise<void>;
 }
@@ -69,11 +70,13 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [geniusData, setGeniusData] = useState<GeniusSong | null>(null);
   const [isFetchingGenius, setIsFetchingGenius] = useState(false);
   const [showQueueToast, setShowQueueToast] = useState(false);
+  const [showLikedToast, setShowLikedToast] = useState(false);
   const [isSaved, setIsSaved] = useState<boolean | null>(null);
 
   const lastFetchedGeniusTrack = useRef<string | null>(null);
   const lastTrackId = useRef<string | null>(null);
   const queueToastTimer = useRef<NodeJS.Timeout | null>(null);
+  const likedToastTimer = useRef<NodeJS.Timeout | null>(null);
 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -122,6 +125,13 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       });
       
       if (!res.ok) throw new Error("Failed to update liked songs");
+      
+      // If successfully saved (was false, now true)
+      if (!prevSaved) {
+        if (likedToastTimer.current) clearTimeout(likedToastTimer.current);
+        setShowLikedToast(true);
+        likedToastTimer.current = setTimeout(() => setShowLikedToast(false), 2500);
+      }
     } catch (err) {
       console.error(err);
       // Revert if failed
@@ -548,6 +558,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     geniusData,
     isFetchingGenius,
     showQueueToast,
+    showLikedToast,
     isSaved,
     toggleSaveTrack,
   };
