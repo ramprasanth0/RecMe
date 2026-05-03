@@ -39,6 +39,8 @@ interface PlayerContextType {
   geniusData: GeniusSong | null;
   isFetchingGenius: boolean;
   showQueueToast: boolean;
+  isSaved: boolean | null;
+  toggleSaveTrack: () => Promise<void>;
 }
 
 function dedupeByUri(tracks: any[]): any[] {
@@ -67,6 +69,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const [geniusData, setGeniusData] = useState<GeniusSong | null>(null);
   const [isFetchingGenius, setIsFetchingGenius] = useState(false);
   const [showQueueToast, setShowQueueToast] = useState(false);
+  const [isSaved, setIsSaved] = useState<boolean | null>(null);
+
   const lastFetchedGeniusTrack = useRef<string | null>(null);
   const lastTrackId = useRef<string | null>(null);
   const queueToastTimer = useRef<NodeJS.Timeout | null>(null);
@@ -74,6 +78,49 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const [sdkReady, setSdkReady] = useState(false);
+
+  // Check if current track is saved in liked songs
+  useEffect(() => {
+    if (!currentTrack?.id) {
+      setIsSaved(null);
+      return;
+    }
+    
+    let isMounted = true;
+    fetch(`/api/spotify/liked-songs?ids=${currentTrack.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (isMounted && data?.saved && Array.isArray(data.saved)) {
+          setIsSaved(data.saved[0]);
+        }
+      })
+      .catch(console.error);
+
+    return () => { isMounted = false; };
+  }, [currentTrack?.id]);
+
+  const toggleSaveTrack = useCallback(async () => {
+    if (!currentTrack?.id || isSaved === null) return;
+    
+    // Optimistic UI update
+    const prevSaved = isSaved;
+    setIsSaved(!prevSaved);
+    
+    try {
+      const method = prevSaved ? "DELETE" : "PUT";
+      const res = await fetch("/api/spotify/liked-songs", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: [currentTrack.id] })
+      });
+      
+      if (!res.ok) throw new Error("Failed to update liked songs");
+    } catch (err) {
+      console.error(err);
+      // Revert if failed
+      setIsSaved(prevSaved);
+    }
+  }, [currentTrack?.id, isSaved]);
 
   // Load initial state from local storage
   useEffect(() => {
@@ -494,6 +541,8 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     geniusData,
     isFetchingGenius,
     showQueueToast,
+    isSaved,
+    toggleSaveTrack,
   };
 
   return (

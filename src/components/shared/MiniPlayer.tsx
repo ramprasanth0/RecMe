@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X,
   ExternalLink, ChevronUp, ChevronDown, RefreshCcw, Music as MusicIcon,
-  Video, Sparkles, Check, Loader2, Maximize2
+  Video, Sparkles, Check, Loader2, Maximize2, Heart
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GeniusDetails } from "./GeniusDetails";
@@ -42,6 +42,8 @@ export function MiniPlayer() {
     playTrack,
     geniusData,
     showQueueToast,
+    isSaved,
+    toggleSaveTrack,
   } = useSpotifyPlayer();
 
   const [volumeLevel, setVolumeLevel] = useState(0.5);
@@ -274,6 +276,8 @@ export function MiniPlayer() {
     geniusData,
     lyrics,
     isFetchingLyrics,
+    isSaved,
+    toggleSaveTrack,
   };
 
   return (
@@ -483,11 +487,21 @@ export function MiniPlayer() {
 
                 {/* Controls + Tabs */}
                 <div className="flex-1 flex flex-col gap-4 px-6 pb-6 md:py-6 md:pr-10 min-w-0 overflow-hidden">
-                  <div className="space-y-0.5">
-                    <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight truncate">{currentTrack.name}</h2>
-                    <p className="text-sm md:text-base text-[var(--music-accent)] font-medium truncate">
-                      {currentTrack.artists.map((a) => a.name).join(", ")}
-                    </p>
+                  <div className="relative">
+                    <div className="space-y-0.5 pr-12">
+                      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight truncate">{currentTrack.name}</h2>
+                      <p className="text-sm md:text-base text-[var(--music-accent)] font-medium truncate">
+                        {currentTrack.artists.map((a) => a.name).join(", ")}
+                      </p>
+                    </div>
+                    
+                    <button
+                      onClick={toggleSaveTrack}
+                      className="absolute top-1/2 -translate-y-1/2 right-0 p-2 text-muted-foreground hover:text-white transition-colors"
+                      title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+                    >
+                      <Heart className={`w-6 h-6 md:w-7 md:h-7 transition-colors ${isSaved ? "fill-[var(--music-accent)] text-[var(--music-accent)]" : "fill-transparent"}`} />
+                    </button>
                   </div>
 
                   <div className="space-y-1.5">
@@ -546,9 +560,19 @@ export function MiniPlayer() {
                 </div>
 
                 <div className="flex-1 flex flex-col min-h-0 pt-3 gap-3">
-                  <div className="shrink-0">
-                    <p className="text-base font-bold truncate">{currentTrack.name}</p>
-                    <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+                  <div className="shrink-0 relative flex items-center justify-between gap-4">
+                    <div className="min-w-0 pr-12">
+                      <p className="text-base font-bold truncate">{currentTrack.name}</p>
+                      <p className="text-sm text-[var(--music-accent)] truncate">{currentTrack.artists.map((a) => a.name).join(", ")}</p>
+                    </div>
+                    
+                    <button
+                      onClick={toggleSaveTrack}
+                      className="absolute top-1/2 -translate-y-1/2 right-0 p-2 text-muted-foreground hover:text-white transition-colors shrink-0"
+                      title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}
+                    >
+                      <Heart className={`w-6 h-6 transition-colors ${isSaved ? "fill-[var(--music-accent)] text-[var(--music-accent)]" : "fill-transparent"}`} />
+                    </button>
                   </div>
                   <ExpandedTabs {...tabProps} layoutIdSuffix="-video" />
                 </div>
@@ -622,6 +646,8 @@ interface TabsProps {
   geniusData: GeniusSong | null;
   lyrics: string | null;
   isFetchingLyrics: boolean;
+  isSaved: boolean | null;
+  toggleSaveTrack: () => Promise<void>;
   layoutIdSuffix?: string;
 }
 
