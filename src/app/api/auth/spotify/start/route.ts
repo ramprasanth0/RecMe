@@ -15,6 +15,7 @@ export async function GET() {
     path: "/",
   });
 
-  const authUrl = getSpotifyAuthUrl(state);
+  // show_dialog=true forces Spotify to re-evaluate scopes and show the approval screen
+  const authUrl = getSpotifyAuthUrl(state, true);
   return NextResponse.redirect(authUrl);
 }
