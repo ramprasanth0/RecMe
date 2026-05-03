@@ -27,9 +27,9 @@ export async function GET(req: Request) {
     }
     const data = await res.json();
     return NextResponse.json({ saved: data });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Failed to check liked songs:", err);
-    return NextResponse.json({ error: "Failed to check liked songs" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to check liked songs", details: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
 
@@ -60,9 +60,9 @@ export async function PUT(req: Request) {
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Failed to add to liked songs:", err);
-    return NextResponse.json({ error: "Failed to add to liked songs" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to add to liked songs", details: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
 
@@ -93,8 +93,8 @@ export async function DELETE(req: Request) {
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error("Failed to remove from liked songs:", err);
-    return NextResponse.json({ error: "Failed to remove from liked songs" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to remove from liked songs", details: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
