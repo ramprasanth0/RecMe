@@ -90,20 +90,27 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     fetch(`/api/spotify/liked-songs?ids=${currentTrack.id}`)
       .then(res => res.json())
       .then(data => {
-        if (isMounted && data?.saved && Array.isArray(data.saved)) {
-          setIsSaved(data.saved[0]);
+        if (isMounted) {
+          if (data?.saved && Array.isArray(data.saved)) {
+            setIsSaved(data.saved[0]);
+          } else {
+            setIsSaved(false); // Default to false if API fails so UI isn't stuck
+          }
         }
       })
-      .catch(console.error);
+      .catch((err) => {
+        console.error(err);
+        if (isMounted) setIsSaved(false);
+      });
 
     return () => { isMounted = false; };
   }, [currentTrack?.id]);
 
   const toggleSaveTrack = useCallback(async () => {
-    if (!currentTrack?.id || isSaved === null) return;
+    if (!currentTrack?.id) return;
     
     // Optimistic UI update
-    const prevSaved = isSaved;
+    const prevSaved = isSaved ?? false;
     setIsSaved(!prevSaved);
     
     try {

@@ -434,6 +434,9 @@ export function MiniPlayer() {
               </div>
             </div>
             <div className="flex items-center gap-3 border-l border-white/10 pl-4">
+              <button onClick={toggleSaveTrack} className="text-muted-foreground hover:text-white transition-colors" title={isSaved ? "Remove from Liked Songs" : "Save to Liked Songs"}>
+                <Heart className={`w-4 h-4 transition-colors ${isSaved ? "fill-[var(--music-accent)] text-[var(--music-accent)]" : "fill-transparent"}`} />
+              </button>
               <a href={spotifyUrl} target="_blank" rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-[var(--music-accent)] transition-colors" title="Open in Spotify"
               >

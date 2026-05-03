@@ -37,8 +37,7 @@ Respond with only valid JSON, no markdown fences.`;
     const parsed = JSON.parse(cleaned);
 
     return NextResponse.json(parsed);
-  } catch (err) {
+    } catch (err: unknown) {
     console.error("Track analysis failed:", err);
-    return NextResponse.json({ error: "Analysis failed" }, { status: 500 });
-  }
-}
+    return NextResponse.json({ error: "Analysis failed", details: err instanceof Error ? err.message : String(err) }, { status: 500 });
+    }}
