@@ -14,30 +14,90 @@ export async function GET(request: Request) {
     
     const html = await res.text();
     
-    // Simple regex-based scraping (Genius often changes classes, but Lyrics__Container is fairly stable)
-    // We look for the Lyrics__Container divs and extract their content
-    const lyricsRegex = /<div [^>]*class="[^"]*Lyrics__Container[^"]*"[^>]*>([\s\S]*?)<\/div>/g;
-    let match;
+    // Scrape all data-lyrics-container elements
+    const parts = html.split('data-lyrics-container="true"');
     let lyricsHtml = "";
     
-    while ((match = lyricsRegex.exec(html)) !== null) {
-      lyricsHtml += match[1];
-    }
-    
-    if (!lyricsHtml) {
+    if (parts.length > 1) {
+      for (let i = 1; i < parts.length; i++) {
+        const part = parts[i];
+        const startIdx = part.indexOf('>');
+        if (startIdx !== -1) {
+          let content = part.substring(startIdx + 1);
+          
+          // Truncate at the end of the lyrics section
+          const endMarkers = ['<div class="RightSidebar', '<div class="LyricsFooter', '<div data-lyrics-container="false"'];
+          let firstEndIdx = content.length;
+          for (const marker of endMarkers) {
+            const idx = content.indexOf(marker);
+            if (idx !== -1 && idx < firstEndIdx) {
+              firstEndIdx = idx;
+            }
+          }
+          content = content.substring(0, firstEndIdx);
+          
+          // Remove ad/header blocks completely (they use data-exclude-from-selection="true")
+          let idx = 0;
+          while ((idx = content.indexOf('data-exclude-from-selection="true"', idx)) !== -1) {
+            const divStart = content.lastIndexOf('<div', idx);
+            if (divStart !== -1) {
+              let divCount = 1;
+              let j = content.indexOf('>', idx) + 1;
+              while (j < content.length && divCount > 0) {
+                if (content.startsWith('<div', j)) divCount++;
+                else if (content.startsWith('</div', j)) divCount--;
+                j++;
+              }
+              const closeIdx = content.indexOf('>', j - 1);
+              if (closeIdx !== -1) j = closeIdx + 1;
+              
+              content = content.substring(0, divStart) + content.substring(j);
+              idx = divStart;
+            } else {
+              idx += 'data-exclude-from-selection="true"'.length;
+            }
+          }
+          
+          lyricsHtml += content + "<br/>";
+        }
+      }
+    } else {
       // Fallback for older Genius layout
       const oldRegex = /<div [^>]*class="lyrics"[^>]*>([\s\S]*?)<\/div>/;
       const oldMatch = html.match(oldRegex);
       if (oldMatch) lyricsHtml = oldMatch[1];
     }
     
-    // Clean up the HTML (Genius uses <br> for newlines)
-    // We want to keep <br> and some basic structure but strip scripts/ads
-    const cleanLyrics = lyricsHtml
-      .replace(/<script[\s\S]*?<\/script>/gi, "")
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<button[\s\S]*?<\/button>/gi, "")
-      .replace(/<div [^>]*class="[^"]*Annotation[^"]*"[^>]*>[\s\S]*?<\/div>/gi, "");
+    if (!lyricsHtml) {
+      return NextResponse.json({ error: "Could not extract lyrics" }, { status: 404 });
+    }
+    
+    // Clean up the HTML
+    let cleanLyrics = lyricsHtml
+      .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+      .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+      .replace(/<br[^>]*>/gi, '\n'); // Temporarily convert br to newlines
+      
+    // Strip all other tags except basic formatting
+    cleanLyrics = cleanLyrics.replace(/<[^>]+>/g, (match) => {
+      const lower = match.toLowerCase();
+      if (lower === '<i>' || lower === '</i>' || lower === '<b>' || lower === '</b>') {
+        return match;
+      }
+      return '';
+    });
+    
+    // Decode HTML entities
+    cleanLyrics = cleanLyrics
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#x27;/g, "'")
+      .replace(/&#x20;/g, ' ');
+      
+    // Convert newlines back to <br/> and remove extra blank lines
+    cleanLyrics = cleanLyrics.replace(/\n+/g, '<br/>').trim();
 
     return NextResponse.json({ lyrics: cleanLyrics });
   } catch (error: unknown) {

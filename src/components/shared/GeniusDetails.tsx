@@ -159,7 +159,11 @@ export function GeniusDetails() {
               <div
                 className="text-sm leading-relaxed text-white/80 font-medium max-w-none
                   [&_p]:mb-4 [&_a]:text-[var(--music-accent)] [&_a]:font-bold [&_a]:underline hover:[&_a]:text-white transition-colors"
-                dangerouslySetInnerHTML={{ __html: geniusData.description.html }}
+                dangerouslySetInnerHTML={{ 
+                  __html: geniusData.description.html
+                    .replace(/<iframe[^>]*>([\s\S]*?)<\/iframe>/gi, '')
+                    .replace(/<video[^>]*>([\s\S]*?)<\/video>/gi, '')
+                }}
               />
             </section>
 

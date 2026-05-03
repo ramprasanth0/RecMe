@@ -24,6 +24,15 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
   const user = await getCurrentUser();
   if (!user || !user.spotify_refresh_token) return user;
 
+  if (user.spotify_token_expires_at) {
+    const expiryTime = new Date(user.spotify_token_expires_at).getTime();
+    const now = Date.now();
+    // Only refresh if expired or expiring within 60 seconds
+    if (expiryTime - now > 60 * 1000) {
+      return user;
+    }
+  }
+
   // Try refreshing the token proactively
   try {
     const tokens = await refreshAccessToken(user.spotify_refresh_token);
