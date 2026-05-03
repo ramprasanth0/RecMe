@@ -4,6 +4,9 @@ import { getSpotifyAuthUrl } from "@/lib/spotify/auth";
 import { getCurrentUser } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   // Clear stored Spotify tokens so the callback issues a fresh grant
   try {
@@ -16,13 +19,13 @@ export async function GET() {
         .eq("id", user.id);
     }
   } catch {
-    // Best-effort — proceed regardless
+    // Best-effort â€” proceed regardless
   }
 
   const state = crypto.randomUUID();
-  cookies().set("spotify_auth_state", state, {
+  cookies().set("spotify_auth_state", state, {       
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production",   
     sameSite: "lax",
     maxAge: 600,
     path: "/",
@@ -30,5 +33,12 @@ export async function GET() {
 
   // show_dialog=true forces Spotify to show the permissions screen
   const authUrl = getSpotifyAuthUrl(state, true);
-  return NextResponse.redirect(authUrl);
+
+  const response = NextResponse.redirect(authUrl);
+  // Bust browser cache
+  response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  response.headers.set('Pragma', 'no-cache');
+  response.headers.set('Expires', '0');
+
+  return response;
 }
