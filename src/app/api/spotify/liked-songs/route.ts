@@ -52,11 +52,12 @@ export async function PUT(req: Request) {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(ids), // Send array directly, not an object wrapper
+      body: JSON.stringify({ ids }), // Object wrapper is standard
     });
 
     if (!res.ok) {
         const errorText = await res.text();
+        console.error(`[PUT /me/tracks] Spotify API 403 Error Details:`, errorText);
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
@@ -85,11 +86,12 @@ export async function DELETE(req: Request) {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(ids),
+      body: JSON.stringify({ ids }),
     });
 
     if (!res.ok) {
         const errorText = await res.text();
+        console.error(`[DELETE /me/tracks] Spotify API 403 Error Details:`, errorText);
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
