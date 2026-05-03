@@ -52,7 +52,6 @@ export async function PUT(req: Request) {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ids }), // Object wrapper is standard
     });
 
     if (!res.ok) {
@@ -86,7 +85,6 @@ export async function DELETE(req: Request) {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ids }),
     });
 
     if (!res.ok) {
