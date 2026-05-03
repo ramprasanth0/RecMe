@@ -52,30 +52,34 @@ export async function GET(request: NextRequest) {
     }
 
     if (targetUserId) {
+      const expiryDate = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
+
       // Update existing user
-      const { error: updateError } = await admin
+      const { error: updateError } = await admin     
         .from("users")
         .update({
           spotify_id: profile.id, // Ensure spotify_id is linked
-          spotify_access_token: tokens.access_token,
+          spotify_access_token: tokens.access_token, 
           spotify_refresh_token: tokens.refresh_token,
-          display_name: profile.display_name,
+          spotify_token_expires_at: expiryDate,
+          display_name: profile.display_name,        
           avatar_url: profile.images?.[0]?.url ?? null,
         })
         .eq("id", targetUserId);
       if (updateError) console.error("Update failed:", updateError);
-    } else {
+      } else {
+      const expiryDate = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
       // Create new user
       const { data: newUser } = await admin.from("users").insert({
         email: profile.email,
         spotify_id: profile.id,
-        spotify_access_token: tokens.access_token,
-        spotify_refresh_token: tokens.refresh_token,
+        spotify_access_token: tokens.access_token,   
+        spotify_refresh_token: tokens.refresh_token, 
+        spotify_token_expires_at: expiryDate,
         display_name: profile.display_name,
         avatar_url: profile.images?.[0]?.url ?? null,
         preferences: {},
-      }).select("id").single();
-      
+      }).select("id").single();      
       if (newUser) {
         targetUserId = newUser.id;
       }

@@ -184,16 +184,46 @@ export function MiniPlayer() {
   }, [isExpanded, refreshQueue]);
 
   useEffect(() => {
-    if (activeTab === "lyrics" && geniusData?.url && !lyrics) {
+    if (activeTab === "lyrics" && currentTrack && !lyrics) {
       setIsFetchingLyrics(true);
-      fetch(`/api/genius/lyrics?url=${encodeURIComponent(geniusData.url)}`)
-        .then((r) => r.ok ? r.json() : null)
-        .then((data) => { if (data?.lyrics) setLyrics(data.lyrics); })
-        .catch(() => {})
-        .finally(() => setIsFetchingLyrics(false));
-    }
-  }, [activeTab, geniusData, lyrics]);
 
+      const fetchLyrics = async () => {
+        try {
+          // Primary: Try lrclib.net client-side to bypass backend blocks
+          const trackName = encodeURIComponent(currentTrack.name);
+          const artistName = encodeURIComponent(currentTrack.artists[0].name);
+          const lrcRes = await fetch(`https://lrclib.net/api/get?artist_name=${artistName}&track_name=${trackName}`);
+
+          if (lrcRes.ok) {
+            const data = await lrcRes.json();
+            if (data?.syncedLyrics || data?.plainLyrics) {
+              const raw = data.plainLyrics || data.syncedLyrics; // Prefer plain for simple display
+              setLyrics(raw.replace(/\n/g, '<br/>'));
+              return;
+            }
+          }
+
+          // Fallback: Try Genius scrape (often blocked by Cloudflare in production)
+          if (geniusData?.url) {
+            const gRes = await fetch(`/api/genius/lyrics?url=${encodeURIComponent(geniusData.url)}`);
+            if (gRes.ok) {
+              const gData = await gRes.json();
+              if (gData?.lyrics) {
+                setLyrics(gData.lyrics);
+                return;
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch lyrics", err);
+        } finally {
+          setIsFetchingLyrics(false);
+        }
+      };
+
+      fetchLyrics();
+    }
+  }, [activeTab, currentTrack, geniusData, lyrics]);
   useEffect(() => {
     setLyrics(null);
   }, [currentTrack?.id]);

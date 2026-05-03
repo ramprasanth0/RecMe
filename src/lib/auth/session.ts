@@ -37,11 +37,14 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
   try {
     const tokens = await refreshAccessToken(user.spotify_refresh_token);
     const admin = createAdminClient();
+    
+    const expiryDate = new Date(Date.now() + tokens.expires_in * 1000).toISOString();
 
     await admin
       .from("users")
       .update({
         spotify_access_token: tokens.access_token,
+        spotify_token_expires_at: expiryDate,
         ...(tokens.refresh_token && {
           spotify_refresh_token: tokens.refresh_token,
         }),
@@ -51,6 +54,7 @@ export async function getUserWithFreshToken(): Promise<DBUser | null> {
     return {
       ...user,
       spotify_access_token: tokens.access_token,
+      spotify_token_expires_at: expiryDate,
       ...(tokens.refresh_token && {
         spotify_refresh_token: tokens.refresh_token,
       }),

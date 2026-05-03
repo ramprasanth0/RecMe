@@ -21,7 +21,10 @@ export async function GET(req: Request) {
       },
     });
 
-    if (!res.ok) throw new Error(`Spotify API error: ${res.status}`);
+    if (!res.ok) {
+        const errorText = await res.text();
+        return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
+    }
     const data = await res.json();
     return NextResponse.json({ saved: data });
   } catch (err) {
@@ -53,8 +56,8 @@ export async function PUT(req: Request) {
     });
 
     if (!res.ok) {
-        const error = await res.text();
-        throw new Error(`Spotify API error: ${res.status} ${error}`);
+        const errorText = await res.text();
+        return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
   } catch (err) {
@@ -86,8 +89,8 @@ export async function DELETE(req: Request) {
     });
 
     if (!res.ok) {
-        const error = await res.text();
-        throw new Error(`Spotify API error: ${res.status} ${error}`);
+        const errorText = await res.text();
+        return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
   } catch (err) {
