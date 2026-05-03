@@ -46,13 +46,13 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.spotify.com/v1/me/tracks`, {
+    const res = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(ids.join(','))}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify(ids), // Send array directly, not an object wrapper
     });
 
     if (!res.ok) {
@@ -79,13 +79,13 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.spotify.com/v1/me/tracks`, {
+    const res = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(ids.join(','))}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify(ids),
     });
 
     if (!res.ok) {
