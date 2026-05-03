@@ -124,7 +124,10 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
         body: JSON.stringify({ ids: [currentTrack.id] })
       });
       
-      if (!res.ok) throw new Error("Failed to update liked songs");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.details || errorData.error || "Failed to update liked songs");
+      }
       
       // If successfully saved (was false, now true)
       if (!prevSaved) {
@@ -133,7 +136,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
         likedToastTimer.current = setTimeout(() => setShowLikedToast(false), 2500);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Liked Songs Toggle Error:", err);
       // Revert if failed
       setIsSaved(prevSaved);
     }
