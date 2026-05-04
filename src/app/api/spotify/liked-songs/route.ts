@@ -46,17 +46,20 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(ids.join(','))}`, {
+    const uris = ids.map((id: string) => `spotify:track:${id}`);
+
+    const res = await fetch(`https://api.spotify.com/v1/me/library`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ uris }),
     });
 
     if (!res.ok) {
         const errorText = await res.text();
-        console.error(`[PUT /me/tracks] Spotify API 403 Error Details:`, errorText);
+        console.error(`[PUT /me/library] Spotify API 403 Error Details:`, errorText);
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
@@ -79,17 +82,20 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const res = await fetch(`https://api.spotify.com/v1/me/tracks?ids=${encodeURIComponent(ids.join(','))}`, {
+    const uris = ids.map((id: string) => `spotify:track:${id}`);
+
+    const res = await fetch(`https://api.spotify.com/v1/me/library`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
+      body: JSON.stringify({ uris }),
     });
 
     if (!res.ok) {
         const errorText = await res.text();
-        console.error(`[DELETE /me/tracks] Spotify API 403 Error Details:`, errorText);
+        console.error(`[DELETE /me/library] Spotify API 403 Error Details:`, errorText);
         return NextResponse.json({ error: `Spotify API error: ${errorText}` }, { status: res.status });
     }
     return NextResponse.json({ success: true });
