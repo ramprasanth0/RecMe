@@ -3,6 +3,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import Script from "next/script";
+import { motion, AnimatePresence } from "framer-motion";
+import { Check, Heart } from "lucide-react";
 
 interface TrackToPlay {
   title: string;
@@ -569,6 +571,42 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
   return (
     <SpotifyPlayerContext.Provider value={value}>
       <Script src="https://sdk.scdn.co/spotify-player.js" strategy="afterInteractive" />
+      
+      {/* ── Top Center Toasts (Always Available) ── */}
+      <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none">
+        <AnimatePresence>
+          {showQueueToast && (
+            <motion.div
+              key="queue-toast"
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="px-4 py-2 rounded-full bg-[var(--music-accent)] text-black text-xs font-bold flex items-center gap-2 shadow-xl"
+            >
+              <Check className="w-3.5 h-3.5" />
+              Added to queue
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {showLikedToast && (
+            <motion.div
+              key="liked-toast"
+              initial={{ opacity: 0, y: -8, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="px-4 py-2 rounded-full bg-[var(--music-accent)] text-black text-xs font-bold flex items-center gap-2 shadow-xl"
+            >
+              <Heart className="w-3.5 h-3.5 fill-current" />
+              Added to Liked Songs
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
       {children}
     </SpotifyPlayerContext.Provider>
   );

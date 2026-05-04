@@ -7,7 +7,7 @@ import Image from "next/image";
 import {
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, X,
   ExternalLink, ChevronUp, ChevronDown, RefreshCcw, Music as MusicIcon,
-  Video, Sparkles, Check, Loader2, Maximize2, Heart
+  Video, Sparkles, Loader2, Maximize2, Heart
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { GeniusDetails } from "./GeniusDetails";
@@ -41,8 +41,6 @@ export function MiniPlayer() {
     refreshQueue,
     playTrack,
     geniusData,
-    showQueueToast,
-    showLikedToast,
     isSaved,
     toggleSaveTrack,
   } = useSpotifyPlayer();
@@ -314,41 +312,6 @@ export function MiniPlayer() {
   return (
     <>
       <AnimatePresence>
-        {/* ── Top Center Toasts ── */}
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col items-center gap-2 pointer-events-none">
-          <AnimatePresence>
-            {showQueueToast && (
-              <motion.div
-                key="queue-toast"
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="px-4 py-2 rounded-full bg-[var(--music-accent)] text-black text-xs font-bold flex items-center gap-2 shadow-xl"
-              >
-                <Check className="w-3.5 h-3.5" />
-                Added to queue
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <AnimatePresence>
-            {showLikedToast && (
-              <motion.div
-                key="liked-toast"
-                initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                transition={{ duration: 0.2 }}
-                className="px-4 py-2 rounded-full bg-[var(--music-accent)] text-black text-xs font-bold flex items-center gap-2 shadow-xl"
-              >
-                <Heart className="w-3.5 h-3.5 fill-current" />
-                Added to Liked Songs
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
         {/* ── Mini Bar ── */}
         <motion.div
           initial={{ y: "100%", opacity: 0 }}
