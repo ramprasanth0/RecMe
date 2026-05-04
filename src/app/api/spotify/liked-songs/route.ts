@@ -46,15 +46,14 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const uris = ids.map((id: string) => `spotify:track:${id}`);
+    const uris = ids.map((id: string) => id.startsWith('spotify:') ? id : `spotify:track:${id}`);
 
-    const res = await fetch(`https://api.spotify.com/v1/me/library`, {
+    const res = await fetch(`https://api.spotify.com/v1/me/library?uris=${encodeURIComponent(uris.join(','))}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ uris }),
     });
 
     if (!res.ok) {
@@ -82,15 +81,14 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Missing or invalid ids" }, { status: 400 });
     }
 
-    const uris = ids.map((id: string) => `spotify:track:${id}`);
+    const uris = ids.map((id: string) => id.startsWith('spotify:') ? id : `spotify:track:${id}`);
 
-    const res = await fetch(`https://api.spotify.com/v1/me/library`, {
+    const res = await fetch(`https://api.spotify.com/v1/me/library?uris=${encodeURIComponent(uris.join(','))}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${user.spotify_access_token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ uris }),
     });
 
     if (!res.ok) {
