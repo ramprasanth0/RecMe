@@ -38,6 +38,7 @@ interface PlayerContextType {
   queue: any[];
   refreshQueue: () => Promise<void>;
   addToQueue: (uri: string) => Promise<void>;
+  triggerQueueToast: () => void;
   geniusData: GeniusSong | null;
   isFetchingGenius: boolean;
   showQueueToast: boolean;
@@ -477,6 +478,12 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     }
   }, [token, player]);
 
+  const triggerQueueToast = useCallback(() => {
+    if (queueToastTimer.current) clearTimeout(queueToastTimer.current);
+    setShowQueueToast(true);
+    queueToastTimer.current = setTimeout(() => setShowQueueToast(false), 2500);
+  }, []);
+
   const addToQueue = useCallback(async (uri: string) => {
     if (!token) return;
     try {
@@ -487,15 +494,12 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
       });
       if (res.ok) {
         await refreshQueue();
-        // Show toast notification
-        if (queueToastTimer.current) clearTimeout(queueToastTimer.current);
-        setShowQueueToast(true);
-        queueToastTimer.current = setTimeout(() => setShowQueueToast(false), 2500);
+        triggerQueueToast();
       }
     } catch (e) {
       console.error("Failed to add to queue", e);
     }
-  }, [token, refreshQueue]);
+  }, [token, refreshQueue, triggerQueueToast]);
 
   // Fetch Genius data when current track changes
   useEffect(() => {
@@ -560,6 +564,7 @@ export function SpotifyPlayerProvider({ children }: { children: React.ReactNode 
     queue,
     refreshQueue,
     addToQueue,
+    triggerQueueToast,
     geniusData,
     isFetchingGenius,
     showQueueToast,

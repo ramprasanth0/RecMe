@@ -49,7 +49,7 @@ function MusicCard({
   const [albumArt, setAlbumArt] = useState<string | null>(item.albumArt ?? null);
   const [queueSuccess, setQueueSuccess] = useState(false);
   const [queueError, setQueueError] = useState(false);
-  const { playTrack, addToQueue, currentTrack, isPlaying } = useSpotifyPlayer();
+  const { playTrack, addToQueue, triggerQueueToast, currentTrack, isPlaying } = useSpotifyPlayer();
 
   const isNowPlaying = currentTrack?.name.toLowerCase() === item.title.toLowerCase();
 
@@ -109,6 +109,7 @@ function MusicCard({
 
       if (uri) {
         await addToQueue(uri);
+        triggerQueueToast();
         setQueueSuccess(true);
         setTimeout(() => setQueueSuccess(false), 2000);
       } else {

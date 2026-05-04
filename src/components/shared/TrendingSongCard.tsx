@@ -8,7 +8,7 @@ import { useSpotifyPlayer } from "@/context/SpotifyPlayerContext";
 import { cn } from "@/lib/utils";
 
 export function TrendingSongCard({ title, artist, albumArt, spotifyUrl }: TrendingSong) {
-  const { playTrack, addToQueue, currentTrack, isPlaying } = useSpotifyPlayer();
+  const { playTrack, addToQueue, triggerQueueToast, currentTrack, isPlaying } = useSpotifyPlayer();
   const [queueSuccess, setQueueSuccess] = useState(false);
   const [queueError, setQueueError] = useState(false);
 
@@ -33,9 +33,10 @@ export function TrendingSongCard({ title, artist, albumArt, spotifyUrl }: Trendi
         const data = await res.json();
         if (data.uri) {
           await addToQueue(data.uri);
+          triggerQueueToast();
           setQueueSuccess(true);
           setTimeout(() => setQueueSuccess(false), 2000);
-          return;
+        } else {
         }
       }
       throw new Error("No URI found");
