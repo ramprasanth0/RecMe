@@ -40,7 +40,14 @@ RecMe is a minimalistic, editorial-grade web app that uses your Spotify listenin
 | 🔖 Saved recs | Bookmark music and movies, view later in Profile |
 | 📊 Top artists & tracks | View your Spotify top 20 artists and top 50 tracks |
 | 🎛️ Genre preferences | Set music and movie genre preferences that inform all AI recommendations |
-| 🌍 Trending | TMDB trending movies — edge-cached, updated hourly |
+| 🏠 Default Landing | Choose between Music or Movies as your personalized default home page |
+| 🌍 Trending Movies | TMDB trending movies — edge-cached, updated hourly |
+| 📈 Top Songs Charts | iTunes RSS integration for "Top Songs US" and "Top Songs India" |
+| 🎵 Global Web Player | Persistent mini-player and full-screen view for Spotify audio and YouTube video |
+| 🧠 AI Track Analysis | Real-time analysis of the currently playing track (mood, tags, breakdown) using Gemini |
+| 📖 Lyrics & Insights | Extract song lyrics, view track story, and track credits powered by Genius API |
+| 🎧 Similar Songs | Instantly discover and play similar songs to the one currently playing |
+| ❤️ Save to Liked Songs | Add tracks directly to your Spotify Liked Songs from the web player |
 | 🔐 Dual auth | Spotify OAuth (full access) + email magic link (movie-only) |
 
 ---
@@ -53,10 +60,11 @@ RecMe is a minimalistic, editorial-grade web app that uses your Spotify listenin
 | Styling | Tailwind CSS v3 + CSS variables + Framer Motion |
 | Database | Supabase (Postgres + RLS) |
 | Auth | Custom httpOnly cookie session over Supabase |
-| AI Engine | Google Gemini `gemini-2.5-flash` via `@google/genai` |
+| AI Engine | Google Gemini `gemini-2.0-flash` via `@google/genai` |
 | Music data | Spotify Web API |
 | Movie data | TMDB API |
-| Album art | iTunes Search API (server-side proxy) |
+| Lyrics & Insights | Genius API |
+| Album art & Charts | iTunes Search API & RSS Feeds (server-side proxy) |
 | Validation | Zod (all AI and external API responses) |
 | Hosting | Vercel |
 
@@ -89,6 +97,7 @@ graph TD
         Spotify[Spotify Web API]
         TMDB[TMDB API]
         iTunes[iTunes Search API]
+        Genius[Genius API]
     end
 
     UI -->|POST /api/gemini/recommend| API
@@ -277,7 +286,8 @@ src/
 │   ├── profile/ProfileClient.tsx
 │   ├── chat/                            # ChatPageClient, ChatSidebar, StreamingChat
 │   └── shared/                          # Navbar, RecommendationCard, MoodInput,
-│                                        # TabSwitcher, PlaylistCreator, PlaylistGenerator
+│                                        # TabSwitcher, PlaylistCreator, PlaylistGenerator,
+│                                        # MiniPlayer, GeniusDetails, TrendingSongCard
 │
 ├── hooks/
 │   ├── useRecommendations.ts   # Gemini recs + module-level autoRecCache
@@ -312,7 +322,7 @@ CTAs: Spotify + Email sign-in       Auto-loaded AI music recs
                                     Auto-loaded AI movie recs
 TMDB trending movies strip          TMDB trending movies strip
 Curated music strip                 (personalised ranking by taste)
-Sticky sign-in banner
+Sticky sign-in banner               Top Songs US & India strips
 ```
 
 ### `/personalize` — Your Spotify data + AI playlists
@@ -324,6 +334,7 @@ Sticky sign-in banner
 ### `/profile` — Preferences + history
 
 - Set music and movie genre preferences (used in all AI prompts)
+- Choose default landing page (Music or Movies)
 - View and unsave bookmarked recommendations
 - Connected accounts — Spotify connection status + reconnect
 
@@ -332,6 +343,14 @@ Sticky sign-in banner
 - Streaming Gemini responses (SSE)
 - Left sidebar: all past sessions, deletable
 - Context-aware: AI knows your Spotify artists and genre preferences
+
+### `Web Player` — Global Persistent Player
+
+- **Mini-bar** at the bottom with essential playback controls.
+- **Full-screen Expanded View** featuring synchronized Spotify Audio and YouTube Video modes.
+- **Lyrics Tab** (powered by Lrclib / Genius).
+- **Insights Tab** featuring Genius story, track credits, AI track analysis, and similar songs.
+- **Queue Management** and "Save to Liked Songs" functionality.
 
 ---
 
@@ -398,7 +417,7 @@ create table users (
   spotify_refresh_token text,
   display_name text,
   avatar_url text,
-  preferences jsonb default '{}',  -- { music_genres: [], movie_genres: [] }
+  preferences jsonb default '{}',  -- { music_genres: [], movie_genres: [], default_landing: 'music' | 'movies' }
   created_at timestamptz default now()
 );
 
